@@ -40,15 +40,32 @@ export const connectDatabase = async () => {
     console.log('Database connection has been established successfully.');
     
     // Sync models with database (creates tables if they don't exist)
-    // In production, use migrations instead of sync
+    // NOTE: alter: false to avoid exceeding free tier query limits
+    // For schema changes, manually run SQL or use migrations
+    // Set SYNC_ALTER=true in .env if you need automatic schema updates (use with caution on free tiers)
     if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: false });
-      console.log('Database models synchronized.');
+      const shouldAlter = process.env.SYNC_ALTER === 'true';
+      await sequelize.sync({ alter: shouldAlter });
+      console.log(`Database models synchronized. (alter: ${shouldAlter})`);
     }
     
     return true;
   } catch (error) {
     console.error('Unable to connect to the database:', error);
+    
+    // Handle query limit exceeded error
+    if (error.original && error.original.code === 'ER_USER_LIMIT_REACHED') {
+      console.error('\n⚠️  Database query limit exceeded!');
+      console.error('This is common on free database tiers.');
+      console.error('Solutions:');
+      console.error('1. Wait for the limit to reset (usually hourly)');
+      console.error('2. Upgrade to a paid database plan');
+      console.error('3. Reduce database operations (disable alter: true)');
+      console.error('\nThe server will continue but database operations may fail.\n');
+      // Don't throw - allow server to start but warn user
+      return false;
+    }
+    
     throw error;
   }
 };

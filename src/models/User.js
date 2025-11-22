@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import Government from './Government.js';
+import Category from './Category.js';
 
 const User = sequelize.define('User', {
   id: {
@@ -61,10 +62,40 @@ const User = sequelize.define('User', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Category,
+      key: 'id'
+    },
+    field: 'category_id'
+  },
   logoImage: {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'logo_image'
+  },
+  backgroundImage: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'background_image'
+  },
+  // Verification fields
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true, // Users are verified by default
+    field: 'is_verified'
+  },
+  verificationCode: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'verification_code'
+  },
+  verificationCodeExpiry: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'verification_code_expiry'
   }
 }, {
   tableName: 'users',
@@ -72,10 +103,15 @@ const User = sequelize.define('User', {
   underscored: true
 });
 
-// Define association
+// Define associations
 User.belongsTo(Government, {
   foreignKey: 'governmentId',
   as: 'government'
+});
+
+User.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  as: 'category'
 });
 
 export default User;

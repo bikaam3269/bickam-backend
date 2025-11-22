@@ -13,6 +13,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use(config.api.prefix, routes);
 
+import path from 'path';
+app.use('/files', express.static(path.resolve(process.cwd(), 'files')));
+
+
 // Error handling middleware (must be last)
 app.use(notFound);
 app.use(errorHandler);
@@ -20,8 +24,13 @@ app.use(errorHandler);
 // Initialize database and start server
 const startServer = async () => {
   try {
-    await connectDatabase();
+    const dbConnected = await connectDatabase();
     
+    if (!dbConnected) {
+      console.warn('⚠️  Server starting with limited database functionality due to query limits.');
+      console.warn('⚠️  Some database operations may fail. Please wait for limit reset or upgrade your plan.\n');
+    }
+
     app.listen(config.port, () => {
       console.log(`Server is running on port ${config.port}`);
       console.log(`Environment: ${config.env}`);

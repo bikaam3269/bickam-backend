@@ -16,7 +16,7 @@ const sequelize = new Sequelize(
     logging: databaseConfig.logging,
     dialectOptions: databaseConfig.dialectOptions || {},
     pool: {
-      max: 5,
+      max: 2, // Reduced for free tier limits
       min: 0,
       acquire: 30000,
       idle: 10000

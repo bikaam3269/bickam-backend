@@ -19,7 +19,8 @@ router.get('/:id', getProductById);
 // Protected routes (require authentication)
 router.use(authenticate);
 
-router.post('/', createProduct);
+import { upload } from '../middleware/upload.js';
+router.post('/', upload.array('images', 5), createProduct);
 router.put('/:id', updateProduct);
 router.delete('/:id', deleteProduct);
 

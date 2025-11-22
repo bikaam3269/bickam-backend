@@ -52,8 +52,21 @@ export const createProduct = async (req, res, next) => {
       });
     }
 
-    const vendorId = req.user.type === 'vendor' ? req.user.id : req.body.vendorId || null;
-    const product = await productService.createProduct(req.body, vendorId);
+    const productData = { ...req.body };
+    // Attach vendorId based on user role
+    if (req.user.type === 'vendor') {
+      productData.vendorId = req.user.id;
+    } else if (req.user.type === 'admin' && !productData.vendorId) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Admin must specify vendorId for the product' }
+      });
+    }
+    // Attach uploaded image filenames (if any)
+    if (req.files && req.files.length > 0) {
+      productData.images = req.files.map(f => f.filename);
+    }
+    const product = await productService.createProduct(productData);
 
     res.status(201).json({
       success: true,

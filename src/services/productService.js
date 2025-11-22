@@ -91,7 +91,7 @@ class ProductService {
     return product;
   }
 
-  async createProduct(data, vendorId) {
+  async createProduct(data) {
     const { name, images, price, isPrice, description, categoryId, subcategoryId, discount } = data;
 
     if (!name) {
@@ -119,7 +119,7 @@ class ProductService {
     const productData = {
       name,
       images: images || [],
-      vendorId: vendorId || null,
+      vendorId: data.vendorId || null,
       price: price || null,
       isPrice: isPrice !== undefined ? isPrice : false,
       description: description || null,
