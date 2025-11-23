@@ -41,6 +41,8 @@ const Order = sequelize.define('Order', {
   shippingAddress: {
     type: DataTypes.TEXT,
     allowNull: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
     field: 'shipping_address'
   },
   paymentMethod: {

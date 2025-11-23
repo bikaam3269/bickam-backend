@@ -74,7 +74,7 @@ class AuthService {
   }
 
   async register(data) {
-    const { type, name, email, password, phone, governmentId, activity, description, logoImage, categoryId, backgroundImage } = data;
+    const { type, name, email, password, phone, governmentId, description, logoImage, categoryId, backgroundImage } = data;
 
     // Validate required fields based on type
     if (!type || !['user', 'vendor', 'admin'].includes(type)) {
@@ -115,6 +115,8 @@ class AuthService {
     const hashedPassword = await this.hashPassword(password);
 
     // Create user
+    // For vendors with phone, require verification. Others can be verified by default
+    const requiresVerification = type === 'vendor' && phone;
     const userData = {
       type,
       name,
@@ -122,12 +124,11 @@ class AuthService {
       password: hashedPassword,
       phone,
       governmentId,
-      isVerified: true // Users are verified by default
+      isVerified: !requiresVerification // Vendors with phone need verification
     };
 
     // Add vendor specific fields (only for vendor type)
     if (type === 'vendor') {
-      if (activity !== undefined) userData.activity = activity;
       if (description !== undefined) userData.description = description;
       if (logoImage !== undefined) userData.logoImage = logoImage;
       if (categoryId !== undefined && categoryId !== null && categoryId !== '') {
@@ -152,19 +153,34 @@ class AuthService {
       throw error;
     }
 
+    // Send verification code for vendors with phone
+    if (requiresVerification && user.phone) {
+      try {
+        await this.sendVerificationCode(user, 'verification');
+      } catch (error) {
+        console.error('Failed to send verification code during registration:', error);
+        // Continue with registration even if code sending fails
+      }
+    }
+
     // Remove password from response
     const userResponse = user.toJSON();
     delete userResponse.password;
     delete userResponse.verificationCode;
     delete userResponse.verificationCodeExpiry;
 
-    // Generate token since user is verified by default
-    const token = this.generateToken(user);
+    // Only generate token if user is verified
+    let token = null;
+    if (user.isVerified) {
+      token = this.generateToken(user);
+    }
 
     return {
       user: userResponse,
       token,
-      message: 'Registration successful. You can now login.'
+      message: requiresVerification 
+        ? 'Registration successful. Please verify your phone number with the code sent via WhatsApp.'
+        : 'Registration successful. You can now login.'
     };
   }
 
@@ -193,7 +209,16 @@ class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    // Users are verified by default, so no verification check needed
+    // Check if vendor needs verification
+    if (!user.isVerified && user.type === 'vendor' && user.phone) {
+      // Resend verification code if needed
+      try {
+        await this.sendVerificationCode(user, 'verification');
+      } catch (error) {
+        console.error('Failed to send verification code during login:', error);
+      }
+      throw new Error('Account not verified. Verification code has been sent to your phone.');
+    }
 
     // Remove password from response
     const userResponse = user.toJSON();

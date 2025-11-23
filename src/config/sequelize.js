@@ -14,7 +14,15 @@ const sequelize = new Sequelize(
     port: databaseConfig.port,
     dialect: databaseConfig.dialect,
     logging: databaseConfig.logging,
-    dialectOptions: databaseConfig.dialectOptions || {},
+    dialectOptions: {
+      ...(databaseConfig.dialectOptions || {}),
+      charset: 'utf8mb4'
+    },
+    define: {
+      charset: 'utf8mb4',
+      collate: 'utf8mb4_unicode_ci',
+      ...(databaseConfig.define || {})
+    },
     pool: {
       max: 2, // Reduced for free tier limits
       min: 0,

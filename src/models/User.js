@@ -19,6 +19,8 @@ const User = sequelize.define('User', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
     validate: {
       notEmpty: true
     }
@@ -60,7 +62,9 @@ const User = sequelize.define('User', {
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci'
   },
   categoryId: {
     type: DataTypes.INTEGER,

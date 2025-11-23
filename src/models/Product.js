@@ -13,6 +13,8 @@ const Product = sequelize.define('Product', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
     validate: {
       notEmpty: true
     }
@@ -49,7 +51,9 @@ const Product = sequelize.define('Product', {
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci'
   },
   categoryId: {
     type: DataTypes.INTEGER,

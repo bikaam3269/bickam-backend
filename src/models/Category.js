@@ -10,13 +10,17 @@ const Category = sequelize.define('Category', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
     validate: {
       notEmpty: true
     }
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci'
   },
   image: {
     type: DataTypes.STRING,

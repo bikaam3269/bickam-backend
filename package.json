@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "migrate:utf8mb4": "node run_utf8mb4_migration.js"
   },
   "keywords": [],
   "author": "",
