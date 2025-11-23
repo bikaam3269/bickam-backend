@@ -1,4 +1,5 @@
 import authService from '../services/authService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -16,42 +17,21 @@ export const register = async (req, res, next) => {
 
     const result = await authService.register(userData);
 
-    res.status(201).json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Registration successful', 201);
   } catch (error) {
     if (error.message === 'Email already exists') {
-      return res.status(409).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 409);
     }
     if (error.message && error.message.includes('Database query limit exceeded')) {
-      return res.status(503).json({
-        success: false,
-        error: { 
-          message: error.message,
-          details: 'The database has reached its query limit. This is common on free database tiers. Please wait a few minutes and try again.'
-        }
-      });
+      return sendError(res, error.message, 503);
     }
     if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.errors[0].message }
-      });
+      return sendError(res, error.errors[0].message, 400);
     }
     // Handle Sequelize connection errors
     if (error.name === 'SequelizeConnectionError' || error.name === 'SequelizeDatabaseError') {
       if (error.original && error.original.code === 'ER_USER_LIMIT_REACHED') {
-        return res.status(503).json({
-          success: false,
-          error: { 
-            message: 'Database query limit exceeded',
-            details: 'The database has reached its query limit. Please wait a few minutes and try again, or upgrade your database plan.'
-          }
-        });
+        return sendError(res, 'Database query limit exceeded. Please wait a few minutes and try again, or upgrade your database plan.', 503);
       }
     }
     next(error);
@@ -64,22 +44,13 @@ export const login = async (req, res, next) => {
 
     const result = await authService.login(email, password);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Login successful');
   } catch (error) {
     if (error.message === 'Invalid email or password') {
-      return res.status(401).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 401);
     }
     if (error.message === 'Account not verified. Verification code has been sent to your phone.') {
-      return res.status(403).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 403);
     }
     next(error);
   }
@@ -90,10 +61,7 @@ export const getProfile = async (req, res, next) => {
     // User is attached by authMiddleware
     const user = req.user;
 
-    res.json({
-      success: true,
-      data: user
-    });
+    return sendSuccess(res, user, 'Profile retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -107,20 +75,14 @@ export const changePassword = async (req, res, next) => {
 
     const result = await authService.changePassword(userId, currentPassword, newPassword);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Password changed successfully');
   } catch (error) {
     if (error.message === 'Current password is incorrect' || 
         error.message === 'User not found' ||
         error.message === 'Current password and new password are required' ||
         error.message === 'New password must be at least 6 characters long' ||
         error.message === 'New password must be different from current password') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -128,24 +90,18 @@ export const changePassword = async (req, res, next) => {
 
 export const verifyCode = async (req, res, next) => {
   try {
-    const { email, code } = req.body;
+    const { phone, code } = req.body;
 
-    const result = await authService.verifyCode(email, code);
+    const result = await authService.verifyCode(phone, code);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Account verified successfully');
   } catch (error) {
-    if (error.message === 'Email and verification code are required' ||
+    if (error.message === 'Phone number and verification code are required' ||
         error.message === 'User not found' ||
         error.message === 'User is already verified' ||
         error.message === 'Invalid verification code' ||
         error.message === 'Verification code has expired. Please request a new one.') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -153,23 +109,16 @@ export const verifyCode = async (req, res, next) => {
 
 export const resendVerificationCode = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { phone } = req.body;
 
-    const result = await authService.resendVerificationCode(email);
+    const result = await authService.resendVerificationCode(phone);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, result.message || 'Verification code sent successfully');
   } catch (error) {
-    if (error.message === 'Email is required' ||
+    if (error.message === 'Phone number is required' ||
         error.message === 'User not found' ||
-        error.message === 'User is already verified' ||
-        error.message === 'Phone number is required for verification') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+        error.message === 'User is already verified') {
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -177,21 +126,15 @@ export const resendVerificationCode = async (req, res, next) => {
 
 export const forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { phone } = req.body;
 
-    const result = await authService.forgotPassword(email);
+    const result = await authService.forgotPassword(phone);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, result.message || 'Password reset code sent successfully');
   } catch (error) {
-    if (error.message === 'Email is required' ||
+    if (error.message === 'Phone number is required' ||
         error.message === 'Phone number is required for password reset') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -199,24 +142,18 @@ export const forgotPassword = async (req, res, next) => {
 
 export const resetPassword = async (req, res, next) => {
   try {
-    const { email, code, newPassword } = req.body;
+    const { phone, code, newPassword } = req.body;
 
-    const result = await authService.resetPassword(email, code, newPassword);
+    const result = await authService.resetPassword(phone, code, newPassword);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, result.message || 'Password reset successfully');
   } catch (error) {
-    if (error.message === 'Email, verification code, and new password are required' ||
+    if (error.message === 'Phone number, verification code, and new password are required' ||
         error.message === 'Password must be at least 6 characters long' ||
         error.message === 'User not found' ||
         error.message === 'Invalid verification code' ||
         error.message === 'Verification code has expired. Please request a new one.') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }

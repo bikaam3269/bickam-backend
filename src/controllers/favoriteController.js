@@ -1,14 +1,12 @@
 import favoriteService from '../services/favoriteService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const getFavorites = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const favorites = await favoriteService.getFavorites(userId);
 
-    res.json({
-      success: true,
-      data: favorites
-    });
+    return sendSuccess(res, favorites, 'Favorites retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -20,30 +18,18 @@ export const addToFavorites = async (req, res, next) => {
     const { productId } = req.body;
 
     if (!productId) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Product ID is required' }
-      });
+      return sendError(res, 'Product ID is required', 400);
     }
 
     const favorite = await favoriteService.addToFavorites(userId, productId);
 
-    res.status(201).json({
-      success: true,
-      data: favorite
-    });
+    return sendSuccess(res, favorite, 'Product added to favorites', 201);
   } catch (error) {
     if (error.message === 'Product not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     if (error.message === 'Product already in favorites') {
-      return res.status(409).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 409);
     }
     next(error);
   }
@@ -56,16 +42,10 @@ export const removeFromFavorites = async (req, res, next) => {
 
     const result = await favoriteService.removeFromFavorites(userId, parseInt(productId));
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Product removed from favorites');
   } catch (error) {
     if (error.message === 'Product not in favorites') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -77,10 +57,7 @@ export const checkIsFavorite = async (req, res, next) => {
     const { productId } = req.params;
     const isFavorite = await favoriteService.isFavorite(userId, parseInt(productId));
 
-    res.json({
-      success: true,
-      data: { isFavorite }
-    });
+    return sendSuccess(res, { isFavorite }, 'Favorite status retrieved successfully');
   } catch (error) {
     next(error);
   }

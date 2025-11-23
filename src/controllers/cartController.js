@@ -1,4 +1,5 @@
 import cartService from '../services/cartService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const getCart = async (req, res, next) => {
   try {
@@ -6,13 +7,10 @@ export const getCart = async (req, res, next) => {
     const cartItems = await cartService.getCart(userId);
     const total = await cartService.getCartTotal(userId);
 
-    res.json({
-      success: true,
-      data: {
-        items: cartItems,
-        total
-      }
-    });
+    return sendSuccess(res, {
+      items: cartItems,
+      total
+    }, 'Cart retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -24,24 +22,15 @@ export const addToCart = async (req, res, next) => {
     const { productId, quantity } = req.body;
 
     if (!productId) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Product ID is required' }
-      });
+      return sendError(res, 'Product ID is required', 400);
     }
 
     const cartItem = await cartService.addToCart(userId, productId, quantity || 1);
 
-    res.status(201).json({
-      success: true,
-      data: cartItem
-    });
+    return sendSuccess(res, cartItem, 'Item added to cart successfully', 201);
   } catch (error) {
     if (error.message === 'Product not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -54,24 +43,15 @@ export const updateCartItem = async (req, res, next) => {
     const { quantity } = req.body;
 
     if (!quantity || quantity < 0) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Valid quantity is required' }
-      });
+      return sendError(res, 'Valid quantity is required', 400);
     }
 
     const result = await cartService.updateCartItem(userId, parseInt(id), quantity);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Cart item updated successfully');
   } catch (error) {
     if (error.message === 'Cart item not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -84,16 +64,10 @@ export const removeFromCart = async (req, res, next) => {
 
     const result = await cartService.removeFromCart(userId, parseInt(id));
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Item removed from cart successfully');
   } catch (error) {
     if (error.message === 'Cart item not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -104,10 +78,7 @@ export const clearCart = async (req, res, next) => {
     const userId = req.user.id;
     const result = await cartService.clearCart(userId);
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Cart cleared successfully');
   } catch (error) {
     next(error);
   }

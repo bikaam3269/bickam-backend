@@ -1,4 +1,5 @@
 import productService from '../services/productService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const getAllProducts = async (req, res, next) => {
   try {
@@ -13,10 +14,7 @@ export const getAllProducts = async (req, res, next) => {
 
     const products = await productService.getAllProducts(filters);
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, products, 'Products retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -27,16 +25,10 @@ export const getProductById = async (req, res, next) => {
     const { id } = req.params;
     const product = await productService.getProductById(id);
 
-    res.json({
-      success: true,
-      data: product
-    });
+    return sendSuccess(res, product, 'Product retrieved successfully');
   } catch (error) {
     if (error.message === 'Product not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -46,10 +38,7 @@ export const createProduct = async (req, res, next) => {
   try {
     // Only vendors can create products
     if (req.user.type !== 'vendor' && req.user.type !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: { message: 'Only vendors can create products' }
-      });
+      return sendError(res, 'Only vendors can create products', 403);
     }
 
     const productData = { ...req.body };
@@ -57,10 +46,7 @@ export const createProduct = async (req, res, next) => {
     if (req.user.type === 'vendor') {
       productData.vendorId = req.user.id;
     } else if (req.user.type === 'admin' && !productData.vendorId) {
-      return res.status(400).json({
-        success: false,
-        error: { message: 'Admin must specify vendorId for the product' }
-      });
+      return sendError(res, 'Admin must specify vendorId for the product', 400);
     }
     // Attach uploaded image filenames (if any)
     if (req.files && req.files.length > 0) {
@@ -68,22 +54,13 @@ export const createProduct = async (req, res, next) => {
     }
     const product = await productService.createProduct(productData);
 
-    res.status(201).json({
-      success: true,
-      data: product
-    });
+    return sendSuccess(res, product, 'Product created successfully', 201);
   } catch (error) {
     if (error.message.includes('required') || error.message.includes('must be')) {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.errors[0].message }
-      });
+      return sendError(res, error.errors[0].message, 400);
     }
     next(error);
   }
@@ -94,34 +71,19 @@ export const updateProduct = async (req, res, next) => {
     const { id } = req.params;
     const product = await productService.updateProduct(id, req.body, req.user);
 
-    res.json({
-      success: true,
-      data: product
-    });
+    return sendSuccess(res, product, 'Product updated successfully');
   } catch (error) {
     if (error.message === 'Product not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     if (error.message === 'Unauthorized to update this product') {
-      return res.status(403).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 403);
     }
     if (error.message.includes('must be')) {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.errors[0].message }
-      });
+      return sendError(res, error.errors[0].message, 400);
     }
     next(error);
   }
@@ -132,22 +94,13 @@ export const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
     await productService.deleteProduct(id, req.user);
 
-    res.json({
-      success: true,
-      message: 'Product deleted successfully'
-    });
+    return sendSuccess(res, null, 'Product deleted successfully');
   } catch (error) {
     if (error.message === 'Product not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     if (error.message === 'Unauthorized to delete this product') {
-      return res.status(403).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 403);
     }
     next(error);
   }
@@ -158,10 +111,7 @@ export const getProductsByVendor = async (req, res, next) => {
     const { vendorId } = req.params;
     const products = await productService.getProductsByVendor(vendorId);
 
-    res.json({
-      success: true,
-      data: products
-    });
+    return sendSuccess(res, products, 'Products retrieved successfully');
   } catch (error) {
     next(error);
   }

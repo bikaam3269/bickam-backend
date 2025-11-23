@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { Op } from 'sequelize';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import twilioService from './twilioService.js';
@@ -212,12 +213,26 @@ class AuthService {
   /**
    * Verify user's phone number with verification code
    */
-  async verifyCode(email, code) {
-    if (!email || !code) {
-      throw new Error('Email and verification code are required');
+  async verifyCode(phone, code) {
+    if (!phone || !code) {
+      throw new Error('Phone number and verification code are required');
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Format phone number for search - remove whatsapp: prefix and clean
+    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
+    const formattedPhone = `whatsapp:+${cleanPhone}`;
+
+    const user = await User.findOne({ 
+      where: { 
+        [Op.or]: [
+          { phone: phone },
+          { phone: formattedPhone },
+          { phone: cleanPhone },
+          { phone: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      } 
+    });
+    
     if (!user) {
       throw new Error('User not found');
     }
@@ -261,12 +276,26 @@ class AuthService {
   /**
    * Resend verification code
    */
-  async resendVerificationCode(email) {
-    if (!email) {
-      throw new Error('Email is required');
+  async resendVerificationCode(phone) {
+    if (!phone) {
+      throw new Error('Phone number is required');
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Format phone number for search - remove whatsapp: prefix and clean
+    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
+    const formattedPhone = `whatsapp:+${cleanPhone}`;
+
+    const user = await User.findOne({ 
+      where: { 
+        [Op.or]: [
+          { phone: phone },
+          { phone: formattedPhone },
+          { phone: cleanPhone },
+          { phone: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      } 
+    });
+    
     if (!user) {
       throw new Error('User not found');
     }
@@ -287,18 +316,32 @@ class AuthService {
   }
 
   /**
-   * Forgot password - send reset code
+   * Forgot password - send reset code via WhatsApp
    */
-  async forgotPassword(email) {
-    if (!email) {
-      throw new Error('Email is required');
+  async forgotPassword(phone) {
+    if (!phone) {
+      throw new Error('Phone number is required');
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Format phone number for search - remove whatsapp: prefix and clean
+    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
+    const formattedPhone = `whatsapp:+${cleanPhone}`;
+
+    const user = await User.findOne({ 
+      where: { 
+        [Op.or]: [
+          { phone: phone },
+          { phone: formattedPhone },
+          { phone: cleanPhone },
+          { phone: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      } 
+    });
+    
     if (!user) {
       // Don't reveal if user exists or not for security
       return {
-        message: 'If an account exists with this email, a password reset code has been sent.'
+        message: 'If an account exists with this phone number, a password reset code has been sent via WhatsApp.'
       };
     }
 
@@ -306,27 +349,41 @@ class AuthService {
       throw new Error('Phone number is required for password reset');
     }
 
-    // Send password reset code
+    // Send password reset code via WhatsApp
     await this.sendVerificationCode(user, 'password_reset');
 
     return {
-      message: 'If an account exists with this email, a password reset code has been sent.'
+      message: 'If an account exists with this phone number, a password reset code has been sent via WhatsApp.'
     };
   }
 
   /**
-   * Reset password with verification code
+   * Reset password with verification code (sent via WhatsApp)
    */
-  async resetPassword(email, code, newPassword) {
-    if (!email || !code || !newPassword) {
-      throw new Error('Email, verification code, and new password are required');
+  async resetPassword(phone, code, newPassword) {
+    if (!phone || !code || !newPassword) {
+      throw new Error('Phone number, verification code, and new password are required');
     }
 
     if (newPassword.length < 6) {
       throw new Error('Password must be at least 6 characters long');
     }
 
-    const user = await User.findOne({ where: { email } });
+    // Format phone number for search - remove whatsapp: prefix and clean
+    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
+    const formattedPhone = `whatsapp:+${cleanPhone}`;
+
+    const user = await User.findOne({ 
+      where: { 
+        [Op.or]: [
+          { phone: phone },
+          { phone: formattedPhone },
+          { phone: cleanPhone },
+          { phone: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      } 
+    });
+    
     if (!user) {
       throw new Error('User not found');
     }

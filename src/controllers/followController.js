@@ -1,4 +1,5 @@
 import followService from '../services/followService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const followVendor = async (req, res, next) => {
   try {
@@ -7,19 +8,13 @@ export const followVendor = async (req, res, next) => {
 
     await followService.followVendor(followerId, parseInt(vendorId));
 
-    res.status(201).json({
-      success: true,
-      message: 'Successfully followed vendor'
-    });
+    return sendSuccess(res, null, 'Successfully followed vendor', 201);
   } catch (error) {
     if (error.message === 'Vendor not found' || 
         error.message === 'Can only follow vendors' ||
         error.message === 'Already following this vendor' ||
         error.message === 'Cannot follow yourself') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -32,16 +27,10 @@ export const unfollowVendor = async (req, res, next) => {
 
     const result = await followService.unfollowVendor(followerId, parseInt(vendorId));
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, 'Successfully unfollowed vendor');
   } catch (error) {
     if (error.message === 'Not following this vendor') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     next(error);
   }
@@ -52,16 +41,10 @@ export const getFollowers = async (req, res, next) => {
     const { vendorId } = req.params;
     const followers = await followService.getFollowers(parseInt(vendorId));
 
-    res.json({
-      success: true,
-      data: followers
-    });
+    return sendSuccess(res, followers, 'Followers retrieved successfully');
   } catch (error) {
     if (error.message === 'Vendor not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -72,10 +55,7 @@ export const getFollowing = async (req, res, next) => {
     const userId = req.user.id;
     const following = await followService.getFollowing(userId);
 
-    res.json({
-      success: true,
-      data: following
-    });
+    return sendSuccess(res, following, 'Following list retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -86,10 +66,7 @@ export const getFollowCount = async (req, res, next) => {
     const { vendorId } = req.params;
     const count = await followService.getFollowCount(parseInt(vendorId));
 
-    res.json({
-      success: true,
-      data: { followerCount: count }
-    });
+    return sendSuccess(res, { followerCount: count }, 'Follower count retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -101,10 +78,7 @@ export const checkIsFollowing = async (req, res, next) => {
     const followerId = req.user.id;
     const isFollowing = await followService.isFollowing(followerId, parseInt(vendorId));
 
-    res.json({
-      success: true,
-      data: { isFollowing }
-    });
+    return sendSuccess(res, { isFollowing }, 'Follow status retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -115,12 +89,14 @@ export const getVendorStats = async (req, res, next) => {
     const { vendorId } = req.params;
     const stats = await followService.getVendorStats(parseInt(vendorId));
 
-    res.json({
-      success: true,
-      data: stats
-    });
+    return sendSuccess(res, stats, 'Vendor stats retrieved successfully');
   } catch (error) {
     next(error);
   }
+
 };
+ 
+
+
+
 

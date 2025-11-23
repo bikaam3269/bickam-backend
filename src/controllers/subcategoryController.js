@@ -1,4 +1,5 @@
 import subcategoryService from '../services/subcategoryService.js';
+import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const getAllSubcategories = async (req, res, next) => {
   try {
@@ -8,10 +9,7 @@ export const getAllSubcategories = async (req, res, next) => {
 
     const subcategories = await subcategoryService.getAllSubcategories(filters);
 
-    res.json({
-      success: true,
-      data: subcategories
-    });
+    return sendSuccess(res, subcategories, 'Subcategories retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -22,16 +20,10 @@ export const getSubcategoryById = async (req, res, next) => {
     const { id } = req.params;
     const subcategory = await subcategoryService.getSubcategoryById(parseInt(id));
 
-    res.json({
-      success: true,
-      data: subcategory
-    });
+    return sendSuccess(res, subcategory, 'Subcategory retrieved successfully');
   } catch (error) {
     if (error.message === 'Subcategory not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -39,27 +31,25 @@ export const getSubcategoryById = async (req, res, next) => {
 
 export const createSubcategory = async (req, res, next) => {
   try {
-    const subcategory = await subcategoryService.createSubcategory(req.body);
+    const subcategoryData = { ...req.body };
+    
+    // Attach uploaded image filename if file was uploaded
+    if (req.file) {
+      subcategoryData.image = req.file.filename;
+    }
 
-    res.status(201).json({
-      success: true,
-      data: subcategory
-    });
+    const subcategory = await subcategoryService.createSubcategory(subcategoryData);
+
+    return sendSuccess(res, subcategory, 'Subcategory created successfully', 201);
   } catch (error) {
     if (error.message === 'Subcategory name is required' ||
         error.message === 'Category ID is required' ||
         error.message === 'Category not found' ||
         error.message === 'Subcategory with this name already exists in this category') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.errors[0].message }
-      });
+      return sendError(res, error.errors[0].message, 400);
     }
     next(error);
   }
@@ -68,26 +58,24 @@ export const createSubcategory = async (req, res, next) => {
 export const updateSubcategory = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const subcategory = await subcategoryService.updateSubcategory(parseInt(id), req.body);
+    const subcategoryData = { ...req.body };
+    
+    // Attach uploaded image filename if file was uploaded
+    if (req.file) {
+      subcategoryData.image = req.file.filename;
+    }
 
-    res.json({
-      success: true,
-      data: subcategory
-    });
+    const subcategory = await subcategoryService.updateSubcategory(parseInt(id), subcategoryData);
+
+    return sendSuccess(res, subcategory, 'Subcategory updated successfully');
   } catch (error) {
     if (error.message === 'Subcategory not found' ||
         error.message === 'Category not found' ||
         error.message === 'Subcategory with this name already exists in this category') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 400);
     }
     if (error.name === 'SequelizeValidationError') {
-      return res.status(400).json({
-        success: false,
-        error: { message: error.errors[0].message }
-      });
+      return sendError(res, error.errors[0].message, 400);
     }
     next(error);
   }
@@ -98,16 +86,10 @@ export const deleteSubcategory = async (req, res, next) => {
     const { id } = req.params;
     const result = await subcategoryService.deleteSubcategory(parseInt(id));
 
-    res.json({
-      success: true,
-      data: result
-    });
+    return sendSuccess(res, result, result.message || 'Subcategory deleted successfully');
   } catch (error) {
     if (error.message === 'Subcategory not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
@@ -118,16 +100,10 @@ export const getSubcategoriesByCategory = async (req, res, next) => {
     const { categoryId } = req.params;
     const subcategories = await subcategoryService.getSubcategoriesByCategory(parseInt(categoryId));
 
-    res.json({
-      success: true,
-      data: subcategories
-    });
+    return sendSuccess(res, subcategories, 'Subcategories retrieved successfully');
   } catch (error) {
     if (error.message === 'Category not found') {
-      return res.status(404).json({
-        success: false,
-        error: { message: error.message }
-      });
+      return sendError(res, error.message, 404);
     }
     next(error);
   }
