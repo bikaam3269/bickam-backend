@@ -292,7 +292,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\",\n  \"code\": \"123456\"\n}"
+							"raw": "{\n  \"phone\": \"+201022980918\",\n  \"code\": \"123456\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/verify",
@@ -321,7 +321,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+							"raw": "{\n  \"phone\": \"+201022980918\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/resend-verification",
@@ -350,7 +350,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\"\n}"
+							"raw": "{\n  \"phone\": \"+201022980918\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/forgot-password",
@@ -379,7 +379,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"john@example.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"newpassword123\"\n}"
+							"raw": "{\n  \"phone\": \"+201022980918\",\n  \"code\": \"123456\",\n  \"newPassword\": \"newpassword123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/reset-password",
