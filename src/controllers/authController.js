@@ -40,13 +40,14 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { phone, password } = req.body;
 
-    const result = await authService.login(email, password);
+    const result = await authService.login(phone, password);
 
     return sendSuccess(res, result, 'Login successful');
   } catch (error) {
-    if (error.message === 'Invalid email or password') {
+    if (error.message === 'Invalid phone number or password' || 
+        error.message === 'Phone number and password are required') {
       return sendError(res, error.message, 401);
     }
     if (error.message === 'Account not verified. Verification code has been sent to your phone.') {

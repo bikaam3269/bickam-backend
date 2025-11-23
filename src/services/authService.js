@@ -184,14 +184,25 @@ class AuthService {
     };
   }
 
-  async login(email, password) {
-    if (!email || !password) {
-      throw new Error('Email and password are required');
+  async login(phone, password) {
+    if (!phone || !password) {
+      throw new Error('Phone number and password are required');
     }
 
-    // Find user with government relation
+    // Format phone number for search - remove whatsapp: prefix and clean
+    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
+    const formattedPhone = `whatsapp:+${cleanPhone}`;
+
+    // Find user with government relation by phone
     const user = await User.findOne({
-      where: { email },
+      where: { 
+        [Op.or]: [
+          { phone: phone },
+          { phone: formattedPhone },
+          { phone: cleanPhone },
+          { phone: { [Op.like]: `%${cleanPhone}%` } }
+        ]
+      },
       include: [{
         model: Government,
         as: 'government',
@@ -200,13 +211,13 @@ class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new Error('Invalid phone number or password');
     }
 
     // Compare password
     const isPasswordValid = await this.comparePassword(password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Invalid email or password');
+      throw new Error('Invalid phone number or password');
     }
 
     // Check if vendor needs verification
