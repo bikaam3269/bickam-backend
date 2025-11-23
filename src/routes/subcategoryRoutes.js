@@ -9,6 +9,7 @@ import {
 } from '../controllers/subcategoryController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -21,8 +22,8 @@ router.get('/:id', getSubcategoryById);
 router.use(authenticate);
 router.use(authorize('admin'));
 
-router.post('/', createSubcategory);
-router.put('/:id', updateSubcategory);
+router.post('/', upload.single('image'), createSubcategory);
+router.put('/:id', upload.single('image'), updateSubcategory);
 router.delete('/:id', deleteSubcategory);
 
 export default router;

@@ -1812,15 +1812,27 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic products and devices\",\n  \"image\": \"https://example.com/category-image.jpg\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Electronics",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Electronic products and devices",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/categories",
@@ -1845,15 +1857,27 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Electronics Updated\",\n  \"description\": \"Updated description\",\n  \"image\": \"https://example.com/updated-image.jpg\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Electronics Updated",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/categories/1",
@@ -1978,15 +2002,32 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Laptops\",\n  \"description\": \"Laptop computers\",\n  \"categoryId\": 1,\n  \"image\": \"https://example.com/subcategory-image.jpg\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Laptops",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Laptop computers",
+									"type": "text"
+								},
+								{
+									"key": "categoryId",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/subcategories",
@@ -2011,15 +2052,27 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Laptops Updated\",\n  \"description\": \"Updated description\",\n  \"image\": \"https://example.com/updated-subcategory-image.jpg\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Laptops Updated",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/subcategories/1",

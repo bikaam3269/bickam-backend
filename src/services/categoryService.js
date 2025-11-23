@@ -1,5 +1,26 @@
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import { config } from '../config/app.js';
+
+// Helper function to construct full image URL
+const getImageUrl = (filename) => {
+  if (!filename) return null;
+  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+  return `${baseUrl}/files/${filename}`;
+};
+
+// Helper function to transform category data
+const transformCategory = (category) => {
+  if (!category) return category;
+  
+  const categoryData = category.toJSON ? category.toJSON() : category;
+  
+  if (categoryData.image) {
+    categoryData.image = getImageUrl(categoryData.image);
+  }
+  
+  return categoryData;
+};
 
 class CategoryService {
   async getAllCategories() {
@@ -12,7 +33,7 @@ class CategoryService {
       order: [['createdAt', 'DESC']]
     });
 
-    return categories;
+    return categories.map(transformCategory);
   }
 
   async getCategoryById(id) {
@@ -28,11 +49,11 @@ class CategoryService {
       throw new Error('Category not found');
     }
 
-    return category;
+    return transformCategory(category);
   }
 
   async createCategory(data) {
-    const { name, description } = data;
+    const { name, description, image } = data;
 
     if (!name) {
       throw new Error('Category name is required');
@@ -46,10 +67,11 @@ class CategoryService {
 
     const category = await Category.create({
       name,
-      description: description || null
+      description: description || null,
+      image: image || null
     });
 
-    return category;
+    return transformCategory(category);
   }
 
   async updateCategory(id, data) {
@@ -69,7 +91,7 @@ class CategoryService {
     Object.assign(category, data);
     await category.save();
 
-    return category;
+    return transformCategory(category);
   }
 
   async deleteCategory(id) {
