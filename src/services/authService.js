@@ -4,6 +4,7 @@ import { Op } from 'sequelize';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import twilioService from './twilioService.js';
+import notificationService from './notificationService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -184,7 +185,7 @@ class AuthService {
     };
   }
 
-  async login(phone, password) {
+  async login(phone, password, fcmToken = null) {
     if (!phone || !password) {
       throw new Error('Phone number and password are required');
     }
@@ -231,6 +232,18 @@ class AuthService {
       throw new Error('Account not verified. Verification code has been sent to your phone.');
     }
 
+    // Save FCM token if provided
+    if (fcmToken) {
+      try {
+        await notificationService.saveFCMToken(user.id, fcmToken);
+        // Refresh user to get updated fcmToken
+        await user.reload();
+      } catch (error) {
+        // Log error but don't fail login if token validation fails
+        console.error('Failed to save FCM token during login:', error.message);
+      }
+    }
+
     // Remove password from response
     const userResponse = user.toJSON();
     delete userResponse.password;
@@ -249,7 +262,7 @@ class AuthService {
   /**
    * Verify user's phone number with verification code
    */
-  async verifyCode(phone, code) {
+  async verifyCode(phone, code, fcmToken = null) {
     if (!phone || !code) {
       throw new Error('Phone number and verification code are required');
     }
@@ -292,6 +305,18 @@ class AuthService {
     user.verificationCode = null;
     user.verificationCodeExpiry = null;
     await user.save();
+
+    // Save FCM token if provided
+    if (fcmToken) {
+      try {
+        await notificationService.saveFCMToken(user.id, fcmToken);
+        // Refresh user to get updated fcmToken
+        await user.reload();
+      } catch (error) {
+        // Log error but don't fail verification if token validation fails
+        console.error('Failed to save FCM token during verification:', error.message);
+      }
+    }
 
     // Remove password from response
     const userResponse = user.toJSON();

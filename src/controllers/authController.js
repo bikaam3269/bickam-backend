@@ -40,9 +40,9 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { phone, password } = req.body;
+    const { phone, password, fcmToken } = req.body;
 
-    const result = await authService.login(phone, password);
+    const result = await authService.login(phone, password, fcmToken);
 
     return sendSuccess(res, result, 'Login successful');
   } catch (error) {
@@ -91,9 +91,9 @@ export const changePassword = async (req, res, next) => {
 
 export const verifyCode = async (req, res, next) => {
   try {
-    const { phone, code } = req.body;
+    const { phone, code, fcmToken } = req.body;
 
-    const result = await authService.verifyCode(phone, code);
+    const result = await authService.verifyCode(phone, code, fcmToken);
 
     return sendSuccess(res, result, 'Account verified successfully');
   } catch (error) {

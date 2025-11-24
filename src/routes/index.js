@@ -10,6 +10,7 @@ import walletRoutes from './walletRoutes.js';
 import orderRoutes from './orderRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
 import subcategoryRoutes from './subcategoryRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.use('/wallet', walletRoutes);
 router.use('/orders', orderRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;
 

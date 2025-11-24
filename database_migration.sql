@@ -96,3 +96,7 @@ MODIFY COLUMN shipping_address TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicod
 
 ALTER TABLE orders CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Add FCM token column to users table (for Firebase push notifications)
+ALTER TABLE users 
+ADD COLUMN fcm_token VARCHAR(255) NULL;
+

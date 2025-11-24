@@ -100,6 +100,12 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
     field: 'verification_code_expiry'
+  },
+  // Firebase Cloud Messaging token
+  fcmToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'fcm_token'
   }
 }, {
   tableName: 'users',
