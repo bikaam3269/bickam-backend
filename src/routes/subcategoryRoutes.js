@@ -19,8 +19,8 @@ router.get('/category/:categoryId', getSubcategoriesByCategory);
 router.get('/:id', getSubcategoryById);
 
 // Admin only routes
-router.use(authenticate);
-router.use(authorize('admin'));
+// router.use(authenticate);
+// router.use(authorize('admin'));
 
 router.post('/', upload.single('image'), createSubcategory);
 router.put('/:id', upload.single('image'), updateSubcategory);
