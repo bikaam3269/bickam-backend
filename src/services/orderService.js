@@ -8,7 +8,6 @@ import Cart from '../models/Cart.js';
 import walletService from './walletService.js';
 import cartService from './cartService.js';
 import notificationService from './notificationService.js';
-
 class OrderService {
   async createOrder(userId, cartItems, shippingAddress, paymentMethod = 'wallet') {
     if (!cartItems || cartItems.length === 0) {
