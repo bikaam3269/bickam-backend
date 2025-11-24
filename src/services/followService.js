@@ -1,6 +1,7 @@
 import Follow from '../models/Follow.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
+import notificationService from './notificationService.js';
 
 class FollowService {
   async followVendor(followerId, vendorId) {
@@ -36,6 +37,16 @@ class FollowService {
       followerId,
       followingId: vendorId
     });
+
+    // Notify vendor about new follower
+    try {
+      const follower = await User.findByPk(followerId);
+      if (follower) {
+        await notificationService.notifyNewFollower(vendorId, followerId, follower.name);
+      }
+    } catch (error) {
+      console.error('Failed to notify vendor about new follower:', error.message);
+    }
 
     return follow;
   }

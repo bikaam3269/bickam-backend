@@ -3,6 +3,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import notificationService from './notificationService.js';
 
 class FavoriteService {
   async getFavorites(userId) {
@@ -56,6 +57,21 @@ class FavoriteService {
       userId,
       productId
     });
+
+    // Notify vendor about product being favorited
+    try {
+      const user = await User.findByPk(userId);
+      if (product.vendorId && user) {
+        await notificationService.notifyProductFavorited(
+          product.vendorId,
+          productId,
+          product.name,
+          user.name
+        );
+      }
+    } catch (error) {
+      console.error('Failed to notify vendor about product favorite:', error.message);
+    }
 
     return favorite;
   }

@@ -244,6 +244,18 @@ class AuthService {
       }
     }
 
+    // Send Firebase push notification on successful login
+    // Check if user has FCM token (either existing or just saved)
+    const userFcmToken = user.fcmToken || fcmToken;
+    if (userFcmToken) {
+      try {
+        await notificationService.notifyLoginSuccess(user.id, user.name);
+      } catch (error) {
+        // Log error but don't fail login if notification fails
+        console.error('Failed to send login notification:', error.message);
+      }
+    }
+
     // Remove password from response
     const userResponse = user.toJSON();
     delete userResponse.password;

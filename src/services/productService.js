@@ -3,6 +3,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import notificationService from './notificationService.js';
 
 class ProductService {
   async getAllProducts(filters = {}) {
@@ -129,6 +130,23 @@ class ProductService {
     };
 
     const product = await Product.create(productData);
+
+    // Notify all followers of the vendor about the new product
+    if (productData.vendorId) {
+      try {
+        const vendor = await User.findByPk(productData.vendorId);
+        if (vendor) {
+          await notificationService.notifyNewProductToFollowers(
+            productData.vendorId,
+            product.id,
+            product.name,
+            vendor.name
+          );
+        }
+      } catch (error) {
+        console.error('Failed to notify followers about new product:', error.message);
+      }
+    }
 
     return await this.getProductById(product.id);
   }

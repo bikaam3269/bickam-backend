@@ -7,6 +7,7 @@ import Subcategory from '../models/Subcategory.js';
 import Cart from '../models/Cart.js';
 import walletService from './walletService.js';
 import cartService from './cartService.js';
+import notificationService from './notificationService.js';
 
 class OrderService {
   async createOrder(userId, cartItems, shippingAddress, paymentMethod = 'wallet') {
@@ -89,7 +90,29 @@ class OrderService {
         });
       }
 
-      orders.push(await this.getOrderById(order.id));
+      const orderData = await this.getOrderById(order.id);
+      orders.push(orderData);
+
+      // Notify vendor about new order
+      try {
+        const user = await User.findByPk(userId);
+        await notificationService.notifyVendorNewOrder(
+          parseInt(vendorId),
+          order.id,
+          user?.name || 'Customer',
+          vendorTotal
+        );
+      } catch (error) {
+        console.error('Failed to notify vendor about new order:', error.message);
+      }
+    }
+
+    // Notify user about order creation
+    try {
+      const totalOrderAmount = orders.reduce((sum, order) => sum + order.total, 0);
+      await notificationService.notifyOrderCreated(userId, orders[0]?.id || 0, totalOrderAmount);
+    } catch (error) {
+      console.error('Failed to notify user about order creation:', error.message);
     }
 
     // Clear cart after order creation
@@ -230,8 +253,25 @@ class OrderService {
       throw new Error('Invalid order status');
     }
 
+    const oldStatus = order.status;
     order.status = status;
     await order.save();
+
+    // Notify user about status change
+    try {
+      await notificationService.notifyOrderStatusChanged(order.userId, order.id, status);
+      
+      // Special notifications for delivered status
+      if (status === 'delivered') {
+        await notificationService.notifyOrderDelivered(order.userId, order.id);
+        // Notify vendor about payment (if applicable)
+        if (order.paymentStatus === 'paid') {
+          await notificationService.notifyPaymentReceived(order.vendorId, order.id, order.total);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send order status notification:', error.message);
+    }
 
     return await this.getOrderById(order.id);
   }
@@ -258,6 +298,13 @@ class OrderService {
 
     order.status = 'cancelled';
     await order.save();
+
+    // Notify user about cancellation
+    try {
+      await notificationService.notifyOrderCancelled(order.userId, order.id, 'Cancelled by user');
+    } catch (error) {
+      console.error('Failed to send order cancellation notification:', error.message);
+    }
 
     return await this.getOrderById(order.id);
   }
