@@ -23,6 +23,24 @@ const Product = sequelize.define('Product', {
     type: DataTypes.JSON,
     allowNull: true,
     defaultValue: [],
+    get() {
+      const rawValue = this.getDataValue('images');
+      // If it's already an array, return it
+      if (Array.isArray(rawValue)) {
+        return rawValue;
+      }
+      // If it's a string, try to parse it
+      if (typeof rawValue === 'string') {
+        try {
+          const parsed = JSON.parse(rawValue);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+      // If it's null or undefined, return empty array
+      return [];
+    },
     validate: {
       isArray(value) {
         if (value && !Array.isArray(value)) {
