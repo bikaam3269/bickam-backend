@@ -844,6 +844,44 @@
 					"response": []
 				},
 				{
+					"name": "Get My Products (Vendor)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/my-products?page=1&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products",
+								"my-products"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Items per page (default: 10)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create Product",
 					"request": {
 						"method": "POST",
@@ -927,15 +965,46 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Laptop Computer\",\n  \"price\": 899.99,\n  \"discount\": 15.0\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Updated Laptop Computer",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "899.99",
+									"type": "text"
+								},
+								{
+									"key": "discount",
+									"value": "15.0",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "existingImages",
+									"value": "image1.jpg",
+									"description": "Keep existing images",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "images",
+									"description": "Upload new images",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/products/1",
@@ -2131,4 +2200,3 @@
 		}
 	]
 }
-

@@ -69,7 +69,51 @@ export const createProduct = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await productService.updateProduct(id, req.body, req.user);
+
+    // Extract all data from form data
+    const productData = { ...req.body };
+
+    // Handle uploaded images (if any new images are uploaded)
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(f => f.filename);
+
+      // If existingImages is provided in form data, merge with new images
+      if (productData.existingImages) {
+        const existingImages = Array.isArray(productData.existingImages)
+          ? productData.existingImages
+          : [productData.existingImages];
+        productData.images = [...existingImages, ...newImages];
+        delete productData.existingImages;
+      } else {
+        // Replace all images with new ones
+        productData.images = newImages;
+      }
+    } else if (productData.existingImages) {
+      // No new images uploaded, but existingImages provided
+      productData.images = Array.isArray(productData.existingImages)
+        ? productData.existingImages
+        : [productData.existingImages];
+      delete productData.existingImages;
+    }
+
+    // Convert string values to appropriate types from form data
+    if (productData.price !== undefined) {
+      productData.price = parseFloat(productData.price);
+    }
+    if (productData.discount !== undefined) {
+      productData.discount = parseFloat(productData.discount);
+    }
+    if (productData.isPrice !== undefined) {
+      productData.isPrice = productData.isPrice === 'true' || productData.isPrice === true;
+    }
+    if (productData.categoryId !== undefined) {
+      productData.categoryId = parseInt(productData.categoryId);
+    }
+    if (productData.subcategoryId !== undefined) {
+      productData.subcategoryId = parseInt(productData.subcategoryId);
+    }
+
+    const product = await productService.updateProduct(id, productData, req.user);
 
     return sendSuccess(res, product, 'Product updated successfully');
   } catch (error) {
@@ -112,6 +156,24 @@ export const getProductsByVendor = async (req, res, next) => {
     const products = await productService.getProductsByVendor(vendorId);
 
     return sendSuccess(res, products, 'Products retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyProducts = async (req, res, next) => {
+  try {
+    // Only vendors can access this endpoint
+    if (req.user.type !== 'vendor') {
+      return sendError(res, 'Only vendors can access this endpoint', 403);
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await productService.getMyProducts(req.user.id, page, limit);
+
+    return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
     next(error);
   }

@@ -213,6 +213,42 @@ class ProductService {
       order: [['createdAt', 'DESC']]
     });
   }
+
+  async getMyProducts(vendorId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Product.findAndCountAll({
+      where: { vendorId },
+      include: [
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    const totalPages = Math.ceil(count / limit);
+
+    return {
+      products: rows,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages
+      }
+    };
+  }
 }
 
 export default new ProductService();

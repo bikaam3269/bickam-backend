@@ -5,7 +5,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  getProductsByVendor
+  getProductsByVendor,
+  getMyProducts
 } from '../controllers/productController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -20,8 +21,9 @@ router.get('/:id', getProductById);
 router.use(authenticate);
 
 import { upload } from '../middleware/upload.js';
+router.get('/my-products', getMyProducts);
 router.post('/', upload.array('images', 5), createProduct);
-router.put('/:id', updateProduct);
+router.put('/:id', upload.array('images', 5), updateProduct);
 router.delete('/:id', deleteProduct);
 
 export default router;
