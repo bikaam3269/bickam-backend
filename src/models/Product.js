@@ -99,11 +99,42 @@ const Product = sequelize.define('Product', {
       min: 0,
       max: 100
     }
+  },
+  originalPrice: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const price = this.getDataValue('price');
+      return price ? parseFloat(price) : null;
+    }
+  },
+  finalPrice: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      const price = this.getDataValue('price');
+      const discount = this.getDataValue('discount');
+
+      if (!price) return null;
+
+      const priceNum = parseFloat(price);
+      const discountNum = parseFloat(discount) || 0;
+
+      if (discountNum > 0) {
+        const discountAmount = (priceNum * discountNum) / 100;
+        return parseFloat((priceNum - discountAmount).toFixed(2));
+      }
+
+      return priceNum;
+    }
   }
 }, {
   tableName: 'products',
   timestamps: true,
-  underscored: true
+  underscored: true,
+  defaultScope: {
+    attributes: {
+      include: ['originalPrice', 'finalPrice']
+    }
+  }
 });
 
 // Define associations
