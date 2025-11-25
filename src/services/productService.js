@@ -195,26 +195,7 @@ class ProductService {
     return true;
   }
 
-  async getProductsByVendor(vendorId) {
-    return await Product.findAll({
-      where: { vendorId },
-      include: [
-        {
-          model: Category,
-          as: 'category',
-          attributes: ['id', 'name']
-        },
-        {
-          model: Subcategory,
-          as: 'subcategory',
-          attributes: ['id', 'name']
-        }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-  }
-
-  async getMyProducts(vendorId, page = 1, limit = 10) {
+  async getProductsByVendor(vendorId, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
 
     const { count, rows } = await Product.findAndCountAll({
@@ -235,6 +216,74 @@ class ProductService {
       limit,
       offset
     });
+
+    // Extract unique subcategories from all products (not just current page)
+    const allProducts = await Product.findAll({
+      where: { vendorId },
+      include: [
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          attributes: ['id', 'name']
+        }
+      ],
+      attributes: ['subcategoryId']
+    });
+
+    // Get unique subcategories
+    const subcategoriesMap = new Map();
+    allProducts.forEach(product => {
+      if (product.subcategory) {
+        subcategoriesMap.set(product.subcategory.id, {
+          id: product.subcategory.id,
+          name: product.subcategory.name
+        });
+      }
+    });
+    const subcategories = Array.from(subcategoriesMap.values());
+
+    const totalPages = Math.ceil(count / limit);
+
+    return {
+      products: rows,
+      subcategories,
+      pagination: {
+        total: count,
+        page,
+        limit,
+        totalPages,
+        hasMore: page < totalPages
+      }
+    };
+  }
+
+  async getMyProducts(vendorId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    console.log('Service: Querying products with vendorId:', vendorId);
+    console.log('Service: Pagination - page:', page, 'limit:', limit, 'offset:', offset);
+
+    const { count, rows } = await Product.findAndCountAll({
+      where: { vendorId },
+      include: [
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset
+    });
+
+    console.log('Service: Found', count, 'total products');
+    console.log('Service: Returned', rows.length, 'products for this page');
 
     const totalPages = Math.ceil(count / limit);
 

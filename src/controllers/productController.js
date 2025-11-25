@@ -153,9 +153,12 @@ export const deleteProduct = async (req, res, next) => {
 export const getProductsByVendor = async (req, res, next) => {
   try {
     const { vendorId } = req.params;
-    const products = await productService.getProductsByVendor(vendorId);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    return sendSuccess(res, products, 'Products retrieved successfully');
+    const result = await productService.getProductsByVendor(vendorId, page, limit);
+
+    return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -168,14 +171,19 @@ export const getMyProducts = async (req, res, next) => {
       return sendError(res, 'Only vendors can access this endpoint', 403);
     }
 
+    console.log('Getting products for vendor ID:', req.user.id);
+    console.log('User type:', req.user.type);
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
     const result = await productService.getMyProducts(req.user.id, page, limit);
 
+    console.log('Result from service:', JSON.stringify(result, null, 2));
+
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
+    console.error('Error in getMyProducts:', error);
     next(error);
   }
 };
-

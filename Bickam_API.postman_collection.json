@@ -828,7 +828,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products/vendor/1",
+							"raw": "{{base_url}}/api/v1/products/vendor/1?page=1&limit=10",
 							"host": [
 								"{{base_url}}"
 							],
@@ -838,6 +838,18 @@
 								"products",
 								"vendor",
 								"1"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Items per page (default: 10)"
+								}
 							]
 						}
 					},
