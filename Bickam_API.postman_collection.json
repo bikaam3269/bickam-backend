@@ -849,6 +849,12 @@
 									"key": "limit",
 									"value": "10",
 									"description": "Items per page (default: 10)"
+								},
+								{
+									"key": "subcategoryId",
+									"value": "1",
+									"description": "Filter by subcategory ID (optional)",
+									"disabled": true
 								}
 							]
 						}

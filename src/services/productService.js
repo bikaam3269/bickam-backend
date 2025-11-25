@@ -195,11 +195,17 @@ class ProductService {
     return true;
   }
 
-  async getProductsByVendor(vendorId, page = 1, limit = 10) {
+  async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null) {
     const offset = (page - 1) * limit;
 
+    // Build where clause for products
+    const where = { vendorId };
+    if (subcategoryId) {
+      where.subcategoryId = subcategoryId;
+    }
+
     const { count, rows } = await Product.findAndCountAll({
-      where: { vendorId },
+      where,
       include: [
         {
           model: Category,
@@ -218,8 +224,14 @@ class ProductService {
     });
 
     // Extract unique subcategories from all products (not just current page)
+    // Apply same filter to get relevant subcategories
+    const subcategoryWhere = { vendorId };
+    if (subcategoryId) {
+      subcategoryWhere.subcategoryId = subcategoryId;
+    }
+
     const allProducts = await Product.findAll({
-      where: { vendorId },
+      where: subcategoryWhere,
       include: [
         {
           model: Subcategory,

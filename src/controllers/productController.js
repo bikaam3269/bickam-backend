@@ -155,8 +155,9 @@ export const getProductsByVendor = async (req, res, next) => {
     const { vendorId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const subcategoryId = req.query.subcategoryId ? parseInt(req.query.subcategoryId) : null;
 
-    const result = await productService.getProductsByVendor(vendorId, page, limit);
+    const result = await productService.getProductsByVendor(vendorId, page, limit, subcategoryId);
 
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
