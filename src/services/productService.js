@@ -257,14 +257,21 @@ class ProductService {
     };
   }
 
-  async getMyProducts(vendorId, page = 1, limit = 10) {
+  async getMyProducts(vendorId, page = 1, limit = 10, categoryId = null) {
     const offset = (page - 1) * limit;
 
     console.log('Service: Querying products with vendorId:', vendorId);
+    console.log('Service: CategoryId filter:', categoryId);
     console.log('Service: Pagination - page:', page, 'limit:', limit, 'offset:', offset);
 
+    // Build where clause
+    const where = { vendorId };
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
+
     const { count, rows } = await Product.findAndCountAll({
-      where: { vendorId },
+      where,
       include: [
         {
           model: Category,

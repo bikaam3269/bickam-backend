@@ -176,8 +176,9 @@ export const getMyProducts = async (req, res, next) => {
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const categoryId = req.query.categoryId ? parseInt(req.query.categoryId) : null;
 
-    const result = await productService.getMyProducts(req.user.id, page, limit);
+    const result = await productService.getMyProducts(req.user.id, page, limit, categoryId);
 
     console.log('Result from service:', JSON.stringify(result, null, 2));
 
@@ -187,3 +188,4 @@ export const getMyProducts = async (req, res, next) => {
     next(error);
   }
 };
+
