@@ -124,4 +124,7 @@ User.belongsTo(Category, {
   as: 'category'
 });
 
+// Note: Notification association is defined in Notification model
+// User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+
 export default User;

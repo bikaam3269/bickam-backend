@@ -796,6 +796,18 @@
 									"value": "1000",
 									"description": "Maximum price",
 									"disabled": true
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Filter by active status (true/false)",
+									"disabled": true
+								},
+								{
+									"key": "minQuantity",
+									"value": "10",
+									"description": "Minimum quantity in stock",
+									"disabled": true
 								}
 							]
 						}
@@ -855,6 +867,12 @@
 									"value": "1",
 									"description": "Filter by subcategory ID (optional)",
 									"disabled": true
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Filter by active status (true/false)",
+									"disabled": true
 								}
 							]
 						}
@@ -898,6 +916,12 @@
 									"key": "categoryId",
 									"value": "1",
 									"description": "Filter by category ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Filter by active status (true/false)",
 									"disabled": true
 								}
 							]
@@ -963,6 +987,18 @@
 									"key": "discount",
 									"value": "10.5",
 									"type": "text"
+								},
+								{
+									"key": "quantity",
+									"value": "100",
+									"description": "Product quantity in stock (default: 0)",
+									"type": "text"
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Whether the product is active (default: true)",
+									"type": "text"
 								}
 							]
 						},
@@ -1026,6 +1062,20 @@
 									"description": "Upload new images",
 									"type": "file",
 									"src": [],
+									"disabled": true
+								},
+								{
+									"key": "quantity",
+									"value": "50",
+									"description": "Product quantity in stock",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"description": "Whether the product is active (true/false)",
+									"type": "text",
 									"disabled": true
 								}
 							]
@@ -2203,6 +2253,390 @@
 								"v1",
 								"subcategories",
 								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Save FCM Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fcmToken\": \"your-fcm-token-here\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove FCM Token",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications?limit=50&offset=0&isRead=false&type=order_created",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of notifications to return (default: 50)",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Number of notifications to skip (default: 0)",
+									"disabled": true
+								},
+								{
+									"key": "isRead",
+									"value": "false",
+									"description": "Filter by read status: true, false, or omit for all",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "order_created",
+									"description": "Filter by notification type",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Unread Count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/unread-count",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"unread-count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notification By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Notification As Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/1/read",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"1",
+								"read"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark All Notifications As Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/read-all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"read-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Notification",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Notification To Me (Test)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Notification\",\n  \"body\": \"This is a test notification\",\n  \"data\": {\n    \"type\": \"test\",\n    \"customField\": \"customValue\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/send-to-me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"send-to-me"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Notification To User (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Admin Notification\",\n  \"body\": \"This is a notification from admin\",\n  \"data\": {\n    \"type\": \"admin_message\",\n    \"priority\": \"high\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/send-to-user/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"send-to-user",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Notification To Multiple Users (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userIds\": [1, 2, 3],\n  \"title\": \"Bulk Notification\",\n  \"body\": \"This is a notification sent to multiple users\",\n  \"data\": {\n    \"type\": \"bulk_message\",\n    \"campaign\": \"summer_sale\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/send-to-users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"send-to-users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Notification To User Type (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userType\": \"vendor\",\n  \"title\": \"Vendor Announcement\",\n  \"body\": \"Important announcement for all vendors\",\n  \"data\": {\n    \"type\": \"vendor_announcement\",\n    \"priority\": \"high\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notifications/send-to-user-type",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notifications",
+								"send-to-user-type"
 							]
 						}
 					},

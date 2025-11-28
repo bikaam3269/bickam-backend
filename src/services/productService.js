@@ -7,7 +7,7 @@ import notificationService from './notificationService.js';
 
 class ProductService {
   async getAllProducts(filters = {}) {
-    const { vendorId, categoryId, subcategoryId, search, minPrice, maxPrice } = filters;
+    const { vendorId, categoryId, subcategoryId, search, minPrice, maxPrice, isActive, minQuantity } = filters;
     const where = {};
 
     if (vendorId) {
@@ -37,6 +37,16 @@ class ProductService {
       if (maxPrice !== undefined) {
         where.price[Op.lte] = maxPrice;
       }
+    }
+
+    // Filter by isActive status
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    // Filter by minimum quantity
+    if (minQuantity !== undefined) {
+      where.quantity = { [Op.gte]: minQuantity };
     }
 
     const products = await Product.findAll({
@@ -93,7 +103,7 @@ class ProductService {
   }
 
   async createProduct(data) {
-    const { name, images, price, isPrice, description, categoryId, subcategoryId, discount } = data;
+    const { name, images, price, isPrice, description, categoryId, subcategoryId, discount, quantity, isActive } = data;
 
     if (!name) {
       throw new Error('Product name is required');
@@ -117,6 +127,11 @@ class ProductService {
       throw new Error('Discount must be between 0 and 100');
     }
 
+    // Validate quantity
+    if (quantity !== undefined && quantity < 0) {
+      throw new Error('Quantity must be greater than or equal to 0');
+    }
+
     const productData = {
       name,
       images: images || [],
@@ -126,7 +141,9 @@ class ProductService {
       description: description || null,
       categoryId,
       subcategoryId,
-      discount: discount || 0
+      discount: discount || 0,
+      quantity: quantity !== undefined ? parseInt(quantity) : 0,
+      isActive: isActive !== undefined ? (isActive === true || isActive === 'true' || isActive === 1 || isActive === '1') : true
     };
 
     const product = await Product.create(productData);
@@ -174,6 +191,21 @@ class ProductService {
       throw new Error('Discount must be between 0 and 100');
     }
 
+    // Validate quantity if provided
+    if (data.quantity !== undefined && data.quantity < 0) {
+      throw new Error('Quantity must be greater than or equal to 0');
+    }
+
+    // Convert quantity to integer if provided
+    if (data.quantity !== undefined) {
+      data.quantity = parseInt(data.quantity);
+    }
+
+    // Convert isActive to boolean if provided
+    if (data.isActive !== undefined) {
+      data.isActive = data.isActive === true || data.isActive === 'true' || data.isActive === 1 || data.isActive === '1';
+    }
+
     Object.assign(product, data);
     await product.save();
 
@@ -195,13 +227,16 @@ class ProductService {
     return true;
   }
 
-  async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null) {
+  async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null, isActive = undefined) {
     const offset = (page - 1) * limit;
 
     // Build where clause for products
     const where = { vendorId };
     if (subcategoryId) {
       where.subcategoryId = subcategoryId;
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
     }
 
     const { count, rows } = await Product.findAndCountAll({
@@ -269,7 +304,7 @@ class ProductService {
     };
   }
 
-  async getMyProducts(vendorId, page = 1, limit = 10, categoryId = null) {
+  async getMyProducts(vendorId, page = 1, limit = 10, categoryId = null, isActive = undefined) {
     const offset = (page - 1) * limit;
 
     console.log('Service: Querying products with vendorId:', vendorId);
@@ -280,6 +315,9 @@ class ProductService {
     const where = { vendorId };
     if (categoryId) {
       where.categoryId = categoryId;
+    }
+    if (isActive !== undefined) {
+      where.isActive = isActive;
     }
 
     const { count, rows } = await Product.findAndCountAll({

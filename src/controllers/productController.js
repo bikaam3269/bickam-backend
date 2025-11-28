@@ -9,7 +9,9 @@ export const getAllProducts = async (req, res, next) => {
       subcategoryId: req.query.subcategoryId,
       search: req.query.search,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
-      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined
+      maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
+      isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
+      minQuantity: req.query.minQuantity ? parseInt(req.query.minQuantity) : undefined
     };
 
     const products = await productService.getAllProducts(filters);
@@ -112,6 +114,12 @@ export const updateProduct = async (req, res, next) => {
     if (productData.subcategoryId !== undefined) {
       productData.subcategoryId = parseInt(productData.subcategoryId);
     }
+    if (productData.quantity !== undefined) {
+      productData.quantity = parseInt(productData.quantity);
+    }
+    if (productData.isActive !== undefined) {
+      productData.isActive = productData.isActive === 'true' || productData.isActive === true || productData.isActive === '1' || productData.isActive === 1;
+    }
 
     const product = await productService.updateProduct(id, productData, req.user);
 
@@ -156,8 +164,9 @@ export const getProductsByVendor = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const subcategoryId = req.query.subcategoryId ? parseInt(req.query.subcategoryId) : null;
+    const isActive = req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined;
 
-    const result = await productService.getProductsByVendor(vendorId, page, limit, subcategoryId);
+    const result = await productService.getProductsByVendor(vendorId, page, limit, subcategoryId, isActive);
 
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
@@ -178,8 +187,9 @@ export const getMyProducts = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const categoryId = req.query.categoryId ? parseInt(req.query.categoryId) : null;
+    const isActive = req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined;
 
-    const result = await productService.getMyProducts(req.user.id, page, limit, categoryId);
+    const result = await productService.getMyProducts(req.user.id, page, limit, categoryId, isActive);
 
     console.log('Result from service:', JSON.stringify(result, null, 2));
 

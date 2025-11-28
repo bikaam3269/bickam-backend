@@ -7,13 +7,16 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "migrate:utf8mb4": "node run_utf8mb4_migration.js"
+    "migrate:utf8mb4": "node run_utf8mb4_migration.js",
+    "migrate:notifications": "node create_notifications_table_migration.js",
+    "migrate:products": "node add_quantity_and_isactive_migration.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase-admin": "^13.6.0",

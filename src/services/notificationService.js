@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import firebaseService from './firebaseService.js';
 import Follow from '../models/Follow.js';
 
@@ -89,14 +90,50 @@ class NotificationService {
       throw new Error('User not found');
     }
 
-    if (!user.fcmToken) {
-      throw new Error('User does not have an FCM token');
+    // Create notification record in database
+    const notification = await Notification.create({
+      userId,
+      title,
+      body,
+      type: data.type || null,
+      data: data || null,
+      fcmSent: false,
+      sentAt: new Date()
+    });
+
+    // Try to send via FCM if token exists
+    let fcmResult = null;
+    let fcmError = null;
+
+    if (user.fcmToken) {
+      try {
+        fcmResult = await firebaseService.sendNotification(user.fcmToken, title, body, {
+          ...data,
+          userId: userId.toString(),
+          notificationId: notification.id.toString()
+        });
+        notification.fcmSent = true;
+      } catch (error) {
+        fcmError = error.message;
+        console.error(`Failed to send FCM notification to user ${userId}:`, error);
+      }
+    } else {
+      fcmError = 'User does not have an FCM token';
     }
 
-    return await firebaseService.sendNotification(user.fcmToken, title, body, {
-      ...data,
-      userId: userId.toString()
-    });
+    // Update notification with FCM status
+    notification.fcmError = fcmError;
+    await notification.save();
+
+    // Return result even if FCM token doesn't exist (notification is saved in DB)
+    return {
+      notificationId: notification.id,
+      fcmResult,
+      fcmSent: notification.fcmSent,
+      message: notification.fcmSent 
+        ? 'Notification sent successfully' 
+        : 'Notification saved but FCM token not available'
+    };
   }
 
   /**
@@ -114,20 +151,79 @@ class NotificationService {
 
     const users = await User.findAll({
       where: {
-        id: userIds,
-        fcmToken: { [Op.ne]: null }
+        id: userIds
       }
     });
 
     if (users.length === 0) {
-      throw new Error('No users with FCM tokens found');
+      throw new Error('No users found');
     }
 
-    const fcmTokens = users.map(user => user.fcmToken).filter(Boolean);
+    // Create notification records for all users
+    const notifications = await Notification.bulkCreate(
+      users.map(user => ({
+        userId: user.id,
+        title,
+        body,
+        type: data.type || null,
+        data: data || null,
+        fcmSent: false,
+        sentAt: new Date()
+      }))
+    );
 
-    return await firebaseService.sendMulticastNotification(fcmTokens, title, body, {
-      ...data
-    });
+    // Get users with FCM tokens
+    const usersWithTokens = users.filter(user => user.fcmToken);
+    const fcmTokens = usersWithTokens.map(user => user.fcmToken).filter(Boolean);
+
+    let fcmResult = null;
+    if (fcmTokens.length > 0) {
+      try {
+        fcmResult = await firebaseService.sendMulticastNotification(fcmTokens, title, body, {
+          ...data
+        });
+
+        // Update notifications for users with tokens
+        const userIdsWithTokens = usersWithTokens.map(u => u.id);
+        await Notification.update(
+          { fcmSent: true },
+          {
+            where: {
+              userId: { [Op.in]: userIdsWithTokens },
+              id: { [Op.in]: notifications.map(n => n.id) }
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to send multicast notification:', error);
+        // Update error for all notifications
+        await Notification.update(
+          { fcmError: error.message },
+          {
+            where: {
+              id: { [Op.in]: notifications.map(n => n.id) }
+            }
+          }
+        );
+      }
+    } else {
+      // Update error for all notifications
+      await Notification.update(
+        { fcmError: 'No users with FCM tokens' },
+        {
+          where: {
+            id: { [Op.in]: notifications.map(n => n.id) }
+          }
+        }
+      );
+    }
+
+    return {
+      notificationsCreated: notifications.length,
+      fcmResult,
+      successCount: fcmResult?.successCount || 0,
+      failureCount: fcmResult?.failureCount || 0
+    };
   }
 
   /**
@@ -145,21 +241,80 @@ class NotificationService {
 
     const users = await User.findAll({
       where: {
-        type: userType,
-        fcmToken: { [Op.ne]: null }
+        type: userType
       }
     });
 
     if (users.length === 0) {
-      throw new Error(`No ${userType}s with FCM tokens found`);
+      throw new Error(`No ${userType}s found`);
     }
 
-    const fcmTokens = users.map(user => user.fcmToken).filter(Boolean);
+    // Create notification records for all users
+    const notifications = await Notification.bulkCreate(
+      users.map(user => ({
+        userId: user.id,
+        title,
+        body,
+        type: data.type || null,
+        data: { ...data, userType } || null,
+        fcmSent: false,
+        sentAt: new Date()
+      }))
+    );
 
-    return await firebaseService.sendMulticastNotification(fcmTokens, title, body, {
-      ...data,
-      userType
-    });
+    // Get users with FCM tokens
+    const usersWithTokens = users.filter(user => user.fcmToken);
+    const fcmTokens = usersWithTokens.map(user => user.fcmToken).filter(Boolean);
+
+    let fcmResult = null;
+    if (fcmTokens.length > 0) {
+      try {
+        fcmResult = await firebaseService.sendMulticastNotification(fcmTokens, title, body, {
+          ...data,
+          userType
+        });
+
+        // Update notifications for users with tokens
+        const userIdsWithTokens = usersWithTokens.map(u => u.id);
+        await Notification.update(
+          { fcmSent: true },
+          {
+            where: {
+              userId: { [Op.in]: userIdsWithTokens },
+              id: { [Op.in]: notifications.map(n => n.id) }
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to send multicast notification:', error);
+        // Update error for all notifications
+        await Notification.update(
+          { fcmError: error.message },
+          {
+            where: {
+              id: { [Op.in]: notifications.map(n => n.id) }
+            }
+          }
+        );
+      }
+    } else {
+      // Update error for all notifications
+      await Notification.update(
+        { fcmError: 'No users with FCM tokens' },
+        {
+          where: {
+            id: { [Op.in]: notifications.map(n => n.id) }
+          }
+        }
+      );
+    }
+
+    return {
+      notificationsCreated: notifications.length,
+      fcmResult,
+      successCount: fcmResult?.successCount || 0,
+      failureCount: fcmResult?.failureCount || 0
+    };
   }
 
   /**
@@ -174,9 +329,17 @@ class NotificationService {
     try {
       return await this.sendNotificationToUser(userId, title, body, data);
     } catch (error) {
-      // Don't throw if user has no FCM token or other non-critical errors
-      if (error.message === 'User does not have an FCM token' || 
-          error.message === 'User not found') {
+      // Don't throw if user has no FCM token - notification is still saved in DB
+      if (error.message === 'User does not have an FCM token') {
+        console.log(`FCM notification skipped for user ${userId}, but notification saved in database`);
+        // Notification is already saved in DB, just return the notification ID
+        const notification = await Notification.findOne({
+          where: { userId },
+          order: [['createdAt', 'DESC']]
+        });
+        return notification ? { notificationId: notification.id, fcmSent: false } : null;
+      }
+      if (error.message === 'User not found') {
         console.log(`Notification skipped for user ${userId}: ${error.message}`);
         return null;
       }
@@ -446,6 +609,271 @@ class NotificationService {
         timestamp: new Date().toISOString()
       }
     );
+  }
+
+  // ==================== NOTIFICATION RETRIEVAL METHODS ====================
+
+  /**
+   * Get all notifications for a user
+   * @param {number} userId - User ID
+   * @param {object} options - Query options (limit, offset, isRead, type)
+   * @returns {Promise<object>}
+   */
+  async getUserNotifications(userId, options = {}) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    const {
+      limit = 50,
+      offset = 0,
+      isRead = null,
+      type = null
+    } = options;
+
+    const where = { userId };
+
+    if (isRead !== null) {
+      where.isRead = isRead;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
+    const { count, rows } = await Notification.findAndCountAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email']
+      }]
+    });
+
+    return {
+      notifications: rows,
+      total: count,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    };
+  }
+
+  /**
+   * Get unread notifications count for a user
+   * @param {number} userId - User ID
+   * @returns {Promise<number>}
+   */
+  async getUnreadCount(userId) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    return await Notification.count({
+      where: {
+        userId,
+        isRead: false
+      }
+    });
+  }
+
+  /**
+   * Mark notification as read
+   * @param {number} notificationId - Notification ID
+   * @param {number} userId - User ID (for security)
+   * @returns {Promise<object>}
+   */
+  async markAsRead(notificationId, userId) {
+    if (!notificationId || !userId) {
+      throw new Error('Notification ID and User ID are required');
+    }
+
+    const notification = await Notification.findOne({
+      where: {
+        id: notificationId,
+        userId
+      }
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    notification.isRead = true;
+    notification.readAt = new Date();
+    await notification.save();
+
+    return notification;
+  }
+
+  /**
+   * Mark all notifications as read for a user
+   * @param {number} userId - User ID
+   * @returns {Promise<object>}
+   */
+  async markAllAsRead(userId) {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    const [updatedCount] = await Notification.update(
+      {
+        isRead: true,
+        readAt: new Date()
+      },
+      {
+        where: {
+          userId,
+          isRead: false
+        }
+      }
+    );
+
+    return {
+      updatedCount,
+      message: `${updatedCount} notifications marked as read`
+    };
+  }
+
+  /**
+   * Delete a notification
+   * @param {number} notificationId - Notification ID
+   * @param {number} userId - User ID (for security)
+   * @returns {Promise<object>}
+   */
+  async deleteNotification(notificationId, userId) {
+    if (!notificationId || !userId) {
+      throw new Error('Notification ID and User ID are required');
+    }
+
+    const notification = await Notification.findOne({
+      where: {
+        id: notificationId,
+        userId
+      }
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    await notification.destroy();
+
+    return {
+      message: 'Notification deleted successfully'
+    };
+  }
+
+  /**
+   * Get notification by ID
+   * @param {number} notificationId - Notification ID
+   * @param {number} userId - User ID (for security)
+   * @returns {Promise<object>}
+   */
+  async getNotificationById(notificationId, userId) {
+    if (!notificationId || !userId) {
+      throw new Error('Notification ID and User ID are required');
+    }
+
+    const notification = await Notification.findOne({
+      where: {
+        id: notificationId,
+        userId
+      },
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email']
+      }]
+    });
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    return notification;
+  }
+
+  /**
+   * Get all notifications (Admin only)
+   * @param {object} options - Query options (limit, offset, userId, type, isRead)
+   * @returns {Promise<object>}
+   */
+  async getAllNotifications(options = {}) {
+    const {
+      limit = 50,
+      offset = 0,
+      userId = null,
+      type = null,
+      isRead = null,
+      search = null
+    } = options;
+
+    const where = {};
+
+    if (userId) {
+      where.userId = userId;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (isRead !== null) {
+      where.isRead = isRead;
+    }
+
+    if (search) {
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { body: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows } = await Notification.findAndCountAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'email', 'type', 'phone']
+      }]
+    });
+
+    return {
+      notifications: rows,
+      total: count,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      hasMore: (parseInt(offset) + parseInt(limit)) < count
+    };
+  }
+
+  /**
+   * Delete notification (Admin only - can delete any notification)
+   * @param {number} notificationId - Notification ID
+   * @returns {Promise<object>}
+   */
+  async deleteNotificationAdmin(notificationId) {
+    if (!notificationId) {
+      throw new Error('Notification ID is required');
+    }
+
+    const notification = await Notification.findByPk(notificationId);
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    await notification.destroy();
+
+    return {
+      message: 'Notification deleted successfully'
+    };
   }
 }
 

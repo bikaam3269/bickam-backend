@@ -1,10 +1,17 @@
 import express from 'express';
+import cors from 'cors';
 import { config } from './config/app.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { connectDatabase } from './models/index.js';
 
 const app = express();
+
+// CORS Configuration
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true
+}));
 
 // Middleware
 app.use(express.json());
@@ -25,7 +32,7 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     const dbConnected = await connectDatabase();
-    
+
     if (!dbConnected) {
       console.warn('⚠️  Server starting with limited database functionality due to query limits.');
       console.warn('⚠️  Some database operations may fail. Please wait for limit reset or upgrade your plan.\n');
@@ -43,3 +50,5 @@ const startServer = async () => {
 };
 
 startServer();
+
+

@@ -100,6 +100,22 @@ const Product = sequelize.define('Product', {
       max: 100
     }
   },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    },
+    comment: 'Product quantity in stock'
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'is_active',
+    comment: 'Whether the product is active/available'
+  },
   originalPrice: {
     type: DataTypes.VIRTUAL,
     get() {

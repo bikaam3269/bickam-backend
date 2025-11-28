@@ -64,10 +64,9 @@ export const sendNotificationToMe = async (req, res, next) => {
       data || {}
     );
 
-    return sendSuccess(res, result, 'Notification sent successfully');
+    return sendSuccess(res, result, result.fcmSent ? 'Notification sent successfully' : 'Notification saved successfully');
   } catch (error) {
     if (error.message === 'User not found' ||
-        error.message === 'User does not have an FCM token' ||
         error.message === 'User ID is required' ||
         error.message === 'Title and body are required') {
       return sendError(res, error.message, 400);
@@ -98,7 +97,6 @@ export const sendNotificationToUser = async (req, res, next) => {
     return sendSuccess(res, result, 'Notification sent successfully');
   } catch (error) {
     if (error.message === 'User not found' ||
-        error.message === 'User does not have an FCM token' ||
         error.message === 'User ID is required' ||
         error.message === 'Title and body are required') {
       return sendError(res, error.message, 400);
@@ -175,8 +173,166 @@ export const sendNotificationToUserType = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all notifications for authenticated user
+ */
+export const getMyNotifications = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { limit = 50, offset = 0, isRead, type } = req.query;
 
+    const result = await notificationService.getUserNotifications(userId, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      isRead: isRead === 'true' ? true : isRead === 'false' ? false : null,
+      type: type || null
+    });
 
+    return sendSuccess(res, result, 'Notifications retrieved successfully');
+  } catch (error) {
+    if (error.message === 'User ID is required') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Get unread notifications count for authenticated user
+ */
+export const getUnreadCount = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const count = await notificationService.getUnreadCount(userId);
+
+    return sendSuccess(res, { count }, 'Unread count retrieved successfully');
+  } catch (error) {
+    if (error.message === 'User ID is required') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+export const markAsRead = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const notification = await notificationService.markAsRead(parseInt(id), userId);
+
+    return sendSuccess(res, notification, 'Notification marked as read');
+  } catch (error) {
+    if (error.message === 'Notification ID and User ID are required' ||
+        error.message === 'Notification not found') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Mark all notifications as read for authenticated user
+ */
+export const markAllAsRead = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const result = await notificationService.markAllAsRead(userId);
+
+    return sendSuccess(res, result, 'All notifications marked as read');
+  } catch (error) {
+    if (error.message === 'User ID is required') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Delete a notification
+ */
+export const deleteNotification = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await notificationService.deleteNotification(parseInt(id), userId);
+
+    return sendSuccess(res, result, 'Notification deleted successfully');
+  } catch (error) {
+    if (error.message === 'Notification ID and User ID are required' ||
+        error.message === 'Notification not found') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Get notification by ID
+ */
+export const getNotificationById = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const notification = await notificationService.getNotificationById(parseInt(id), userId);
+
+    return sendSuccess(res, notification, 'Notification retrieved successfully');
+  } catch (error) {
+    if (error.message === 'Notification ID and User ID are required' ||
+        error.message === 'Notification not found') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
+ * Get all notifications (Admin only)
+ */
+export const getAllNotifications = async (req, res, next) => {
+  try {
+    const { limit = 50, offset = 0, userId, type, isRead, search } = req.query;
+
+    const result = await notificationService.getAllNotifications({
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      userId: userId ? parseInt(userId) : null,
+      type: type || null,
+      isRead: isRead === 'true' ? true : isRead === 'false' ? false : null,
+      search: search || null
+    });
+
+    return sendSuccess(res, result, 'Notifications retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Delete notification (Admin only)
+ */
+export const deleteNotificationAdmin = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await notificationService.deleteNotificationAdmin(parseInt(id));
+
+    return sendSuccess(res, result, 'Notification deleted successfully');
+  } catch (error) {
+    if (error.message === 'Notification ID is required' ||
+        error.message === 'Notification not found') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
 
 
 

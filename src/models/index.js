@@ -10,6 +10,7 @@ import Favorite from './Favorite.js';
 import Wallet from './Wallet.js';
 import Order from './Order.js';
 import OrderItem from './OrderItem.js';
+import Notification from './Notification.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -30,6 +31,7 @@ const models = {
   Wallet,
   Order,
   OrderItem,
+  Notification,
   sequelize
 };
 
