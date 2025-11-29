@@ -85,6 +85,39 @@ const User = sequelize.define('User', {
     allowNull: true,
     field: 'background_image'
   },
+  // Vendor location fields
+  latitude: {
+    type: DataTypes.DECIMAL(10, 8),
+    allowNull: true,
+    validate: {
+      min: -90,
+      max: 90
+    },
+    comment: 'Vendor location latitude'
+  },
+  longitude: {
+    type: DataTypes.DECIMAL(11, 8),
+    allowNull: true,
+    validate: {
+      min: -180,
+      max: 180
+    },
+    comment: 'Vendor location longitude'
+  },
+  // Vendor contact fields
+  whatsappNumber: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'whatsapp_number',
+    comment: 'Vendor WhatsApp contact number'
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    charset: 'utf8mb4',
+    collate: 'utf8mb4_unicode_ci',
+    comment: 'Vendor physical address'
+  },
   // Verification fields
   isVerified: {
     type: DataTypes.BOOLEAN,

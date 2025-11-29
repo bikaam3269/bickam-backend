@@ -27,7 +27,7 @@ class NotificationService {
     if (!userId || !fcmToken) {
       throw new Error('User ID and FCM token are required');
     }
-
+    
     const user = await User.findByPk(userId);
     if (!user) {
       throw new Error('User not found');

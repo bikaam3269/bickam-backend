@@ -9,7 +9,8 @@
     "dev": "nodemon src/index.js",
     "migrate:utf8mb4": "node run_utf8mb4_migration.js",
     "migrate:notifications": "node create_notifications_table_migration.js",
-    "migrate:products": "node add_quantity_and_isactive_migration.js"
+    "migrate:products": "node add_quantity_and_isactive_migration.js",
+    "migrate:vendor-location": "node add_vendor_location_migration.js"
   },
   "keywords": [],
   "author": "",

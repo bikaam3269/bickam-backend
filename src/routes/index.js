@@ -11,6 +11,7 @@ import orderRoutes from './orderRoutes.js';
 import categoryRoutes from './categoryRoutes.js';
 import subcategoryRoutes from './subcategoryRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
+import vendorRoutes from './vendorRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.use('/orders', orderRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/vendors', vendorRoutes);
 
 export default router;
 
