@@ -790,7 +790,8 @@
 									"disabled": true
 								}
 							]
-						}
+						},
+						"description": "Retrieve a paginated list of all vendors. Response includes 'isOnline' field (true if lat/long are missing)."
 					},
 					"response": []
 				},

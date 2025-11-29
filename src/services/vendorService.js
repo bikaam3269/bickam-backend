@@ -175,8 +175,15 @@ class VendorService {
             order: [['createdAt', 'DESC']]
         });
 
+        const vendorsWithStatus = rows.map(vendor => {
+            const vendorData = vendor.toJSON();
+            // If vendor does not have lat or long, return isOnline: true, else false
+            vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
+            return vendorData;
+        });
+
         return {
-            vendors: rows,
+            vendors: vendorsWithStatus,
             pagination: {
                 total: count,
                 page: parseInt(page),
