@@ -3,6 +3,45 @@ import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
+import Product from '../models/Product.js';
+import Subcategory from '../models/Subcategory.js';
+import Order from '../models/Order.js';
+import followService from './followService.js';
+import { config } from '../config/app.js';
+
+// Helper function to construct full image URL
+const getImageUrl = (filename) => {
+  if (!filename) return null;
+  // If already a full URL, return as is
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  // If starts with /files/, it's already a path, just add base URL
+  if (filename.startsWith('/files/')) {
+    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+    return `${baseUrl}${filename}`;
+  }
+  // Otherwise, it's just a filename, construct full URL
+  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+  return `${baseUrl}/files/${filename}`;
+};
+
+// Helper function to transform vendor data with image URLs
+const transformVendorImages = (vendor) => {
+  if (!vendor) return vendor;
+  
+  const vendorData = vendor.toJSON ? vendor.toJSON() : vendor;
+  
+  if (vendorData.logoImage) {
+    vendorData.logoImage = getImageUrl(vendorData.logoImage);
+  }
+  
+  if (vendorData.backgroundImage) {
+    vendorData.backgroundImage = getImageUrl(vendorData.backgroundImage);
+  }
+  
+  return vendorData;
+};
 
 class VendorService {
     /**
@@ -96,7 +135,13 @@ class VendorService {
             attributes: { exclude: ['password', 'verificationCode', 'verificationCodeExpiry'] }
         });
 
-        return updatedVendor;
+        // Transform vendor data with image URLs
+        const vendorData = transformVendorImages(updatedVendor);
+        
+        // Add isOnline status (true if lat or long are missing, else false)
+        vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
+
+        return vendorData;
     }
 
     /**
@@ -127,7 +172,65 @@ class VendorService {
             throw new Error('User is not a vendor');
         }
 
-        return vendor;
+        // Get followers count
+        const followersCount = await followService.getFollowCount(parseInt(vendorId));
+
+        // Get unique subcategories from vendor products
+        const vendorProducts = await Product.findAll({
+            where: { vendorId: parseInt(vendorId) },
+            include: [
+                {
+                    model: Subcategory,
+                    as: 'subcategory',
+                    attributes: ['id', 'name']
+                }
+            ],
+            attributes: ['subcategoryId']
+        });
+
+        // Extract unique subcategories
+        const subcategoriesMap = new Map();
+        vendorProducts.forEach(product => {
+            if (product.subcategory) {
+                subcategoriesMap.set(product.subcategory.id, {
+                    id: product.subcategory.id,
+                    name: product.subcategory.name
+                });
+            }
+        });
+        const subcategories = Array.from(subcategoriesMap.values());
+
+        // Calculate rating from orders
+        // Rating based on completed orders vs total orders
+        const totalOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId) }
+        });
+
+        const completedOrders = await Order.count({
+            where: {
+                vendorId: parseInt(vendorId),
+                status: 'delivered'
+            }
+        });
+
+        // Calculate rating (0-5 scale based on completion rate)
+        // If no orders, rating is 0
+        let rating = 0;
+        if (totalOrders > 0) {
+            const completionRate = completedOrders / totalOrders;
+            // Convert to 0-5 scale (completion rate * 5)
+            rating = parseFloat((completionRate * 5).toFixed(2));
+        }
+
+        // Transform vendor data with image URLs
+        const vendorData = transformVendorImages(vendor);
+        vendorData.followersCount = followersCount;
+        vendorData.subcategories = subcategories;
+        vendorData.rating = rating;
+        vendorData.totalOrders = totalOrders;
+        vendorData.completedOrders = completedOrders;
+
+        return vendorData;
     }
 
     /**
@@ -176,7 +279,8 @@ class VendorService {
         });
 
         const vendorsWithStatus = rows.map(vendor => {
-            const vendorData = vendor.toJSON();
+            // Transform vendor data with image URLs
+            const vendorData = transformVendorImages(vendor);
             // If vendor does not have lat or long, return isOnline: true, else false
             vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
             return vendorData;
