@@ -60,4 +60,41 @@ export const authorize = (...allowedTypes) => {
   };
 };
 
+/**
+ * Optional authentication middleware
+ * If token is provided and valid, attaches user to req.user
+ * If token is missing or invalid, continues without error (req.user will be undefined)
+ */
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // No token provided, continue without authentication
+      return next();
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify token
+    const decoded = authService.verifyToken(token);
+
+    // Get user from database
+    const user = await User.findByPk(decoded.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (user) {
+      // Attach user to request if found
+      req.user = user;
+    }
+    // If user not found, continue without req.user (no error)
+
+    next();
+  } catch (error) {
+    // If token is invalid, continue without authentication (no error)
+    next();
+  }
+};
+
 

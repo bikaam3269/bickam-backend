@@ -1,9 +1,13 @@
 import { Op } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import Favorite from '../models/Favorite.js';
+import Cart from '../models/Cart.js';
 import notificationService from './notificationService.js';
+import favoriteService from './favoriteService.js';
 
 class ProductService {
   async getAllProducts(filters = {}) {
@@ -227,7 +231,7 @@ class ProductService {
     return true;
   }
 
-  async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null, isActive = undefined) {
+  async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null, isActive = undefined, sortBy = 'latest', currentUserId = null) {
     const offset = (page - 1) * limit;
 
     // Build where clause for products
@@ -237,6 +241,30 @@ class ProductService {
     }
     if (isActive !== undefined) {
       where.isActive = isActive;
+    }
+
+    // Determine sorting order
+    let order = [];
+    switch (sortBy) {
+      case 'price_asc':
+        order = [['price', 'ASC'], ['createdAt', 'DESC']];
+        break;
+      case 'price_desc':
+        order = [['price', 'DESC'], ['createdAt', 'DESC']];
+        break;
+      case 'offers':
+        // Sort by discount (highest discount first), then by price
+        order = [
+          [sequelize.literal('CASE WHEN discount > 0 THEN 0 ELSE 1 END'), 'ASC'],
+          ['discount', 'DESC'],
+          ['price', 'ASC'],
+          ['createdAt', 'DESC']
+        ];
+        break;
+      case 'latest':
+      default:
+        order = [['createdAt', 'DESC']];
+        break;
     }
 
     const { count, rows } = await Product.findAndCountAll({
@@ -253,9 +281,46 @@ class ProductService {
           attributes: ['id', 'name']
         }
       ],
-      order: [['createdAt', 'DESC']],
+      order,
       limit,
       offset
+    });
+
+    // Get favorite and cart status for all products if user is authenticated
+    let favoriteProductIds = new Set();
+    let cartProductIds = new Set();
+    if (currentUserId) {
+      // Get all product IDs
+      const productIds = rows.map(p => p.id);
+      if (productIds.length > 0) {
+        // Get favorite product IDs
+        const favorites = await Favorite.findAll({
+          where: {
+            userId: currentUserId,
+            productId: { [Op.in]: productIds }
+          },
+          attributes: ['productId']
+        });
+        favoriteProductIds = new Set(favorites.map(fav => fav.productId));
+
+        // Get cart product IDs
+        const cartItems = await Cart.findAll({
+          where: {
+            userId: currentUserId,
+            productId: { [Op.in]: productIds }
+          },
+          attributes: ['productId']
+        });
+        cartProductIds = new Set(cartItems.map(item => item.productId));
+      }
+    }
+
+    // Add isFavorite and isCart to each product
+    const productsWithFavorite = rows.map(product => {
+      const productData = product.toJSON ? product.toJSON() : product;
+      productData.isFavorite = currentUserId ? favoriteProductIds.has(product.id) : false;
+      productData.isCart = currentUserId ? cartProductIds.has(product.id) : false;
+      return productData;
     });
 
     // Extract unique subcategories from all products (not just current page)
@@ -292,7 +357,7 @@ class ProductService {
     const totalPages = Math.ceil(count / limit);
 
     return {
-      products: rows,
+      products: productsWithFavorite,
       subcategories,
       pagination: {
         total: count,

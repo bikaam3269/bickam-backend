@@ -96,6 +96,22 @@ class FavoriteService {
 
     return !!favorite;
   }
+
+  async hasFavoriteProductsFromVendor(userId, vendorId) {
+    const favorite = await Favorite.findOne({
+      where: { userId },
+      include: [{
+        model: Product,
+        as: 'product',
+        where: { 
+          vendorId: parseInt(vendorId) 
+        },
+        required: true
+      }]
+    });
+
+    return !!favorite;
+  }
 }
 
 export default new FavoriteService();

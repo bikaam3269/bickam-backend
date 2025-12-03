@@ -8,13 +8,13 @@ import {
   getProductsByVendor,
   getMyProducts
 } from '../controllers/productController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
+import { authenticate, optionalAuthenticate } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Public routes
 router.get('/', getAllProducts);
-router.get('/vendor/:vendorId', getProductsByVendor);
+router.get('/vendor/:vendorId', optionalAuthenticate, getProductsByVendor);
 router.get('/:id', getProductById);
 
 // Protected routes (require authentication)

@@ -165,8 +165,10 @@ export const getProductsByVendor = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const subcategoryId = req.query.subcategoryId ? parseInt(req.query.subcategoryId) : null;
     const isActive = req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined;
+    const sortBy = req.query.sortBy || 'latest'; // latest, price_asc, price_desc, offers
+    const currentUserId = req.user ? req.user.id : null;
 
-    const result = await productService.getProductsByVendor(vendorId, page, limit, subcategoryId, isActive);
+    const result = await productService.getProductsByVendor(vendorId, page, limit, subcategoryId, isActive, sortBy, currentUserId);
 
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {

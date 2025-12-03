@@ -7,6 +7,7 @@ import Product from '../models/Product.js';
 import Subcategory from '../models/Subcategory.js';
 import Order from '../models/Order.js';
 import followService from './followService.js';
+import favoriteService from './favoriteService.js';
 import { config } from '../config/app.js';
 
 // Helper function to construct full image URL
@@ -146,8 +147,10 @@ class VendorService {
 
     /**
      * Get vendor profile by ID
+     * @param {number|string} vendorId - The vendor ID
+     * @param {number|null} currentUserId - The current authenticated user ID (optional)
      */
-    async getVendorProfile(vendorId) {
+    async getVendorProfile(vendorId, currentUserId = null) {
         const vendor = await User.findByPk(vendorId, {
             include: [
                 {
@@ -174,6 +177,18 @@ class VendorService {
 
         // Get followers count
         const followersCount = await followService.getFollowCount(parseInt(vendorId));
+
+        // Check if current user is following this vendor
+        let isFollowing = false;
+        if (currentUserId) {
+            isFollowing = await followService.isFollowing(parseInt(currentUserId), parseInt(vendorId));
+        }
+
+        // Check if current user has favorite products from this vendor
+        let hasFavoriteProducts = false;
+        if (currentUserId) {
+            hasFavoriteProducts = await favoriteService.hasFavoriteProductsFromVendor(parseInt(currentUserId), parseInt(vendorId));
+        }
 
         // Get unique subcategories from vendor products
         const vendorProducts = await Product.findAll({
@@ -225,6 +240,8 @@ class VendorService {
         // Transform vendor data with image URLs
         const vendorData = transformVendorImages(vendor);
         vendorData.followersCount = followersCount;
+        vendorData.isFollowing = isFollowing;
+        vendorData.hasFavoriteProducts = hasFavoriteProducts;
         vendorData.subcategories = subcategories;
         vendorData.rating = rating;
         vendorData.totalOrders = totalOrders;

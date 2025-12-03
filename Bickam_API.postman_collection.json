@@ -799,7 +799,15 @@
 					"name": "Get Vendor Profile",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional: Include token to get isFollowing and hasFavoriteProducts status",
+								"disabled": true
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/v1/vendors/1",
 							"host": [
@@ -811,7 +819,8 @@
 								"vendors",
 								"1"
 							]
-						}
+						},
+						"description": "Get vendor profile by ID. If Authorization header is provided, response includes:\n- isFollowing: boolean (true if current user follows this vendor)\n- hasFavoriteProducts: boolean (true if current user has favorite products from this vendor)"
 					},
 					"response": []
 				},
@@ -1133,9 +1142,17 @@
 					"name": "Get Products By Vendor",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional: Include token to get isFavorite and isCart status for each product",
+								"disabled": true
+							}
+						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products/vendor/1?page=1&limit=10",
+							"raw": "{{base_url}}/api/v1/products/vendor/1?page=1&limit=10&sortBy=latest",
 							"host": [
 								"{{base_url}}"
 							],
@@ -1158,6 +1175,12 @@
 									"description": "Items per page (default: 10)"
 								},
 								{
+									"key": "sortBy",
+									"value": "latest",
+									"description": "Sort order: latest (default), price_asc, price_desc, offers",
+									"disabled": false
+								},
+								{
 									"key": "subcategoryId",
 									"value": "1",
 									"description": "Filter by subcategory ID (optional)",
@@ -1170,7 +1193,8 @@
 									"disabled": true
 								}
 							]
-						}
+						},
+						"description": "Get products by vendor ID with sorting options.\n\nSort options:\n- latest: Sort by newest first (default)\n- price_asc: Sort by price ascending\n- price_desc: Sort by price descending\n- offers: Sort by products with discount first\n\nIf Authorization header is provided, each product in response includes:\n- isFavorite: boolean (true if product is in user's favorites)\n- isCart: boolean (true if product is in user's cart)"
 					},
 					"response": []
 				},

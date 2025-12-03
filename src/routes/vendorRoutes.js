@@ -6,7 +6,7 @@ import {
     getCurrentVendorProfile,
     updateCurrentVendorProfile
 } from '../controllers/vendorController.js';
-import { authenticate, authorize } from '../middleware/authMiddleware.js';
+import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -28,8 +28,8 @@ router.put(
     updateCurrentVendorProfile
 );
 
-// 3. Public Routes - Vendor by ID
-router.get('/:id', getVendorProfile);
+// 3. Public Routes - Vendor by ID (with optional authentication to check follow status)
+router.get('/:id', optionalAuthenticate, getVendorProfile);
 
 // 4. Protected Routes - Update Vendor by ID
 router.put(

@@ -90,11 +90,13 @@ export const updateCurrentVendorProfile = async (req, res, next) => {
 
 /**
  * Get vendor profile by ID
+ * If user is authenticated, includes isFollowing status
  */
 export const getVendorProfile = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const vendor = await vendorService.getVendorProfile(id);
+        const currentUserId = req.user ? req.user.id : null;
+        const vendor = await vendorService.getVendorProfile(id, currentUserId);
 
         return sendSuccess(res, vendor, 'Vendor profile retrieved successfully');
     } catch (error) {
