@@ -75,7 +75,25 @@ class ProductService {
       order: [['createdAt', 'DESC']]
     });
 
-    return products;
+    // Ensure images is always returned as an array, not a stringified array
+    return products.map(product => {
+      const productData = product.toJSON ? product.toJSON() : product;
+      if (productData.images) {
+        if (typeof productData.images === 'string') {
+          try {
+            productData.images = JSON.parse(productData.images);
+          } catch (e) {
+            productData.images = [];
+          }
+        }
+        if (!Array.isArray(productData.images)) {
+          productData.images = [];
+        }
+      } else {
+        productData.images = [];
+      }
+      return productData;
+    });
   }
 
   async getProductById(id) {
@@ -84,7 +102,7 @@ class ProductService {
         {
           model: User,
           as: 'vendor',
-          attributes: ['id', 'name', 'email', 'type']
+          attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
         },
         {
           model: Category,
@@ -103,7 +121,24 @@ class ProductService {
       throw new Error('Product not found');
     }
 
-    return product;
+    // Ensure images is always returned as an array, not a stringified array
+    const productData = product.toJSON ? product.toJSON() : product;
+    if (productData.images) {
+      if (typeof productData.images === 'string') {
+        try {
+          productData.images = JSON.parse(productData.images);
+        } catch (e) {
+          productData.images = [];
+        }
+      }
+      if (!Array.isArray(productData.images)) {
+        productData.images = [];
+      }
+    } else {
+      productData.images = [];
+    }
+
+    return productData;
   }
 
   async createProduct(data) {
@@ -320,6 +355,21 @@ class ProductService {
       const productData = product.toJSON ? product.toJSON() : product;
       productData.isFavorite = currentUserId ? favoriteProductIds.has(product.id) : false;
       productData.isCart = currentUserId ? cartProductIds.has(product.id) : false;
+      // Ensure images is always returned as an array, not a stringified array
+      if (productData.images) {
+        if (typeof productData.images === 'string') {
+          try {
+            productData.images = JSON.parse(productData.images);
+          } catch (e) {
+            productData.images = [];
+          }
+        }
+        if (!Array.isArray(productData.images)) {
+          productData.images = [];
+        }
+      } else {
+        productData.images = [];
+      }
       return productData;
     });
 
@@ -407,10 +457,30 @@ class ProductService {
     console.log('Service: Found', count, 'total products');
     console.log('Service: Returned', rows.length, 'products for this page');
 
+    // Ensure images is always returned as an array, not a stringified array
+    const products = rows.map(product => {
+      const productData = product.toJSON ? product.toJSON() : product;
+      if (productData.images) {
+        if (typeof productData.images === 'string') {
+          try {
+            productData.images = JSON.parse(productData.images);
+          } catch (e) {
+            productData.images = [];
+          }
+        }
+        if (!Array.isArray(productData.images)) {
+          productData.images = [];
+        }
+      } else {
+        productData.images = [];
+      }
+      return productData;
+    });
+
     const totalPages = Math.ceil(count / limit);
 
     return {
-      products: rows,
+      products,
       pagination: {
         total: count,
         page,
