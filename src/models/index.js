@@ -11,6 +11,10 @@ import Wallet from './Wallet.js';
 import Order from './Order.js';
 import OrderItem from './OrderItem.js';
 import Notification from './Notification.js';
+import LiveStream from './LiveStream.js';
+import LiveStreamViewer from './LiveStreamViewer.js';
+import LiveStreamMessage from './LiveStreamMessage.js';
+import LiveStreamLike from './LiveStreamLike.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -32,6 +36,10 @@ const models = {
   Order,
   OrderItem,
   Notification,
+  LiveStream,
+  LiveStreamViewer,
+  LiveStreamMessage,
+  LiveStreamLike,
   sequelize
 };
 

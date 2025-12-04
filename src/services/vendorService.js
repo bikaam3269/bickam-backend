@@ -44,6 +44,45 @@ const transformVendorImages = (vendor) => {
   return vendorData;
 };
 
+// Helper function to get product images as array with full URLs
+const getProductImages = async (vendorId) => {
+  const products = await Product.findAll({
+    where: { vendorId: parseInt(vendorId) },
+    attributes: ['images']
+  });
+
+  const allImages = [];
+  products.forEach(product => {
+    const productData = product.toJSON ? product.toJSON() : product;
+    let images = productData.images || [];
+    
+    // Ensure images is an array
+    if (typeof images === 'string') {
+      try {
+        images = JSON.parse(images);
+      } catch (e) {
+        images = [];
+      }
+    }
+    
+    if (!Array.isArray(images)) {
+      images = [];
+    }
+    
+    // Convert each image to full URL and add to array
+    images.forEach(image => {
+      if (image) {
+        const fullUrl = getImageUrl(image);
+        if (fullUrl) {
+          allImages.push(fullUrl);
+        }
+      }
+    });
+  });
+
+  return allImages;
+};
+
 class VendorService {
     /**
      * Update vendor profile data
@@ -247,6 +286,10 @@ class VendorService {
         vendorData.totalOrders = totalOrders;
         vendorData.completedOrders = completedOrders;
 
+        // Get product images as array
+        const productImages = await getProductImages(vendorId);
+        vendorData.productImages = productImages;
+
         return vendorData;
     }
 
@@ -295,13 +338,21 @@ class VendorService {
             order: [['createdAt', 'DESC']]
         });
 
-        const vendorsWithStatus = rows.map(vendor => {
-            // Transform vendor data with image URLs
-            const vendorData = transformVendorImages(vendor);
-            // If vendor does not have lat or long, return isOnline: true, else false
-            vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
-            return vendorData;
-        });
+        // Get product images for all vendors
+        const vendorsWithStatus = await Promise.all(
+            rows.map(async (vendor) => {
+                // Transform vendor data with image URLs
+                const vendorData = transformVendorImages(vendor);
+                // If vendor does not have lat or long, return isOnline: true, else false
+                vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
+                
+                // Get product images as array
+                const productImages = await getProductImages(vendor.id);
+                vendorData.productImages = productImages;
+                
+                return vendorData;
+            })
+        );
 
         return {
             vendors: vendorsWithStatus,

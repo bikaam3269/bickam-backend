@@ -2962,6 +2962,548 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Live Streams",
+			"description": "Live streaming functionality using Agora. Vendors can create and manage live streams, users can watch, send messages, and like streams.",
+			"item": [
+				{
+					"name": "Live Stream Management",
+					"item": [
+						{
+							"name": "Create Live Stream (Vendor Only)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"title\": \"Live Product Showcase\",\n  \"description\": \"Join us for a live showcase of our new products\",\n  \"scheduledAt\": null\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams"
+									]
+								},
+								"description": "Create a new live stream. Only vendors can create live streams.\n\n**Fields:**\n- `title` (required): Title of the live stream\n- `description` (optional): Description of the live stream\n- `scheduledAt` (optional): Scheduled start time (ISO 8601 format). If null, stream starts immediately.\n\n**Response:** Returns created live stream with Agora channel name and token."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Active Live Streams",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams"
+									]
+								},
+								"description": "Get all currently active (live) streams.\n\n**Authentication:** Optional - If authenticated, returns whether user liked each stream.\n\n**Response:** Array of active live streams with vendor info, viewer count, and likes count."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Live Stream by ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Get detailed information about a specific live stream.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Authentication:** Optional - If authenticated, returns whether user liked the stream.\n\n**Response:** Live stream details including vendor info, status, viewer count, likes count, and user like status."
+							},
+							"response": []
+						},
+						{
+							"name": "Start Live Stream (Vendor Owner Only)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/start",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"start"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Start a live stream. Only the vendor who created the stream can start it.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Response:** Updated live stream with status changed to 'live' and started_at timestamp. Followers are automatically notified."
+							},
+							"response": []
+						},
+						{
+							"name": "End Live Stream (Vendor Owner Only)",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/end",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"end"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "End a live stream. Only the vendor who created the stream can end it.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Response:** Updated live stream with status changed to 'ended' and ended_at timestamp."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Vendor Live Streams",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/vendor/:vendorId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										"vendor",
+										":vendorId"
+									],
+									"variable": [
+										{
+											"key": "vendorId",
+											"value": "1",
+											"description": "Vendor ID"
+										}
+									]
+								},
+								"description": "Get all live streams created by a specific vendor.\n\n**Parameters:**\n- `vendorId`: Vendor user ID\n\n**Response:** Array of all live streams (scheduled, live, ended) created by the vendor."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Join/Leave Live Stream",
+					"item": [
+						{
+							"name": "Join Live Stream",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/join",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"join"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Join a live stream as a viewer. This records the user as a viewer and updates the viewer count.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Authentication:** Required\n\n**Response:** Success message. Viewer count is automatically updated."
+							},
+							"response": []
+						},
+						{
+							"name": "Leave Live Stream",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/leave",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"leave"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Leave a live stream. This records the leave time and updates the viewer count.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Authentication:** Required\n\n**Response:** Success message. Viewer count is automatically updated."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Live Stream Token",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/token?role=subscriber",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"token"
+									],
+									"query": [
+										{
+											"key": "role",
+											"value": "subscriber",
+											"description": "Token role: 'publisher' (vendor only) or 'subscriber' (viewer)",
+											"disabled": false
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Get Agora token to join the live stream.\n\n**Parameters:**\n- `id`: Live stream ID\n- `role` (query): 'publisher' (vendor only) or 'subscriber' (viewer, default)\n\n**Authentication:** Required\n\n**Response:** Agora token, channel name, user ID, and role. Use this token with Agora RTC SDK in the frontend."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Live Stream Messages",
+					"item": [
+						{
+							"name": "Send Message",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"message\": \"Hello! Great products!\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/messages",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"messages"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Send a message in the live stream chat.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Body:**\n- `message` (required): Message text (max 500 characters)\n\n**Authentication:** Required\n\n**Response:** Created message with user details."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Messages",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/messages?limit=50&offset=0",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"messages"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Number of messages to retrieve (default: 50, max: 100)",
+											"disabled": false
+										},
+										{
+											"key": "offset",
+											"value": "0",
+											"description": "Offset for pagination (default: 0)",
+											"disabled": false
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Get messages from a live stream chat.\n\n**Parameters:**\n- `id`: Live stream ID\n- `limit` (query, optional): Number of messages (default: 50, max: 100)\n- `offset` (query, optional): Pagination offset (default: 0)\n\n**Authentication:** Optional\n\n**Response:** Array of messages ordered by creation time (newest first), each with user details."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Message",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/messages/:messageId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"messages",
+										":messageId"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										},
+										{
+											"key": "messageId",
+											"value": "1",
+											"description": "Message ID"
+										}
+									]
+								},
+								"description": "Delete a message from the live stream chat.\n\n**Parameters:**\n- `id`: Live stream ID\n- `messageId`: Message ID to delete\n\n**Authentication:** Required\n\n**Authorization:**\n- User can delete their own messages\n- Vendor can delete any message in their live stream\n\n**Response:** Success message."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Live Stream Likes",
+					"item": [
+						{
+							"name": "Toggle Like",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/like",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"like"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Toggle like on a live stream. If user hasn't liked, it adds a like. If already liked, it removes the like.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Authentication:** Required\n\n**Response:** Like status (liked: true/false) and updated likes count."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Likes Count",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/:id/likes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										":id",
+										"likes"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Live stream ID"
+										}
+									]
+								},
+								"description": "Get the total number of likes for a live stream.\n\n**Parameters:**\n- `id`: Live stream ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Likes count."
+							},
+							"response": []
+						}
+					]
+				}
+			]
 		}
 	],
 	"variable": [

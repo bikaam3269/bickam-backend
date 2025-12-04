@@ -25,7 +25,8 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await productService.getProductById(id);
+    const userId = req.user ? req.user.id : null;
+    const product = await productService.getProductById(id, userId);
 
     return sendSuccess(res, product, 'Product retrieved successfully');
   } catch (error) {

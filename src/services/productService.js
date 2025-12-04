@@ -96,7 +96,7 @@ class ProductService {
     });
   }
 
-  async getProductById(id) {
+  async getProductById(id, userId = null) {
     const product = await Product.findByPk(id, {
       include: [
         {
@@ -136,6 +136,32 @@ class ProductService {
       }
     } else {
       productData.images = [];
+    }
+
+    // Check if product is in cart
+    if (userId) {
+      const cartItem = await Cart.findOne({
+        where: {
+          userId,
+          productId: id
+        }
+      });
+      productData.isCart = !!cartItem;
+    } else {
+      productData.isCart = false;
+    }
+
+    // Check if product is in favorites
+    if (userId) {
+      const favorite = await Favorite.findOne({
+        where: {
+          userId,
+          productId: id
+        }
+      });
+      productData.isFavorite = !!favorite;
+    } else {
+      productData.isFavorite = false;
     }
 
     return productData;

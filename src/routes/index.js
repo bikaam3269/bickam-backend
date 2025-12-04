@@ -12,6 +12,7 @@ import categoryRoutes from './categoryRoutes.js';
 import subcategoryRoutes from './subcategoryRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import vendorRoutes from './vendorRoutes.js';
+import liveStreamRoutes from './liveStreamRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -38,6 +39,7 @@ router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/vendors', vendorRoutes);
+router.use('/live-streams', liveStreamRoutes);
 
 export default router;
 
