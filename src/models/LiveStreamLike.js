@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
-import LiveStream from './LiveStream.js';
 import User from './User.js';
 
 const LiveStreamLike = sequelize.define('LiveStreamLike', {
@@ -13,7 +12,7 @@ const LiveStreamLike = sequelize.define('LiveStreamLike', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: LiveStream,
+      model: 'live_streams',
       key: 'id'
     },
     field: 'live_stream_id'
@@ -45,12 +44,7 @@ const LiveStreamLike = sequelize.define('LiveStreamLike', {
   ]
 });
 
-// Define associations
-LiveStreamLike.belongsTo(LiveStream, {
-  foreignKey: 'liveStreamId',
-  as: 'liveStream'
-});
-
+// Define associations (will be set up in models/index.js to avoid circular dependency)
 LiveStreamLike.belongsTo(User, {
   foreignKey: 'userId',
   as: 'user'

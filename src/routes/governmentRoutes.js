@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getAllGovernments,
+  getAllGovernmentsWithCities,
   getGovernmentById,
   getGovernmentByCode,
   createGovernment,
@@ -10,6 +11,7 @@ import {
 
 const router = express.Router();
 
+router.get('/with-cities', getAllGovernmentsWithCities);
 router.get('/', getAllGovernments);
 router.get('/code/:code', getGovernmentByCode);
 router.get('/:id', getGovernmentById);

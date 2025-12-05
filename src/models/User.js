@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import Government from './Government.js';
 import Category from './Category.js';
+import City from './City.js';
 
 const User = sequelize.define('User', {
   id: {
@@ -54,6 +55,15 @@ const User = sequelize.define('User', {
       key: 'id'
     },
     field: 'government_id'
+  },
+  cityId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: City,
+      key: 'id'
+    },
+    field: 'city_id'
   },
   // Vendor specific fields
   activity: {
@@ -157,6 +167,7 @@ User.belongsTo(Category, {
   as: 'category'
 });
 
+// Note: City association is defined in models/index.js to avoid circular dependency
 // Note: Notification association is defined in Notification model
 // User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 

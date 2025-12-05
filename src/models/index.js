@@ -15,11 +15,87 @@ import LiveStream from './LiveStream.js';
 import LiveStreamViewer from './LiveStreamViewer.js';
 import LiveStreamMessage from './LiveStreamMessage.js';
 import LiveStreamLike from './LiveStreamLike.js';
+import City from './City.js';
+import Shipping from './Shipping.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
   foreignKey: 'categoryId',
   as: 'subcategories'
+});
+
+// Government and City associations
+Government.hasMany(City, {
+  foreignKey: 'governmentId',
+  as: 'cities'
+});
+
+City.belongsTo(Government, {
+  foreignKey: 'governmentId',
+  as: 'government'
+});
+
+// User and City associations
+User.belongsTo(City, {
+  foreignKey: 'cityId',
+  as: 'city'
+});
+
+City.hasMany(User, {
+  foreignKey: 'cityId',
+  as: 'users'
+});
+
+// Shipping associations
+Shipping.belongsTo(City, {
+  foreignKey: 'fromCityId',
+  as: 'fromCity'
+});
+
+Shipping.belongsTo(City, {
+  foreignKey: 'toCityId',
+  as: 'toCity'
+});
+
+City.hasMany(Shipping, {
+  foreignKey: 'fromCityId',
+  as: 'shippingsFrom'
+});
+
+City.hasMany(Shipping, {
+  foreignKey: 'toCityId',
+  as: 'shippingsTo'
+});
+
+// Live Stream associations (defined here to avoid circular dependency)
+LiveStream.hasMany(LiveStreamViewer, {
+  foreignKey: 'liveStreamId',
+  as: 'viewers'
+});
+
+LiveStreamViewer.belongsTo(LiveStream, {
+  foreignKey: 'liveStreamId',
+  as: 'liveStream'
+});
+
+LiveStream.hasMany(LiveStreamMessage, {
+  foreignKey: 'liveStreamId',
+  as: 'messages'
+});
+
+LiveStreamMessage.belongsTo(LiveStream, {
+  foreignKey: 'liveStreamId',
+  as: 'liveStream'
+});
+
+LiveStream.hasMany(LiveStreamLike, {
+  foreignKey: 'liveStreamId',
+  as: 'likes'
+});
+
+LiveStreamLike.belongsTo(LiveStream, {
+  foreignKey: 'liveStreamId',
+  as: 'liveStream'
 });
 
 // Initialize all models
@@ -40,6 +116,8 @@ const models = {
   LiveStreamViewer,
   LiveStreamMessage,
   LiveStreamLike,
+  City,
+  Shipping,
   sequelize
 };
 

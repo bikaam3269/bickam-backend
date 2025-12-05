@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import User from './User.js';
 
+
 const Order = sequelize.define('Order', {
   id: {
     type: DataTypes.INTEGER,
@@ -38,6 +39,22 @@ const Order = sequelize.define('Order', {
       min: 0
     }
   },
+  fromCityId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'from_city_id'
+  },
+  toCityId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'to_city_id'
+  },
+  shippingPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0,
+    field: 'shipping_price'
+  },
   shippingAddress: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -52,10 +69,16 @@ const Order = sequelize.define('Order', {
     field: 'payment_method'
   },
   paymentStatus: {
-    type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded'),
+    type: DataTypes.ENUM('pending', 'paid', 'failed', 'refunded', 'remaining'),
     allowNull: false,
     defaultValue: 'pending',
     field: 'payment_status'
+  },
+  remainingAmount: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0,
+    field: 'remaining_amount'
   }
 }, {
   tableName: 'orders',

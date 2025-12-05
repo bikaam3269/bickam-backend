@@ -52,6 +52,28 @@ class WalletService {
     return wallet;
   }
 
+  async deductBalancePartial(userId, amount) {
+    if (amount <= 0) {
+      return { deducted: 0, remaining: amount };
+    }
+
+    const wallet = await this.getOrCreateWallet(userId);
+    const currentBalance = parseFloat(wallet.balance);
+    const requestedAmount = parseFloat(amount);
+
+    if (currentBalance <= 0) {
+      return { deducted: 0, remaining: requestedAmount };
+    }
+
+    const deducted = Math.min(currentBalance, requestedAmount);
+    const remaining = requestedAmount - deducted;
+
+    wallet.balance = currentBalance - deducted;
+    await wallet.save();
+
+    return { deducted, remaining };
+  }
+
   async getBalance(userId) {
     const wallet = await this.getOrCreateWallet(userId);
     return parseFloat(wallet.balance);

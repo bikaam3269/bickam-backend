@@ -11,7 +11,12 @@
     "migrate:notifications": "node create_notifications_table_migration.js",
     "migrate:products": "node add_quantity_and_isactive_migration.js",
     "migrate:vendor-location": "node add_vendor_location_migration.js",
-    "migrate:live-streams": "node create_live_streams_tables_migration.js"
+    "migrate:live-streams": "node create_live_streams_tables_migration.js",
+    "migrate:add-updated-at": "node add_updated_at_to_live_stream_tables.js",
+    "migrate:cities": "node create_cities_table_migration.js",
+    "migrate:shippings": "node create_shippings_table_migration.js",
+    "migrate:order-shipping": "node add_order_shipping_fields_migration.js",
+    "migrate:user-city": "node add_city_id_to_users_migration.js"
   },
   "keywords": [],
   "author": "",

@@ -5,7 +5,21 @@ import { sendSuccess, sendError } from '../utils/responseHelper.js';
 export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { shippingAddress, paymentMethod = 'wallet' } = req.body;
+    const { toCityId, shippingAddress, paymentMethod = 'wallet' } = req.body;
+
+    // Validate required fields
+    if (!toCityId) {
+      return sendError(res, 'To city ID (delivery city) is required', 400);
+    }
+
+    if (!shippingAddress) {
+      return sendError(res, 'Shipping address is required', 400);
+    }
+
+    const toCityIdNum = parseInt(toCityId);
+    if (isNaN(toCityIdNum) || toCityIdNum <= 0) {
+      return sendError(res, 'Invalid to city ID', 400);
+    }
 
     // Get cart items
     const cartItems = await cartService.getCart(userId);
@@ -20,13 +34,22 @@ export const createOrder = async (req, res, next) => {
       quantity: item.quantity
     }));
 
-    const orders = await orderService.createOrder(userId, orderItems, shippingAddress, paymentMethod);
+    // fromCityId will be automatically taken from each vendor's cityId
+    const orders = await orderService.createOrder(
+      userId, 
+      orderItems, 
+      toCityIdNum,
+      shippingAddress, 
+      paymentMethod
+    );
 
     return sendSuccess(res, orders, 'Order created successfully', 201);
   } catch (error) {
     if (error.message === 'Cart is empty' || 
-        error.message === 'Insufficient wallet balance' ||
-        error.message.includes('not found')) {
+        error.message.includes('not found') ||
+        error.message.includes('city') ||
+        error.message.includes('shipping') ||
+        error.message.includes('has no city')) {
       return sendError(res, error.message, 400);
     }
     next(error);

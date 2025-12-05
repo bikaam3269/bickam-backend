@@ -1,9 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize.js';
 import User from './User.js';
-import LiveStreamViewer from './LiveStreamViewer.js';
-import LiveStreamMessage from './LiveStreamMessage.js';
-import LiveStreamLike from './LiveStreamLike.js';
 
 const LiveStream = sequelize.define('LiveStream', {
   id: {
@@ -95,20 +92,7 @@ LiveStream.belongsTo(User, {
   as: 'vendor'
 });
 
-LiveStream.hasMany(LiveStreamViewer, {
-  foreignKey: 'liveStreamId',
-  as: 'viewers'
-});
-
-LiveStream.hasMany(LiveStreamMessage, {
-  foreignKey: 'liveStreamId',
-  as: 'messages'
-});
-
-LiveStream.hasMany(LiveStreamLike, {
-  foreignKey: 'liveStreamId',
-  as: 'likes'
-});
+// Other associations (hasMany) are defined in models/index.js to avoid circular dependency
 
 export default LiveStream;
 

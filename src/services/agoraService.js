@@ -1,10 +1,12 @@
-import { RtcTokenBuilder, RtcRole } from 'agora-access-token';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 
 class AgoraService {
   constructor() {
-    this.appId = process.env.AGORA_APP_ID;
-    this.appCertificate = process.env.AGORA_APP_CERTIFICATE;
-    
+    this.appId = '39eda0b38ebe46dfa8f0f34ae13979ea';
+    this.appCertificate = '6fba24e49439495895d64b1c2f84272f';
+  
     if (!this.appId || !this.appCertificate) {
       console.warn('⚠️  Agora credentials not found in environment variables');
     }

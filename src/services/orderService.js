@@ -8,19 +8,25 @@ import Cart from '../models/Cart.js';
 import walletService from './walletService.js';
 import cartService from './cartService.js';
 import notificationService from './notificationService.js';
+import shippingService from './shippingService.js';
 class OrderService {
-  async createOrder(userId, cartItems, shippingAddress, paymentMethod = 'wallet') {
+  async createOrder(userId, cartItems, toCityId, shippingAddress, paymentMethod = 'wallet') {
     if (!cartItems || cartItems.length === 0) {
       throw new Error('Cart is empty');
     }
 
-    // Group items by vendor
+    // Group items by vendor and get vendor cityId
     const vendorGroups = {};
+    const vendorCityMap = {}; // Map vendorId to cityId
     let totalAmount = 0;
 
     for (const cartItem of cartItems) {
       const product = await Product.findByPk(cartItem.productId, {
-        include: [{ model: User, as: 'vendor' }]
+        include: [{ 
+          model: User, 
+          as: 'vendor',
+          attributes: ['id', 'name', 'cityId']
+        }]
       });
 
       if (!product) {
@@ -31,7 +37,18 @@ class OrderService {
         throw new Error(`Product ${cartItem.productId} has no vendor`);
       }
 
+      if (!product.vendor || !product.vendor.cityId) {
+        throw new Error(`Vendor for product ${cartItem.productId} has no city. Please update vendor profile with city.`);
+      }
+
       const vendorId = product.vendorId;
+      const vendorCityId = product.vendor.cityId;
+
+      // Store vendor cityId
+      if (!vendorCityMap[vendorId]) {
+        vendorCityMap[vendorId] = vendorCityId;
+      }
+
       if (!vendorGroups[vendorId]) {
         vendorGroups[vendorId] = [];
       }
@@ -55,16 +72,50 @@ class OrderService {
     const orders = [];
 
     for (const [vendorId, items] of Object.entries(vendorGroups)) {
-      // Calculate vendor total
-      const vendorTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+      // Get vendor's cityId (fromCityId)
+      const fromCityId = vendorCityMap[vendorId];
+      
+      if (!fromCityId) {
+        throw new Error(`Vendor ${vendorId} has no city. Please update vendor profile with city.`);
+      }
 
-      // If payment method is wallet, check balance and deduct
-      if (paymentMethod === 'wallet') {
-        const balance = await walletService.getBalance(userId);
-        if (balance < vendorTotal) {
-          throw new Error('Insufficient wallet balance');
+      // Get shipping price for this vendor
+      let shippingPrice = 0;
+      if (fromCityId && toCityId) {
+        try {
+          const shipping = await shippingService.getShippingPrice(fromCityId, toCityId);
+          shippingPrice = parseFloat(shipping.price);
+        } catch (error) {
+          // If shipping price not found, use 0 or throw error
+          throw new Error(`Shipping price not found from city ${fromCityId} to city ${toCityId}`);
         }
-        await walletService.deductBalance(userId, vendorTotal);
+      }
+
+      // Calculate vendor total (products + shipping)
+      const productsTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+      const vendorTotal = productsTotal + shippingPrice;
+
+      // Handle payment based on payment method
+      let paymentStatus = 'pending';
+      let remainingAmount = 0;
+
+      if (paymentMethod === 'cash') {
+        // Cash payment: status is paid (will pay on delivery)
+        paymentStatus = 'paid';
+        remainingAmount = 0;
+      } else if (paymentMethod === 'wallet') {
+        // Wallet payment: deduct what's available (partial payment allowed)
+        const { deducted, remaining } = await walletService.deductBalancePartial(userId, vendorTotal);
+        
+        if (remaining > 0) {
+          // Partial payment: some amount remaining
+          paymentStatus = 'remaining';
+          remainingAmount = remaining;
+        } else {
+          // Full payment: all amount deducted
+          paymentStatus = 'paid';
+          remainingAmount = 0;
+        }
       }
 
       // Create order
@@ -73,9 +124,13 @@ class OrderService {
         vendorId: parseInt(vendorId),
         status: 'pending',
         total: vendorTotal,
+        fromCityId,
+        toCityId,
+        shippingPrice,
         shippingAddress,
         paymentMethod,
-        paymentStatus: paymentMethod === 'wallet' ? 'paid' : 'pending'
+        paymentStatus,
+        remainingAmount
       });
 
       // Create order items
@@ -289,10 +344,21 @@ class OrderService {
       throw new Error('Cannot cancel this order');
     }
 
-    // If paid with wallet, refund
-    if (order.paymentMethod === 'wallet' && order.paymentStatus === 'paid') {
-      await walletService.addBalance(userId, order.total);
-      order.paymentStatus = 'refunded';
+    // If paid with wallet, refund (only the paid amount, not remaining)
+    if (order.paymentMethod === 'wallet') {
+      if (order.paymentStatus === 'paid') {
+        // Full refund
+        await walletService.addBalance(userId, order.total);
+        order.paymentStatus = 'refunded';
+      } else if (order.paymentStatus === 'remaining') {
+        // Partial refund (only what was deducted)
+        const paidAmount = order.total - (order.remainingAmount || 0);
+        if (paidAmount > 0) {
+          await walletService.addBalance(userId, paidAmount);
+        }
+        order.paymentStatus = 'refunded';
+        order.remainingAmount = order.total; // All amount is now remaining
+      }
     }
 
     order.status = 'cancelled';

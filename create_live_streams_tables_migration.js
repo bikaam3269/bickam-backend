@@ -75,6 +75,7 @@ async function createLiveStreamsTables() {
           joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           left_at DATETIME NULL,
           created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           
           FOREIGN KEY (live_stream_id) REFERENCES live_streams(id) ON DELETE CASCADE,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -106,6 +107,7 @@ async function createLiveStreamsTables() {
           user_id INT NOT NULL,
           message TEXT NOT NULL,
           created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           
           FOREIGN KEY (live_stream_id) REFERENCES live_streams(id) ON DELETE CASCADE,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -135,6 +137,7 @@ async function createLiveStreamsTables() {
           live_stream_id INT NOT NULL,
           user_id INT NOT NULL,
           created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           
           FOREIGN KEY (live_stream_id) REFERENCES live_streams(id) ON DELETE CASCADE,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

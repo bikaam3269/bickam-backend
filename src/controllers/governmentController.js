@@ -15,10 +15,30 @@ export const getAllGovernments = async (req, res, next) => {
   }
 };
 
+export const getAllGovernmentsWithCities = async (req, res, next) => {
+  try {
+    const filters = {
+      search: req.query.search
+    };
+
+    const governments = await governmentService.getAllGovernmentsWithCities(filters);
+
+    return sendSuccess(res, governments, 'Governments with cities retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getGovernmentById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const government = await governmentService.getGovernmentById(id);
+    const governmentId = parseInt(id);
+    
+    if (isNaN(governmentId) || governmentId <= 0) {
+      return sendError(res, 'Invalid government ID', 400);
+    }
+    
+    const government = await governmentService.getGovernmentById(governmentId);
 
     return sendSuccess(res, government, 'Government retrieved successfully');
   } catch (error) {
@@ -32,7 +52,12 @@ export const getGovernmentById = async (req, res, next) => {
 export const getGovernmentByCode = async (req, res, next) => {
   try {
     const { code } = req.params;
-    const government = await governmentService.getGovernmentByCode(code);
+    
+    if (!code || code.trim().length === 0) {
+      return sendError(res, 'Government code is required', 400);
+    }
+    
+    const government = await governmentService.getGovernmentByCode(code.trim());
 
     return sendSuccess(res, government, 'Government retrieved successfully');
   } catch (error) {
@@ -71,7 +96,13 @@ export const createGovernment = async (req, res, next) => {
 export const updateGovernment = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const government = await governmentService.updateGovernment(id, req.body);
+    const governmentId = parseInt(id);
+    
+    if (isNaN(governmentId) || governmentId <= 0) {
+      return sendError(res, 'Invalid government ID', 400);
+    }
+    
+    const government = await governmentService.updateGovernment(governmentId, req.body);
 
     return sendSuccess(res, government, 'Government updated successfully');
   } catch (error) {
@@ -91,7 +122,13 @@ export const updateGovernment = async (req, res, next) => {
 export const deleteGovernment = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await governmentService.deleteGovernment(id);
+    const governmentId = parseInt(id);
+    
+    if (isNaN(governmentId) || governmentId <= 0) {
+      return sendError(res, 'Invalid government ID', 400);
+    }
+    
+    await governmentService.deleteGovernment(governmentId);
 
     return sendSuccess(res, null, 'Government deleted successfully');
   } catch (error) {

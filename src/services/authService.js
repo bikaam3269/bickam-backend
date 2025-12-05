@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import Government from '../models/Government.js';
 import twilioService from './twilioService.js';
 import notificationService from './notificationService.js';
+import { validateAndFormatEgyptianPhone, formatPhoneForWhatsApp } from '../utils/phoneHelper.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -51,6 +52,12 @@ class AuthService {
       throw new Error('Phone number is required for verification');
     }
 
+    // Validate and format phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(user.phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+
     const code = this.generateVerificationCode();
     const expiry = new Date();
     expiry.setMinutes(expiry.getMinutes() + 10); // Code expires in 10 minutes
@@ -60,12 +67,19 @@ class AuthService {
     user.verificationCodeExpiry = expiry;
     await user.save();
 
+    // Format phone for WhatsApp (whatsapp:+20xxxxxxxxxx)
+    const whatsappPhone = formatPhoneForWhatsApp(user.phone);
+
     // Send via Twilio WhatsApp
     try {
-      await twilioService.sendVerificationCode(user.phone, code, type);
+      await twilioService.sendVerificationCode(whatsappPhone, code, type);
     } catch (error) {
       console.error('Failed to send verification code:', error);
-      // Don't throw error, code is still saved in database
+      // Throw Sandbox errors so user knows they need to join Sandbox
+      if (error.isSandboxError || error.code === 63015) {
+        throw error;
+      }
+      // Don't throw other errors, code is still saved in database
     }
 
     return {
@@ -75,7 +89,7 @@ class AuthService {
   }
 
   async register(data) {
-    const { type, name, email, password, phone, governmentId, description, logoImage, categoryId, backgroundImage } = data;
+    const { type, name, email, password, phone, governmentId, cityId, description, logoImage, categoryId, backgroundImage } = data;
 
     // Validate required fields based on type
     if (!type || !['user', 'vendor', 'admin'].includes(type)) {
@@ -84,6 +98,16 @@ class AuthService {
 
     if (!name || !email || !password) {
       throw new Error('Name, email, and password are required');
+    }
+
+    // Validate and format Egyptian phone number if provided
+    let formattedPhone = phone;
+    if (phone) {
+      const phoneValidation = validateAndFormatEgyptianPhone(phone);
+      if (!phoneValidation.isValid) {
+        throw new Error(phoneValidation.error);
+      }
+      formattedPhone = phoneValidation.formatted;
     }
 
     // Vendor specific validations
@@ -123,8 +147,9 @@ class AuthService {
       name,
       email,
       password: hashedPassword,
-      phone,
+      phone: formattedPhone,
       governmentId,
+      cityId,
       isVerified: !requiresVerification // Vendors with phone need verification
     };
 
@@ -190,16 +215,21 @@ class AuthService {
       throw new Error('Phone number and password are required');
     }
 
-    // Format phone number for search - remove whatsapp: prefix and clean
-    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
-    const formattedPhone = `whatsapp:+${cleanPhone}`;
+    // Validate and format Egyptian phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+    const formattedPhone = phoneValidation.formatted;
 
-    // Find user with government relation by phone
+    // Find user with government relation by phone (search with different formats)
+    const cleanPhone = formattedPhone.replace('+20', '');
     const user = await User.findOne({
       where: { 
         [Op.or]: [
-          { phone: phone },
           { phone: formattedPhone },
+          { phone: `+20${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
           { phone: cleanPhone },
           { phone: { [Op.like]: `%${cleanPhone}%` } }
         ]
@@ -279,15 +309,21 @@ class AuthService {
       throw new Error('Phone number and verification code are required');
     }
 
-    // Format phone number for search - remove whatsapp: prefix and clean
-    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
-    const formattedPhone = `whatsapp:+${cleanPhone}`;
+    // Validate and format Egyptian phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+    const formattedPhone = phoneValidation.formatted;
 
+    // Find user by phone (search with different formats)
+    const cleanPhone = formattedPhone.replace('+20', '');
     const user = await User.findOne({ 
       where: { 
         [Op.or]: [
-          { phone: phone },
           { phone: formattedPhone },
+          { phone: `+20${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
           { phone: cleanPhone },
           { phone: { [Op.like]: `%${cleanPhone}%` } }
         ]
@@ -354,15 +390,21 @@ class AuthService {
       throw new Error('Phone number is required');
     }
 
-    // Format phone number for search - remove whatsapp: prefix and clean
-    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
-    const formattedPhone = `whatsapp:+${cleanPhone}`;
+    // Validate and format Egyptian phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+    const formattedPhone = phoneValidation.formatted;
 
+    // Find user by phone (search with different formats)
+    const cleanPhone = formattedPhone.replace('+20', '');
     const user = await User.findOne({ 
       where: { 
         [Op.or]: [
-          { phone: phone },
           { phone: formattedPhone },
+          { phone: `+20${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
           { phone: cleanPhone },
           { phone: { [Op.like]: `%${cleanPhone}%` } }
         ]
@@ -396,15 +438,21 @@ class AuthService {
       throw new Error('Phone number is required');
     }
 
-    // Format phone number for search - remove whatsapp: prefix and clean
-    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
-    const formattedPhone = `whatsapp:+${cleanPhone}`;
+    // Validate and format Egyptian phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+    const formattedPhone = phoneValidation.formatted;
 
+    // Find user by phone (search with different formats)
+    const cleanPhone = formattedPhone.replace('+20', '');
     const user = await User.findOne({ 
       where: { 
         [Op.or]: [
-          { phone: phone },
           { phone: formattedPhone },
+          { phone: `+20${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
           { phone: cleanPhone },
           { phone: { [Op.like]: `%${cleanPhone}%` } }
         ]
@@ -442,15 +490,21 @@ class AuthService {
       throw new Error('Password must be at least 6 characters long');
     }
 
-    // Format phone number for search - remove whatsapp: prefix and clean
-    const cleanPhone = phone.replace(/whatsapp:\+/g, '').replace(/\D/g, '');
-    const formattedPhone = `whatsapp:+${cleanPhone}`;
+    // Validate and format Egyptian phone number
+    const phoneValidation = validateAndFormatEgyptianPhone(phone);
+    if (!phoneValidation.isValid) {
+      throw new Error(phoneValidation.error);
+    }
+    const formattedPhone = phoneValidation.formatted;
 
+    // Find user by phone (search with different formats)
+    const cleanPhone = formattedPhone.replace('+20', '');
     const user = await User.findOne({ 
       where: { 
         [Op.or]: [
-          { phone: phone },
           { phone: formattedPhone },
+          { phone: `+20${cleanPhone}` },
+          { phone: `0${cleanPhone}` },
           { phone: cleanPhone },
           { phone: { [Op.like]: `%${cleanPhone}%` } }
         ]

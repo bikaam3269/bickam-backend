@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import Government from '../models/Government.js';
+import City from '../models/City.js';
 
 class GovernmentService {
   async getAllGovernments(filters = {}) {
@@ -17,6 +18,34 @@ class GovernmentService {
       where,
       order: [['createdAt', 'DESC']]
     });
+  }
+
+  async getAllGovernmentsWithCities(filters = {}) {
+    const { search } = filters;
+    const where = {};
+
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { code: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const governments = await Government.findAll({
+      where,
+      include: [
+        {
+          model: City,
+          as: 'cities',
+          attributes: ['id', 'name'],
+          separate: true,
+          order: [['name', 'ASC']]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return governments;
   }
 
   async getGovernmentById(id) {

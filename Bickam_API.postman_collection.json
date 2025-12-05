@@ -61,7 +61,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"type\": \"user\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"governmentId\": 1\n}"
+							"raw": "{\n  \"type\": \"user\",\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"1234567890\",\n  \"governmentId\": 1,\n  \"cityId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/register",
@@ -74,7 +79,8 @@
 								"auth",
 								"register"
 							]
-						}
+						},
+						"description": "Register a new user account.\n\n**Body Parameters:**\n- `type` (required): User type - 'user', 'vendor', or 'admin'\n- `name` (required): User's full name\n- `email` (required): User's email address (must be unique)\n- `password` (required): User's password (minimum 6 characters)\n- `phone` (optional): User's phone number (Egyptian format)\n- `governmentId` (optional): Government ID\n- `cityId` (optional): City ID (must belong to the specified government)\n\n**Response:** User object and JWT token (if verified). For vendors with phone, verification code is sent via WhatsApp."
 					},
 					"response": []
 				},
@@ -133,6 +139,11 @@
 									"type": "text"
 								},
 								{
+									"key": "cityId",
+									"value": "1",
+									"type": "text"
+								},
+								{
 									"key": "categoryId",
 									"value": "1",
 									"type": "text"
@@ -170,7 +181,8 @@
 								"auth",
 								"register"
 							]
-						}
+						},
+						"description": "Register a new vendor account.\n\n**Body Parameters (multipart/form-data):**\n- `type` (required): Must be 'vendor'\n- `name` (required): Vendor's business name\n- `email` (required): Vendor's email address (must be unique)\n- `password` (required): Vendor's password (minimum 6 characters)\n- `phone` (optional): Vendor's phone number (Egyptian format)\n- `governmentId` (optional): Government ID\n- `cityId` (optional): City ID (must belong to the specified government)\n- `categoryId` (optional): Category ID for vendor's business category\n- `activity` (optional): Business activity description\n- `description` (optional): Vendor description\n- `logoImage` (optional): Vendor logo image file\n- `backgroundImage` (optional): Vendor background image file\n\n**Verification:**\n- If phone is provided, verification code is sent via WhatsApp\n- Vendor must verify phone before login\n\n**Response:** Vendor object and JWT token (if verified). If phone verification required, token will be null until verified."
 					},
 					"response": []
 				},
@@ -202,7 +214,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"type\": \"admin\",\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"phone\": \"5555555555\"\n}"
+							"raw": "{\n  \"type\": \"admin\",\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"phone\": \"5555555555\",\n  \"governmentId\": 1,\n  \"cityId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/register",
@@ -215,7 +232,8 @@
 								"auth",
 								"register"
 							]
-						}
+						},
+						"description": "Register a new admin account.\n\n**Body Parameters:**\n- `type` (required): Must be 'admin'\n- `name` (required): Admin's full name\n- `email` (required): Admin's email address (must be unique)\n- `password` (required): Admin's password (minimum 6 characters)\n- `phone` (optional): Admin's phone number (Egyptian format)\n- `governmentId` (optional): Government ID\n- `cityId` (optional): City ID\n\n**Response:** Admin user object and JWT token."
 					},
 					"response": []
 				},
@@ -596,6 +614,35 @@
 			"name": "Governments",
 			"item": [
 				{
+					"name": "Get All Governments With Cities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/governments/with-cities?search=federal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"governments",
+								"with-cities"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "federal",
+									"description": "Search by name or code",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all governments with their associated cities.\n\n**Query Parameters:**\n- `search` (optional): Search governments by name or code\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments, each containing:\n- Government details (id, name, code)\n- `cities` array with city details (id, name)\n\n**Example Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"name\": \"Cairo\",\n    \"code\": \"CAI001\",\n    \"cities\": [\n      { \"id\": 1, \"name\": \"Nasr City\" },\n      { \"id\": 2, \"name\": \"Maadi\" }\n    ]\n  }\n]\n```"
+					},
+					"response": []
+				},
+				{
 					"name": "Get All Governments",
 					"request": {
 						"method": "GET",
@@ -618,7 +665,8 @@
 									"disabled": true
 								}
 							]
-						}
+						},
+						"description": "Get all governments without cities.\n\n**Query Parameters:**\n- `search` (optional): Search by name or code\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments (without cities). Use `/with-cities` endpoint to get governments with cities."
 					},
 					"response": []
 				},
@@ -737,6 +785,368 @@
 								"1"
 							]
 						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cities",
+			"item": [
+				{
+					"name": "Get All Cities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities?governmentId=1&search=cairo",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities"
+							],
+							"query": [
+								{
+									"key": "governmentId",
+									"value": "1",
+									"description": "Filter by government ID",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "cairo",
+									"description": "Search by city name",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all cities with optional filtering by government or search.\n\n**Query Parameters:**\n- `governmentId` (optional): Filter cities by government ID\n- `search` (optional): Search cities by name\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of cities with government information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get City By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities",
+								"1"
+							]
+						},
+						"description": "Get a specific city by ID.\n\n**Parameters:**\n- `id`: City ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** City details with government information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cities By Government ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities/government/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities",
+								"government",
+								"1"
+							],
+							"variable": [
+								{
+									"key": "governmentId",
+									"value": "1",
+									"description": "Government ID"
+								}
+							]
+						},
+						"description": "Get all cities for a specific government.\n\n**Parameters:**\n- `governmentId`: Government ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of cities belonging to the specified government."
+					},
+					"response": []
+				},
+				{
+					"name": "Create City",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Cairo\",\n  \"governmentId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities"
+							]
+						},
+						"description": "Create a new city.\n\n**Body Parameters:**\n- `name` (required): City name\n- `governmentId` (required): Government ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Created city with government information."
+					},
+					"response": []
+				},
+				{
+					"name": "Update City",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Cairo Updated\",\n  \"governmentId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities",
+								"1"
+							]
+						},
+						"description": "Update a city.\n\n**Parameters:**\n- `id`: City ID\n\n**Body Parameters:**\n- `name` (optional): City name\n- `governmentId` (optional): Government ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Updated city information."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete City",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/cities/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"cities",
+								"1"
+							]
+						},
+						"description": "Delete a city.\n\n**Parameters:**\n- `id`: City ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Success message."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Shippings",
+			"item": [
+				{
+					"name": "Get All Shippings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings?fromCityId=1&toCityId=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings"
+							],
+							"query": [
+								{
+									"key": "fromCityId",
+									"value": "1",
+									"description": "Filter by from city ID",
+									"disabled": true
+								},
+								{
+									"key": "toCityId",
+									"value": "2",
+									"description": "Filter by to city ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all shipping prices with optional filtering.\n\n**Query Parameters:**\n- `fromCityId` (optional): Filter by source city ID\n- `toCityId` (optional): Filter by destination city ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of shipping prices with city information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Shipping Price",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings/price?fromCityId=1&toCityId=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings",
+								"price"
+							],
+							"query": [
+								{
+									"key": "fromCityId",
+									"value": "1",
+									"description": "Source city ID"
+								},
+								{
+									"key": "toCityId",
+									"value": "2",
+									"description": "Destination city ID"
+								}
+							]
+						},
+						"description": "Get shipping price between two cities.\n\n**Query Parameters:**\n- `fromCityId` (required): Source city ID\n- `toCityId` (required): Destination city ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Shipping price information with city details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Shipping By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings",
+								"1"
+							]
+						},
+						"description": "Get a specific shipping price by ID.\n\n**Parameters:**\n- `id`: Shipping ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Shipping price details with city information."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Shipping",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fromCityId\": 1,\n  \"toCityId\": 2,\n  \"price\": 50.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings"
+							]
+						},
+						"description": "Create a new shipping price between two cities.\n\n**Body Parameters:**\n- `fromCityId` (required): Source city ID\n- `toCityId` (required): Destination city ID\n- `price` (required): Shipping price (must be positive number)\n\n**Validation:**\n- From city and to city cannot be the same\n- Shipping price for this route must not already exist\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Created shipping price with city information."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Shipping",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"price\": 60.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings",
+								"1"
+							]
+						},
+						"description": "Update a shipping price.\n\n**Parameters:**\n- `id`: Shipping ID\n\n**Body Parameters:**\n- `fromCityId` (optional): Source city ID\n- `toCityId` (optional): Destination city ID\n- `price` (optional): Shipping price\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Updated shipping price information."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Shipping",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/shippings/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"shippings",
+								"1"
+							]
+						},
+						"description": "Delete a shipping price.\n\n**Parameters:**\n- `id`: Shipping ID\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Success message."
 					},
 					"response": []
 				}
@@ -2065,7 +2475,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"shippingAddress\": \"123 Main St, City, Country\",\n  \"paymentMethod\": \"wallet\"\n}"
+							"raw": "{\n  \"toCityId\": 2,\n  \"shippingAddress\": \"123 Main St, City, Country\",\n  \"paymentMethod\": \"wallet\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/orders",
@@ -2077,7 +2492,8 @@
 								"v1",
 								"orders"
 							]
-						}
+						},
+						"description": "Create a new order from cart items.\n\n**Body Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n- `shippingAddress` (required): Full shipping address text\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Automatic fromCityId:**\n- `fromCityId` is automatically taken from each vendor's `cityId` (vendor location)\n- Each vendor in cart will have their own order with their own `fromCityId`\n- If vendor has no city, order creation will fail with error\n\n**Payment Handling:**\n- **Cash**: paymentStatus = 'paid' (will pay on delivery)\n- **Wallet**: \n  - If balance >= total: Deduct full amount, paymentStatus = 'paid'\n  - If balance < total: Deduct available balance, paymentStatus = 'remaining', remainingAmount = difference\n\n**Shipping:**\n- Shipping price is automatically calculated from shippings table based on vendor's cityId (fromCityId) and toCityId\n- Each vendor order has its own shipping price\n- Shipping price is added to each order total\n\n**Process:**\n1. Get cart items\n2. Group items by vendor (creates separate order for each vendor)\n3. Get each vendor's cityId as fromCityId\n4. Calculate shipping price for each vendor (from vendor city to delivery city)\n5. Process payment based on payment method\n6. Create orders and order items (one order per vendor)\n7. Send notifications to vendors and user\n8. Clear cart\n\n**Authentication:** Required (User)\n\n**Response:** Array of created orders (one per vendor) with items, shipping price, and payment status."
 					},
 					"response": []
 				},

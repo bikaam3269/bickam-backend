@@ -6,6 +6,7 @@ import User from '../models/User.js';
 import agoraService from './agoraService.js';
 import notificationService from './notificationService.js';
 import Follow from '../models/Follow.js';
+import { withQueryTimeout } from '../utils/timeoutHelper.js';
 
 class LiveStreamService {
   /**
@@ -22,7 +23,7 @@ class LiveStreamService {
     }
 
     // Check if vendor exists and is a vendor
-    const vendor = await User.findByPk(vendorId);
+    const vendor = await withQueryTimeout(() => User.findByPk(vendorId), 10000);
     if (!vendor) {
       throw new Error('Vendor not found');
     }
@@ -36,7 +37,7 @@ class LiveStreamService {
     // Generate token for vendor (publisher)
     const agoraToken = agoraService.generatePublisherToken(channelName, vendorId);
 
-    const liveStream = await LiveStream.create({
+    const liveStream = await withQueryTimeout(() => LiveStream.create({
       vendorId,
       title,
       description: description || null,
@@ -45,7 +46,7 @@ class LiveStreamService {
       status: scheduledAt ? 'scheduled' : 'live',
       scheduledAt: scheduledAt || null,
       viewerCount: 0
-    });
+    }), 15000);
 
     // If starting immediately, set started_at
     if (!scheduledAt) {
@@ -71,7 +72,7 @@ class LiveStreamService {
    * @returns {Promise<object>} Updated live stream
    */
   async startLiveStream(liveStreamId, vendorId) {
-    const liveStream = await LiveStream.findByPk(liveStreamId);
+    const liveStream = await withQueryTimeout(() => LiveStream.findByPk(liveStreamId), 10000);
     if (!liveStream) {
       throw new Error('Live stream not found');
     }
@@ -114,7 +115,7 @@ class LiveStreamService {
    * @returns {Promise<object>} Updated live stream
    */
   async endLiveStream(liveStreamId, vendorId) {
-    const liveStream = await LiveStream.findByPk(liveStreamId);
+    const liveStream = await withQueryTimeout(() => LiveStream.findByPk(liveStreamId), 10000);
     if (!liveStream) {
       throw new Error('Live stream not found');
     }
@@ -141,7 +142,7 @@ class LiveStreamService {
    * @returns {Promise<object>} Live stream with details
    */
   async getLiveStreamById(id, userId = null) {
-    const liveStream = await LiveStream.findByPk(id, {
+    const liveStream = await withQueryTimeout(() => LiveStream.findByPk(id, {
       include: [
         {
           model: User,
@@ -149,7 +150,7 @@ class LiveStreamService {
           attributes: ['id', 'name', 'email', 'type', 'logoImage']
         }
       ]
-    });
+    }), 15000);
 
     if (!liveStream) {
       throw new Error('Live stream not found');
@@ -182,7 +183,7 @@ class LiveStreamService {
    * @returns {Promise<Array>} Array of active live streams
    */
   async getActiveLiveStreams(userId = null) {
-    const liveStreams = await LiveStream.findAll({
+    const liveStreams = await withQueryTimeout(() => LiveStream.findAll({
       where: {
         status: 'live'
       },
@@ -194,7 +195,7 @@ class LiveStreamService {
         }
       ],
       order: [['startedAt', 'DESC']]
-    });
+    }), 20000);
     
     const liveStreamsData = await Promise.all(
       liveStreams.map(async (liveStream) => {
@@ -378,12 +379,15 @@ class LiveStreamService {
    */
   async notifyFollowersAboutLiveStream(vendorId, liveStreamId, title, vendorName) {
     try {
+      // Find all users who follow this vendor
+      // followingId = vendorId (the vendor being followed)
+      // followerId = userId (the user who follows)
       const followers = await Follow.findAll({
-        where: { vendorId },
-        attributes: ['userId']
+        where: { followingId: vendorId },
+        attributes: ['followerId']
       });
 
-      const followerIds = followers.map(f => f.userId);
+      const followerIds = followers.map(f => f.followerId);
 
       if (followerIds.length === 0) {
         return;
