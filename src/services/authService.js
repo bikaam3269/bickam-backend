@@ -251,16 +251,16 @@ class AuthService {
       throw new Error('Invalid phone number or password');
     }
 
-    // Check if user needs verification
-    if (!user.isVerified && user.phone) {
-      // Resend verification code
+    // Check if vendor needs verification (only vendors need verification, not users or admins)
+    if (!user.isVerified && user.type === 'vendor' && user.phone) {
+      // Resend verification code for vendors only
       try {
         await this.sendVerificationCode(user, 'verification');
       } catch (error) {
         console.error('Failed to send verification code during login:', error);
       }
       
-      // Return user data with isVerified: false (don't throw error)
+      // Return vendor data with isVerified: false (don't throw error)
       const userResponse = user.toJSON();
       delete userResponse.password;
       delete userResponse.verificationCode;

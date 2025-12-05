@@ -143,8 +143,15 @@ class VendorService {
         const updateData = {};
         allowedFields.forEach(field => {
             if (data[field] !== undefined) {
+                // Handle null values - explicitly set to null
+                if (data[field] === null) {
+                    // Don't set password to null if empty, just skip it
+                    if (field !== 'password') {
+                        updateData[field] = null;
+                    }
+                }
                 // Handle empty strings for optional fields - convert to null
-                if (data[field] === '' || data[field] === 'null' || data[field] === 'undefined') {
+                else if (data[field] === '' || data[field] === 'null' || data[field] === 'undefined') {
                     // Don't set password to null if empty, just skip it
                     if (field !== 'password') {
                         updateData[field] = null;

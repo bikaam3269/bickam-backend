@@ -5,7 +5,8 @@ import {
   getUserOrders,
   getVendorOrders,
   updateOrderStatus,
-  cancelOrder
+  cancelOrder,
+  calculateOrderPrice
 } from '../controllers/orderController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 // All order routes require authentication
 router.use(authenticate);
 
+router.get('/calculate-price', calculateOrderPrice);
 router.post('/', createOrder);
 router.get('/my-orders', getUserOrders);
 router.get('/vendor-orders', getVendorOrders);

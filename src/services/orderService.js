@@ -373,6 +373,143 @@ class OrderService {
 
     return await this.getOrderById(order.id);
   }
+
+  /**
+   * Calculate full order price (products + shipping) for cart items
+   * @param {number} userId - User ID
+   * @param {number} toCityId - Destination city ID
+   * @returns {Promise<Object>} Order price breakdown
+   */
+  async calculateOrderPrice(userId, toCityId) {
+    if (!toCityId) {
+      throw new Error('To city ID is required');
+    }
+
+    // Get cart items
+    const cartItems = await cartService.getCart(userId);
+    
+    if (!cartItems || cartItems.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
+    // Group items by vendor and calculate totals
+    const vendorGroups = {};
+    const vendorCityMap = {};
+    let productsTotal = 0;
+
+    for (const cartItem of cartItems) {
+      const product = await Product.findByPk(cartItem.productId, {
+        include: [{ 
+          model: User, 
+          as: 'vendor',
+          attributes: ['id', 'name', 'cityId']
+        }]
+      });
+
+      if (!product) {
+        throw new Error(`Product ${cartItem.productId} not found`);
+      }
+
+      if (!product.vendorId) {
+        throw new Error(`Product ${cartItem.productId} has no vendor`);
+      }
+
+      if (!product.vendor || !product.vendor.cityId) {
+        throw new Error(`Vendor for product ${cartItem.productId} has no city. Please update vendor profile with city.`);
+      }
+
+      const vendorId = product.vendorId;
+      const vendorCityId = product.vendor.cityId;
+
+      // Store vendor cityId
+      if (!vendorCityMap[vendorId]) {
+        vendorCityMap[vendorId] = vendorCityId;
+      }
+
+      if (!vendorGroups[vendorId]) {
+        vendorGroups[vendorId] = {
+          vendorId: vendorId,
+          vendorName: product.vendor.name,
+          fromCityId: vendorCityId,
+          items: [],
+          productsSubtotal: 0
+        };
+      }
+
+      const price = product.price && product.isPrice ? parseFloat(product.price) : 0;
+      const discount = product.discount || 0;
+      const discountedPrice = price * (1 - discount / 100);
+      const subtotal = discountedPrice * cartItem.quantity;
+
+      vendorGroups[vendorId].items.push({
+        productId: product.id,
+        productName: product.name,
+        quantity: cartItem.quantity,
+        price: discountedPrice,
+        subtotal
+      });
+
+      vendorGroups[vendorId].productsSubtotal += subtotal;
+      productsTotal += subtotal;
+    }
+
+    // Calculate shipping for each vendor
+    const vendorsBreakdown = [];
+    let totalShippingPrice = 0;
+
+    for (const [vendorId, vendorData] of Object.entries(vendorGroups)) {
+      const fromCityId = vendorData.fromCityId;
+      
+      // Get shipping price
+      let shippingPrice = 0;
+      let shippingInfo = null;
+      
+      if (fromCityId && toCityId) {
+        try {
+          const shipping = await shippingService.getShippingPrice(fromCityId, toCityId);
+          shippingPrice = parseFloat(shipping.price);
+          shippingInfo = {
+            fromCity: shipping.fromCity,
+            toCity: shipping.toCity,
+            price: shippingPrice
+          };
+        } catch (error) {
+          // If shipping price not found, shippingPrice remains 0
+          shippingInfo = {
+            fromCity: null,
+            toCity: null,
+            price: 0,
+            error: 'Shipping price not found for this route'
+          };
+        }
+      }
+
+      const vendorTotal = vendorData.productsSubtotal + shippingPrice;
+      totalShippingPrice += shippingPrice;
+
+      vendorsBreakdown.push({
+        vendorId: parseInt(vendorId),
+        vendorName: vendorData.vendorName,
+        fromCityId: fromCityId,
+        toCityId: toCityId,
+        productsSubtotal: vendorData.productsSubtotal,
+        shippingPrice: shippingPrice,
+        shippingInfo: shippingInfo,
+        vendorTotal: vendorTotal,
+        items: vendorData.items
+      });
+    }
+
+    const grandTotal = productsTotal + totalShippingPrice;
+
+    return {
+      productsTotal,
+      totalShippingPrice,
+      grandTotal,
+      toCityId: parseInt(toCityId),
+      vendorsBreakdown
+    };
+  }
 }
 
 export default new OrderService();
