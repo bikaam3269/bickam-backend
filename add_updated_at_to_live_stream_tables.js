@@ -6,7 +6,6 @@ const config = dbConfig[process.env.NODE_ENV || 'development'];
 
 async function addUpdatedAtColumns() {
   let connection;
-  
   try {
     console.log('Connecting to database...');
     connection = await mysql.createConnection({
@@ -16,9 +15,7 @@ async function addUpdatedAtColumns() {
       password: config.password,
       database: config.database
     });
-
     console.log('Connected to database successfully');
-
     // Check and add updated_at to live_stream_viewers
     console.log('Checking live_stream_viewers table...');
     const [columns1] = await connection.execute(`
@@ -68,7 +65,6 @@ async function addUpdatedAtColumns() {
       AND TABLE_NAME = 'live_stream_likes'
       AND COLUMN_NAME = 'updated_at'
     `, [config.database]);
-
     if (columns3.length === 0) {
       await connection.execute(`
         ALTER TABLE live_stream_likes 
@@ -91,7 +87,6 @@ async function addUpdatedAtColumns() {
     }
   }
 }
-
 addUpdatedAtColumns()
   .then(() => {
     console.log('\n✅ Migration completed successfully');

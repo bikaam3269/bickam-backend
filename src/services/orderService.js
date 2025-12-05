@@ -256,9 +256,28 @@ class OrderService {
     return ordersWithItems;
   }
 
-  async getVendorOrders(vendorId) {
+  async getVendorOrders(vendorId, options = {}) {
+    const {
+      status = null,
+      limit = 50,
+      offset = 0
+    } = options;
+
+    // Build where clause
+    const whereClause = { vendorId };
+    if (status) {
+      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+      if (validStatuses.includes(status)) {
+        whereClause.status = status;
+      }
+    }
+
+    // Get total count for pagination
+    const totalCount = await Order.count({ where: whereClause });
+
+    // Get orders with pagination
     const orders = await Order.findAll({
-      where: { vendorId },
+      where: whereClause,
       include: [
         {
           model: User,
@@ -266,7 +285,9 @@ class OrderService {
           attributes: ['id', 'name', 'email', 'phone']
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
 
     // Get order items for each order
@@ -288,7 +309,15 @@ class OrderService {
       })
     );
 
-    return ordersWithItems;
+    return {
+      orders: ordersWithItems,
+      pagination: {
+        total: totalCount,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        hasMore: parseInt(offset) + ordersWithItems.length < totalCount
+      }
+    };
   }
 
   async updateOrderStatus(orderId, status, currentUser) {

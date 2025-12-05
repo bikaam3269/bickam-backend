@@ -2456,6 +2456,304 @@
 			]
 		},
 		{
+			"name": "Wallet Requests",
+			"item": [
+				{
+					"name": "Create Deposit Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "amount",
+									"value": "500.00",
+									"type": "text"
+								},
+								{
+									"key": "evidenceImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/deposit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"deposit"
+							]
+						},
+						"description": "User creates a deposit request with amount and evidence image (form-data). Admin must approve to add amount to wallet. Body: form-data with 'amount' (text) and 'evidenceImage' (file)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Withdrawal Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 300.00,\n  \"walletNumber\": \"01012345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/withdrawal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"withdrawal"
+							]
+						},
+						"description": "User creates a withdrawal request with amount and wallet number (JSON). Admin must approve and upload evidence image to deduct amount from wallet. Body: JSON with 'amount' (number) and 'walletNumber' (string)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/my-requests?type=deposit&status=pending",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"my-requests"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "deposit",
+									"description": "Optional: 'deposit' or 'withdrawal'"
+								},
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Optional: 'pending', 'approved', 'rejected'"
+								}
+							]
+						},
+						"description": "Get user's wallet requests. Optional filters: type, status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Request By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"1"
+							]
+						},
+						"description": "Get wallet request details by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Requests (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests?type=deposit&status=pending&page=1&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "deposit",
+									"description": "Optional: 'deposit' or 'withdrawal'"
+								},
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Optional: 'pending', 'approved', 'rejected'"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Items per page"
+								}
+							]
+						},
+						"description": "Get all wallet requests (Admin only). Supports pagination and filtering."
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Deposit Request (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/1/approve-deposit",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"1",
+								"approve-deposit"
+							]
+						},
+						"description": "Admin approves deposit request. Amount is added to user's wallet and notification is sent via Firebase. No body required."
+					},
+					"response": []
+				},
+				{
+					"name": "Approve Withdrawal Request (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "evidenceImage",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/1/approve-withdrawal",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"1",
+								"approve-withdrawal"
+							]
+						},
+						"description": "Admin approves withdrawal request and uploads evidence image (form-data). Amount is deducted from user's wallet and notification is sent via Firebase. Body: form-data with 'evidenceImage' (file)."
+					},
+					"response": []
+				},
+				{
+					"name": "Reject Request (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rejectionReason\": \"Invalid evidence image\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-requests/1/reject",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-requests",
+								"1",
+								"reject"
+							]
+						},
+						"description": "Admin rejects wallet request. Optional rejection reason can be provided in JSON body. Notification is sent to user via Firebase. Body: JSON with optional 'rejectionReason' (string)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Orders",
 			"item": [
 				{
@@ -2569,7 +2867,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/orders/vendor-orders",
+							"raw": "{{base_url}}/api/v1/orders/vendor-orders?status=pending&limit=50&offset=0",
 							"host": [
 								"{{base_url}}"
 							],
@@ -2578,8 +2876,29 @@
 								"v1",
 								"orders",
 								"vendor-orders"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by order status: pending, confirmed, processing, shipped, delivered, cancelled",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of orders to return (default: 50)",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Number of orders to skip (default: 0)",
+									"disabled": true
+								}
 							]
-						}
+						},
+						"description": "Get all orders for the authenticated vendor with filtering and pagination.\n\n**Query Parameters:**\n- `status` (optional): Filter by order status - 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'\n- `limit` (optional, default: 50): Number of orders to return per page\n- `offset` (optional, default: 0): Number of orders to skip (for pagination)\n\n**Response:** Returns orders array with pagination info:\n```json\n{\n  \"orders\": [...],\n  \"pagination\": {\n    \"total\": 100,\n    \"limit\": 50,\n    \"offset\": 0,\n    \"hasMore\": true\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -3093,7 +3412,7 @@
 					"response": []
 				},
 				{
-					"name": "Get My Notifications",
+					"name": "Get Notifications",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -3129,17 +3448,30 @@
 								{
 									"key": "isRead",
 									"value": "false",
-									"description": "Filter by read status: true, false, or omit for all",
+									"description": "Filter by read status: true, false, or omit for all (for regular users only)",
 									"disabled": true
 								},
 								{
 									"key": "type",
 									"value": "order_created",
-									"description": "Filter by notification type",
+									"description": "Filter by notification type (for regular users only)",
+									"disabled": true
+								},
+								{
+									"key": "userId",
+									"value": "",
+									"description": "Filter by user ID (Admin only)",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search in notifications (Admin only)",
 									"disabled": true
 								}
 							]
-						}
+						},
+						"description": "Get notifications with automatic role-based behavior.\n\n**For Regular Users (user/vendor):**\n- Returns only their own notifications\n- Query parameters: `limit`, `offset`, `isRead`, `type`\n\n**For Admin:**\n- Returns all notifications with advanced filtering\n- Query parameters: `limit`, `offset`, `userId`, `type`, `isRead`, `search`\n\n**Query Parameters:**\n- `limit` (optional, default: 50): Number of notifications per page\n- `offset` (optional, default: 0): Number to skip (pagination)\n- `isRead` (optional, regular users only): Filter by read status - true, false, or omit for all\n- `type` (optional, regular users only): Filter by notification type\n- `userId` (optional, Admin only): Filter by specific user ID\n- `search` (optional, Admin only): Search term in notifications\n\n**Response:** Returns notifications array with pagination (for admin) or simple array (for regular users)."
 					},
 					"response": []
 				},

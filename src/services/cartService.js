@@ -79,7 +79,7 @@ class CartService {
     });
 
     if (existingCartItem) {
-      // Update quantity
+      // Update quantityp
       existingCartItem.quantity += quantity;
       await existingCartItem.save();
       return existingCartItem;

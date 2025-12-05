@@ -316,6 +316,47 @@ export const getAllNotifications = async (req, res, next) => {
 };
 
 /**
+ * Get notifications - Admin gets all, regular users get their own
+ */
+export const getNotifications = async (req, res, next) => {
+  try {
+    // If user is admin, return all notifications
+    if (req.user.type === 'admin') {
+      const { limit = 50, offset = 0, userId, type, isRead, search } = req.query;
+
+      const result = await notificationService.getAllNotifications({
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        userId: userId ? parseInt(userId) : null,
+        type: type || null,
+        isRead: isRead === 'true' ? true : isRead === 'false' ? false : null,
+        search: search || null
+      });
+
+      return sendSuccess(res, result, 'Notifications retrieved successfully');
+    }
+
+    // For regular users, return their own notifications
+    const userId = req.user.id;
+    const { limit = 50, offset = 0, isRead, type } = req.query;
+
+    const result = await notificationService.getUserNotifications(userId, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      isRead: isRead === 'true' ? true : isRead === 'false' ? false : null,
+      type: type || null
+    });
+
+    return sendSuccess(res, result, 'Notifications retrieved successfully');
+  } catch (error) {
+    if (error.message === 'User ID is required') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+/**
  * Delete notification (Admin only)
  */
 export const deleteNotificationAdmin = async (req, res, next) => {

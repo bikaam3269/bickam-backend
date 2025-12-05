@@ -15,7 +15,11 @@ class NotificationService {
     NEW_PRODUCT: 'new_product',
     ORDER_CANCELLED: 'order_cancelled',
     ORDER_DELIVERED: 'order_delivered',
-    PAYMENT_RECEIVED: 'payment_received'
+    PAYMENT_RECEIVED: 'payment_received',
+    WALLET_DEPOSIT_APPROVED: 'wallet_deposit_approved',
+    WALLET_WITHDRAWAL_APPROVED: 'wallet_withdrawal_approved',
+    WALLET_DEPOSIT_REJECTED: 'wallet_deposit_rejected',
+    WALLET_WITHDRAWAL_REJECTED: 'wallet_withdrawal_rejected'
   };
   /**
    * Save or update FCM token for a user

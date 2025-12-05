@@ -17,6 +17,7 @@ import LiveStreamMessage from './LiveStreamMessage.js';
 import LiveStreamLike from './LiveStreamLike.js';
 import City from './City.js';
 import Shipping from './Shipping.js';
+import WalletRequest from './WalletRequest.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -65,6 +66,22 @@ City.hasMany(Shipping, {
 City.hasMany(Shipping, {
   foreignKey: 'toCityId',
   as: 'shippingsTo'
+});
+
+// Wallet Request associations
+WalletRequest.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+WalletRequest.belongsTo(User, {
+  foreignKey: 'adminId',
+  as: 'admin'
+});
+
+User.hasMany(WalletRequest, {
+  foreignKey: 'userId',
+  as: 'walletRequests'
 });
 
 // Live Stream associations (defined here to avoid circular dependency)
@@ -118,6 +135,7 @@ const models = {
   LiveStreamLike,
   City,
   Shipping,
+  WalletRequest,
   sequelize
 };
 

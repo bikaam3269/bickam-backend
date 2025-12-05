@@ -13,7 +13,8 @@ import {
   deleteNotification,
   getNotificationById,
   getAllNotifications,
-  deleteNotificationAdmin
+  deleteNotificationAdmin,
+  getNotifications
 } from '../controllers/notificationController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/authMiddleware.js';
@@ -22,6 +23,9 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
+
+// Get notifications - works for both admin and regular users
+router.get('/', getNotifications); // Admin: all notifications, Users: their own notifications
 
 // User routes (all authenticated users)
 router.post('/token', saveFCMToken);
@@ -38,7 +42,7 @@ router.delete('/:id', deleteNotification);
 
 // Admin only routes
 router.use(authorize('admin'));
-router.get('/', getAllNotifications); // Admin: Get all notifications with pagination
+router.get('/admin/all', getAllNotifications); // Admin: Get all notifications with pagination (alternative endpoint)
 router.post('/send-to-user/:userId', sendNotificationToUser);
 router.post('/send-to-users', sendNotificationToUsers);
 router.post('/send-to-user-type', sendNotificationToUserType);
