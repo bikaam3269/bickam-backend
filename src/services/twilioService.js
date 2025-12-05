@@ -11,7 +11,6 @@ const contentSid = process.env.TWILIO_CONTENT_SID;
 
 
 // Initialize Twilio client
-let client = null;
 
 // Validate required credentials
 if (!accountSid || !authToken) {

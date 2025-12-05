@@ -44,14 +44,16 @@ export const login = async (req, res, next) => {
 
     const result = await authService.login(phone, password, fcmToken);
 
+    // If user is not verified, return 200 with isVerified: false
+    if (result.isVerified === false) {
+      return sendSuccess(res, result, result.message || 'Verification code sent');
+    }
+
     return sendSuccess(res, result, 'Login successful');
   } catch (error) {
     if (error.message === 'Invalid phone number or password' || 
         error.message === 'Phone number and password are required') {
       return sendError(res, error.message, 401);
-    }
-    if (error.message === 'Account not verified. Verification code has been sent to your phone.') {
-      return sendError(res, error.message, 403);
     }
     next(error);
   }

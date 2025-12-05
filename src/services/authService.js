@@ -251,15 +251,27 @@ class AuthService {
       throw new Error('Invalid phone number or password');
     }
 
-    // Check if vendor needs verification
-    if (!user.isVerified && user.type === 'vendor' && user.phone) {
-      // Resend verification code if needed
+    // Check if user needs verification
+    if (!user.isVerified && user.phone) {
+      // Resend verification code
       try {
         await this.sendVerificationCode(user, 'verification');
       } catch (error) {
         console.error('Failed to send verification code during login:', error);
       }
-      throw new Error('Account not verified. Verification code has been sent to your phone.');
+      
+      // Return user data with isVerified: false (don't throw error)
+      const userResponse = user.toJSON();
+      delete userResponse.password;
+      delete userResponse.verificationCode;
+      delete userResponse.verificationCodeExpiry;
+      
+      return {
+        user: userResponse,
+        token: null,
+        isVerified: false,
+        message: 'Verification code has been sent to your phone. Please verify your account to complete login.'
+      };
     }
 
     // Save FCM token if provided

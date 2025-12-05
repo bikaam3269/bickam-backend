@@ -178,8 +178,9 @@ class VendorService {
         // Transform vendor data with image URLs
         const vendorData = transformVendorImages(updatedVendor);
         
-        // Add isOnline status (true if lat or long are missing, else false)
-        vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
+        // Set isOnline: false if vendor has no address, latitude, or longitude
+        // Otherwise, isOnline: true
+        vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
 
         return vendorData;
     }
@@ -290,6 +291,10 @@ class VendorService {
         const productImages = await getProductImages(vendorId);
         vendorData.productImages = productImages;
 
+        // Set isOnline: false if vendor has no address, latitude, or longitude
+        // Otherwise, isOnline: true
+        vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
+
         return vendorData;
     }
 
@@ -343,8 +348,9 @@ class VendorService {
             rows.map(async (vendor) => {
                 // Transform vendor data with image URLs
                 const vendorData = transformVendorImages(vendor);
-                // If vendor does not have lat or long, return isOnline: true, else false
-                vendorData.isOnline = !vendorData.latitude || !vendorData.longitude;
+                // Set isOnline: false if vendor has no address, latitude, or longitude
+                // Otherwise, isOnline: true
+                vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
                 
                 // Get product images as array
                 const productImages = await getProductImages(vendor.id);
