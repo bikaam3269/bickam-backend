@@ -18,6 +18,7 @@ import LiveStreamLike from './LiveStreamLike.js';
 import City from './City.js';
 import Shipping from './Shipping.js';
 import WalletRequest from './WalletRequest.js';
+import WalletInfo from './WalletInfo.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -136,6 +137,7 @@ const models = {
   City,
   Shipping,
   WalletRequest,
+  WalletInfo,
   sequelize
 };
 

@@ -16,6 +16,7 @@ import liveStreamRoutes from './liveStreamRoutes.js';
 import cityRoutes from './cityRoutes.js';
 import shippingRoutes from './shippingRoutes.js';
 import walletRequestRoutes from './walletRequestRoutes.js';
+import walletInfoRoutes from './walletInfoRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -46,6 +47,7 @@ router.use('/live-streams', liveStreamRoutes);
 router.use('/cities', cityRoutes);
 router.use('/shippings', shippingRoutes);
 router.use('/wallet-requests', walletRequestRoutes);
+router.use('/wallet-info', walletInfoRoutes);
 
 export default router;
 

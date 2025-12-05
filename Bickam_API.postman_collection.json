@@ -3746,6 +3746,188 @@
 			]
 		},
 		{
+			"name": "Wallet Info",
+			"item": [
+				{
+					"name": "Get Active Wallet Info (Public)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info/active",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info",
+								"active"
+							]
+						},
+						"description": "Get all active wallet info (public endpoint, no authentication required). Returns wallet names and IDs that users can see when making withdrawal requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Wallet Info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info?activeOnly=false",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info"
+							],
+							"query": [
+								{
+									"key": "activeOnly",
+									"value": "false",
+									"description": "Optional: true to get only active wallets, false for all (default: false)"
+								}
+							]
+						},
+						"description": "Get all wallet info (authenticated users). Admin can see all, including inactive. Regular users see all but can filter by activeOnly."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Wallet Info By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info",
+								"1"
+							]
+						},
+						"description": "Get wallet info by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Wallet Info (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"فودافون كاش\",\n  \"walletId\": \"01012345678\",\n  \"isActive\": true,\n  \"displayOrder\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info"
+							]
+						},
+						"description": "Create new wallet info (Admin only).\n\n**Body Parameters:**\n- `name` (required): Wallet name (e.g., \"فودافون كاش\", \"إنستاباي\", \"بنك الأهلي\")\n- `walletId` (required): Wallet identifier (phone number, account number, etc.)\n- `isActive` (optional, default: true): Whether wallet is active and visible to users\n- `displayOrder` (optional, default: 0): Order for displaying in lists"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Wallet Info (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"فودافون كاش\",\n  \"walletId\": \"01012345678\",\n  \"isActive\": true,\n  \"displayOrder\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info",
+								"1"
+							]
+						},
+						"description": "Update wallet info (Admin only). All fields are optional - only include fields you want to update."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Wallet Info (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/wallet-info/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"wallet-info",
+								"1"
+							]
+						},
+						"description": "Delete wallet info (Admin only)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Live Streams",
 			"description": "Live streaming functionality using Agora. Vendors can create and manage live streams, users can watch, send messages, and like streams.",
 			"item": [
