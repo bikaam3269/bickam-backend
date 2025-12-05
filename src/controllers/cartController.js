@@ -29,8 +29,11 @@ export const addToCart = async (req, res, next) => {
 
     return sendSuccess(res, cartItem, 'Item added to cart successfully', 201);
   } catch (error) {
-    if (error.message === 'Product not found') {
-      return sendError(res, error.message, 404);
+    if (error.message === 'Product not found' || 
+        error.message === 'Product has no vendor' ||
+        error.message === 'Cart contains product with no vendor' ||
+        error.message.includes('Cannot add product from different vendor')) {
+      return sendError(res, error.message, 400);
     }
     next(error);
   }

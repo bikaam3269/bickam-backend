@@ -44,6 +44,35 @@ class CartService {
       throw new Error('Product not found');
     }
 
+    if (!product.vendorId) {
+      throw new Error('Product has no vendor');
+    }
+
+    // Get all cart items to check vendor
+    const cartItems = await Cart.findAll({
+      where: { userId },
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['id', 'vendorId']
+      }]
+    });
+
+    // Check if cart has items from different vendor
+    if (cartItems.length > 0) {
+      const firstCartItem = cartItems[0];
+      const firstVendorId = firstCartItem.product?.vendorId;
+
+      if (!firstVendorId) {
+        throw new Error('Cart contains product with no vendor');
+      }
+
+      // Check if new product is from different vendor
+      if (product.vendorId !== firstVendorId) {
+        throw new Error(`Cannot add product from different vendor. Cart already contains products from vendor ${firstVendorId}. Please clear cart first or complete current order.`);
+      }
+    }
+
     // Check if item already in cart
     const existingCartItem = await Cart.findOne({
       where: { userId, productId }
