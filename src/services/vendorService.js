@@ -178,9 +178,9 @@ class VendorService {
         // Transform vendor data with image URLs
         const vendorData = transformVendorImages(updatedVendor);
         
-        // Set isOnline: false if vendor has no address, latitude, or longitude
-        // Otherwise, isOnline: true
-        vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
+        // Set isOnline: true if vendor has no address, latitude, or longitude (online store)
+        // Otherwise, isOnline: false (physical store)
+        vendorData.isOnline = !(vendorData.address && vendorData.latitude && vendorData.longitude);
 
         return vendorData;
     }
@@ -291,9 +291,9 @@ class VendorService {
         const productImages = await getProductImages(vendorId);
         vendorData.productImages = productImages;
 
-        // Set isOnline: false if vendor has no address, latitude, or longitude
-        // Otherwise, isOnline: true
-        vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
+        // Set isOnline: true if vendor has no address, latitude, or longitude (online store)
+        // Otherwise, isOnline: false (physical store)
+        vendorData.isOnline = !(vendorData.address && vendorData.latitude && vendorData.longitude);
 
         return vendorData;
     }
