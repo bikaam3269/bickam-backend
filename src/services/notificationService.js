@@ -135,8 +135,8 @@ class NotificationService {
       fcmResult,
       fcmSent: notification.fcmSent,
       message: notification.fcmSent 
-        ? 'Notification sent successfully' 
-        : 'Notification saved but FCM token not available'
+        ? 'تم إرسال الإشعار بنجاح' 
+        : 'تم حفظ الإشعار ولكن رمز FCM غير متاح'
     };
   }
 
@@ -363,8 +363,8 @@ class NotificationService {
   async notifyLoginSuccess(userId, userName) {
     return await this.sendNotificationSafely(
       userId,
-      'Login Successful',
-      `Welcome back, ${userName}! You have successfully logged in.`,
+      'تم تسجيل الدخول بنجاح',
+      `مرحباً بعودتك، ${userName}! تم تسجيل دخولك بنجاح.`,
       {
         type: NotificationService.NOTIFICATION_TYPES.LOGIN_SUCCESS,
         timestamp: new Date().toISOString()
@@ -382,8 +382,8 @@ class NotificationService {
   async notifyOrderCreated(userId, orderId, totalAmount) {
     return await this.sendNotificationSafely(
       userId,
-      'Order Placed Successfully',
-      `Your order #${orderId} has been placed. Total: ${totalAmount} EGP`,
+      'تم إنشاء الطلب بنجاح',
+      `تم إنشاء طلبك رقم #${orderId}. الإجمالي: ${totalAmount} جنيه`,
       {
         type: NotificationService.NOTIFICATION_TYPES.ORDER_CREATED,
         orderId: orderId.toString(),
@@ -404,8 +404,8 @@ class NotificationService {
   async notifyVendorNewOrder(vendorId, orderId, customerName, totalAmount) {
     return await this.sendNotificationSafely(
       vendorId,
-      'New Order Received',
-      `You have a new order #${orderId} from ${customerName}. Amount: ${totalAmount} EGP`,
+      'طلب جديد',
+      `لديك طلب جديد رقم #${orderId} من ${customerName}. المبلغ: ${totalAmount} جنيه`,
       {
         type: NotificationService.NOTIFICATION_TYPES.ORDER_CREATED,
         orderId: orderId.toString(),
@@ -425,20 +425,20 @@ class NotificationService {
    */
   async notifyOrderStatusChanged(userId, orderId, status) {
     const statusMessages = {
-      'pending': 'Your order is being processed',
-      'confirmed': 'Your order has been confirmed',
-      'processing': 'Your order is being prepared',
-      'shipped': 'Your order has been shipped',
-      'delivered': 'Your order has been delivered',
-      'cancelled': 'Your order has been cancelled'
+      'pending': 'طلبك قيد المعالجة',
+      'confirmed': 'تم تأكيد طلبك',
+      'processing': 'طلبك قيد التحضير',
+      'shipped': 'تم شحن طلبك',
+      'delivered': 'تم تسليم طلبك',
+      'cancelled': 'تم إلغاء طلبك'
     };
 
-    const message = statusMessages[status] || `Your order status has been updated to ${status}`;
+    const message = statusMessages[status] || `تم تحديث حالة طلبك إلى ${status}`;
 
     return await this.sendNotificationSafely(
       userId,
-      'Order Status Updated',
-      `Order #${orderId}: ${message}`,
+      'تم تحديث حالة الطلب',
+      `الطلب رقم #${orderId}: ${message}`,
       {
         type: NotificationService.NOTIFICATION_TYPES.ORDER_STATUS_CHANGED,
         orderId: orderId.toString(),
@@ -458,8 +458,8 @@ class NotificationService {
   async notifyNewFollower(vendorId, followerId, followerName) {
     return await this.sendNotificationSafely(
       vendorId,
-      'New Follower',
-      `${followerName} started following you`,
+      'متابع جديد',
+      `${followerName} بدأ متابعتك`,
       {
         type: NotificationService.NOTIFICATION_TYPES.NEW_FOLLOWER,
         followerId: followerId.toString(),
@@ -480,8 +480,8 @@ class NotificationService {
   async notifyProductFavorited(vendorId, productId, productName, userName) {
     return await this.sendNotificationSafely(
       vendorId,
-      'Product Favorited',
-      `${userName} added "${productName}" to their favorites`,
+      'تم إضافة منتج للمفضلة',
+      `${userName} أضاف "${productName}" إلى المفضلة`,
       {
         type: NotificationService.NOTIFICATION_TYPES.PRODUCT_FAVORITED,
         productId: productId.toString(),
@@ -513,7 +513,7 @@ class NotificationService {
       });
 
       if (follows.length === 0) {
-        return { success: true, sent: 0, message: 'No followers found' };
+        return { success: true, sent: 0, message: 'لا يوجد متابعون' };
       }
 
       // Filter followers with FCM tokens
@@ -522,13 +522,13 @@ class NotificationService {
         .filter(token => token && token.trim().length > 0);
 
       if (fcmTokens.length === 0) {
-        return { success: true, sent: 0, message: 'No valid FCM tokens found' };
+        return { success: true, sent: 0, message: 'لا توجد رموز FCM صالحة' };
       }
 
       const result = await firebaseService.sendMulticastNotification(
         fcmTokens,
-        'New Product Available',
-        `${vendorName} added a new product: ${productName}`,
+        'منتج جديد متاح',
+        `${vendorName} أضاف منتجاً جديداً: ${productName}`,
         {
           type: NotificationService.NOTIFICATION_TYPES.NEW_PRODUCT,
           vendorId: vendorId.toString(),
@@ -560,8 +560,8 @@ class NotificationService {
   async notifyPaymentReceived(vendorId, orderId, amount) {
     return await this.sendNotificationSafely(
       vendorId,
-      'Payment Received',
-      `You received ${amount} EGP for order #${orderId}`,
+      'تم استلام الدفع',
+      `تم استلام ${amount} جنيه للطلب رقم #${orderId}`,
       {
         type: NotificationService.NOTIFICATION_TYPES.PAYMENT_RECEIVED,
         orderId: orderId.toString(),
@@ -580,8 +580,8 @@ class NotificationService {
   async notifyOrderDelivered(userId, orderId) {
     return await this.sendNotificationSafely(
       userId,
-      'Order Delivered',
-      `Your order #${orderId} has been delivered. Thank you for your purchase!`,
+      'تم تسليم الطلب',
+      `تم تسليم طلبك رقم #${orderId}. شكراً لشرائك!`,
       {
         type: NotificationService.NOTIFICATION_TYPES.ORDER_DELIVERED,
         orderId: orderId.toString(),
@@ -599,12 +599,12 @@ class NotificationService {
    */
   async notifyOrderCancelled(userId, orderId, reason = null) {
     const body = reason 
-      ? `Your order #${orderId} has been cancelled. Reason: ${reason}`
-      : `Your order #${orderId} has been cancelled`;
+      ? `تم إلغاء طلبك رقم #${orderId}. السبب: ${reason}`
+      : `تم إلغاء طلبك رقم #${orderId}`;
 
     return await this.sendNotificationSafely(
       userId,
-      'Order Cancelled',
+      'تم إلغاء الطلب',
       body,
       {
         type: NotificationService.NOTIFICATION_TYPES.ORDER_CANCELLED,

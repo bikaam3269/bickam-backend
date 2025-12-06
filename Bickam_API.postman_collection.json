@@ -1982,7 +1982,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/follows/following",
+							"raw": "{{base_url}}/api/v1/follows/following?limit=50&offset=0",
 							"host": [
 								"{{base_url}}"
 							],
@@ -1991,8 +1991,21 @@
 								"v1",
 								"follows",
 								"following"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of vendors to return (default: 50)"
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Number of vendors to skip (default: 0)"
+								}
 							]
-						}
+						},
+						"description": "Get list of vendors that the authenticated user is following with pagination.\n\n**Query Parameters:**\n- `limit` (optional, default: 50): Number of vendors to return per page\n- `offset` (optional, default: 0): Number of vendors to skip (for pagination)\n\n**Response:** Returns following array with pagination info and vendor stats:\n```json\n{\n  \"following\": [\n    {\n      \"id\": 1,\n      \"name\": \"Vendor Name\",\n      \"email\": \"vendor@example.com\",\n      \"rating\": 4.5,\n      \"followersCount\": 150,\n      \"logoImage\": \"/files/logo.jpg\",\n      \"government\": {...}\n    }\n  ],\n  \"pagination\": {\n    \"total\": 50,\n    \"limit\": 50,\n    \"offset\": 0,\n    \"hasMore\": false\n  }\n}\n```\n\n**Vendor Stats:**\n- `rating`: Vendor rating (0-5 scale) based on completed orders vs total orders\n- `followersCount`: Number of followers for this vendor"
 					},
 					"response": []
 				},
@@ -2878,7 +2891,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/orders/my-orders",
+							"raw": "{{base_url}}/api/v1/orders/my-orders?status=pending&limit=50&offset=0",
 							"host": [
 								"{{base_url}}"
 							],
@@ -2887,8 +2900,29 @@
 								"v1",
 								"orders",
 								"my-orders"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by order status: pending, confirmed, processing, shipped, delivered, cancelled",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of orders to return (default: 50)",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Number of orders to skip (default: 0)",
+									"disabled": true
+								}
 							]
-						}
+						},
+						"description": "Get all orders for the authenticated user with filtering and pagination.\n\n**Query Parameters:**\n- `status` (optional): Filter by order status - 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'\n- `limit` (optional, default: 50): Number of orders to return per page\n- `offset` (optional, default: 0): Number of orders to skip (for pagination)\n\n**Response:** Returns orders array with pagination info:\n```json\n{\n  \"orders\": [...],\n  \"pagination\": {\n    \"total\": 100,\n    \"limit\": 50,\n    \"offset\": 0,\n    \"hasMore\": true\n  }\n}\n```"
 					},
 					"response": []
 				},

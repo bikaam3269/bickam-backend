@@ -274,7 +274,7 @@ class AuthService {
       };
     }
 
-    // Save FCM token if provided
+    // Save FCM token if provided (for future notifications, but don't send login notification)
     if (fcmToken) {
       try {
         await notificationService.saveFCMToken(user.id, fcmToken);
@@ -283,18 +283,6 @@ class AuthService {
       } catch (error) {
         // Log error but don't fail login if token validation fails
         console.error('Failed to save FCM token during login:', error.message);
-      }
-    }
-
-    // Send Firebase push notification on successful login
-    // Check if user has FCM token (either existing or just saved)
-    const userFcmToken = user.fcmToken || fcmToken;
-    if (userFcmToken) {
-      try {
-        await notificationService.notifyLoginSuccess(user.id, user.name);
-      } catch (error) {
-        // Log error but don't fail login if notification fails
-        console.error('Failed to send login notification:', error.message);
       }
     }
 
