@@ -104,6 +104,14 @@ class OrderService {
         paymentStatus = 'paid';
         remainingAmount = 0;
       } else if (paymentMethod === 'wallet') {
+        // Check wallet balance first
+        const walletBalance = await walletService.getBalance(userId);
+        
+        // If wallet balance is 0, throw error
+        if (walletBalance <= 0) {
+          throw new Error('Wallet balance is zero. Please add funds to your wallet or use cash payment.');
+        }
+        
         // Wallet payment: deduct what's available (partial payment allowed)
         const { deducted, remaining } = await walletService.deductBalancePartial(userId, vendorTotal);
         

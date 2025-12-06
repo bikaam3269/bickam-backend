@@ -49,7 +49,8 @@ export const createOrder = async (req, res, next) => {
         error.message.includes('not found') ||
         error.message.includes('city') ||
         error.message.includes('shipping') ||
-        error.message.includes('has no city')) {
+        error.message.includes('has no city') ||
+        error.message.includes('Wallet balance is zero')) {
       return sendError(res, error.message, 400);
     }
     next(error);
