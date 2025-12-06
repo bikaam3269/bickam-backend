@@ -53,9 +53,16 @@ export const getFollowers = async (req, res, next) => {
 export const getFollowing = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const following = await followService.getFollowing(userId);
+    const { limit = 50, offset = 0 } = req.query;
 
-    return sendSuccess(res, following, 'Following list retrieved successfully');
+    const options = {
+      limit: parseInt(limit) || 50,
+      offset: parseInt(offset) || 0
+    };
+
+    const result = await followService.getFollowing(userId, options);
+
+    return sendSuccess(res, result, 'Following list retrieved successfully');
   } catch (error) {
     next(error);
   }

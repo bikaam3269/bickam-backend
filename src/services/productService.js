@@ -11,7 +11,20 @@ import favoriteService from './favoriteService.js';
 
 class ProductService {
   async getAllProducts(filters = {}) {
-    const { vendorId, categoryId, subcategoryId, search, minPrice, maxPrice, isActive, minQuantity } = filters;
+    const { 
+      vendorId, 
+      categoryId, 
+      subcategoryId, 
+      search, 
+      minPrice, 
+      maxPrice, 
+      isActive, 
+      minQuantity,
+      page = 1,
+      limit = 50,
+      status // 'published', 'pending', 'rejected' - based on isActive
+    } = filters;
+    
     const where = {};
 
     if (vendorId) {
@@ -48,12 +61,26 @@ class ProductService {
       where.isActive = isActive;
     }
 
+    // Filter by status (published = isActive=true, pending/rejected = isActive=false)
+    // Note: This is a simplified status system. You may want to add a proper status field later.
+    if (status === 'published') {
+      where.isActive = true;
+    } else if (status === 'pending' || status === 'rejected') {
+      where.isActive = false;
+    }
+
     // Filter by minimum quantity
     if (minQuantity !== undefined) {
       where.quantity = { [Op.gte]: minQuantity };
     }
 
-    const products = await Product.findAll({
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get total count
+    const totalCount = await Product.count({ where });
+
+    // Get products with pagination
+    const products = await Product.findAndCountAll({
       where,
       include: [
         {
@@ -72,11 +99,13 @@ class ProductService {
           attributes: ['id', 'name']
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: offset
     });
 
     // Ensure images is always returned as an array, not a stringified array
-    return products.map(product => {
+    const formattedProducts = products.rows.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
       if (productData.images) {
         if (typeof productData.images === 'string') {
@@ -92,8 +121,21 @@ class ProductService {
       } else {
         productData.images = [];
       }
+      // Add status based on isActive (simplified - you may want to add proper status field)
+      productData.status = productData.isActive ? 'published' : 'pending';
       return productData;
     });
+
+    return {
+      products: formattedProducts,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / parseInt(limit)),
+        hasMore: offset + formattedProducts.length < totalCount
+      }
+    };
   }
 
   async getProductById(id, userId = null) {
@@ -290,6 +332,42 @@ class ProductService {
 
     await product.destroy();
     return true;
+  }
+
+  async approveProduct(id) {
+    const product = await Product.findByPk(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.isActive = true;
+    await product.save();
+
+    return await this.getProductById(product.id);
+  }
+
+  async rejectProduct(id) {
+    const product = await Product.findByPk(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.isActive = false;
+    await product.save();
+
+    return await this.getProductById(product.id);
+  }
+
+  async hideProduct(id) {
+    const product = await Product.findByPk(id);
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.isActive = false;
+    await product.save();
+
+    return await this.getProductById(product.id);
   }
 
   async getProductsByVendor(vendorId, page = 1, limit = 10, subcategoryId = null, isActive = undefined, sortBy = 'latest', currentUserId = null) {
@@ -515,6 +593,182 @@ class ProductService {
         hasMore: page < totalPages
       }
     };
+  }
+
+  async getSimilarProducts(productId, limit = 10, userId = null) {
+    // Get the product first
+    const product = await Product.findByPk(productId, {
+      attributes: ['id', 'categoryId', 'subcategoryId', 'vendorId']
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    const { categoryId, subcategoryId, vendorId } = product;
+
+    // Build where clause to find similar products
+    // Priority: same subcategory > same category > same vendor
+    const where = {
+      id: { [Op.ne]: productId }, // Exclude the current product
+      isActive: true // Only active products
+    };
+
+    // Try to find products with same subcategory first
+    let similarProducts = await Product.findAll({
+      where: {
+        ...where,
+        subcategoryId: subcategoryId
+      },
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+        },
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit)
+    });
+
+    // If not enough products, add products from same category
+    if (similarProducts.length < limit) {
+      const remainingLimit = parseInt(limit) - similarProducts.length;
+      const existingIds = similarProducts.map(p => p.id);
+      existingIds.push(productId);
+
+      const categoryProducts = await Product.findAll({
+        where: {
+          ...where,
+          categoryId: categoryId,
+          id: { [Op.notIn]: existingIds }
+        },
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name']
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: remainingLimit
+      });
+
+      similarProducts = [...similarProducts, ...categoryProducts];
+    }
+
+    // If still not enough, add products from same vendor
+    if (similarProducts.length < limit && vendorId) {
+      const remainingLimit = parseInt(limit) - similarProducts.length;
+      const existingIds = similarProducts.map(p => p.id);
+      existingIds.push(productId);
+
+      const vendorProducts = await Product.findAll({
+        where: {
+          ...where,
+          vendorId: vendorId,
+          id: { [Op.notIn]: existingIds }
+        },
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name']
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: remainingLimit
+      });
+
+      similarProducts = [...similarProducts, ...vendorProducts];
+    }
+
+    // Get favorite and cart status for all products if user is authenticated
+    let favoriteProductIds = new Set();
+    let cartProductIds = new Set();
+    if (userId && similarProducts.length > 0) {
+      const productIds = similarProducts.map(p => p.id);
+      if (productIds.length > 0) {
+        // Get favorite product IDs
+        const favorites = await Favorite.findAll({
+          where: {
+            userId: userId,
+            productId: { [Op.in]: productIds }
+          },
+          attributes: ['productId']
+        });
+        favoriteProductIds = new Set(favorites.map(fav => fav.productId));
+
+        // Get cart product IDs
+        const cartItems = await Cart.findAll({
+          where: {
+            userId: userId,
+            productId: { [Op.in]: productIds }
+          },
+          attributes: ['productId']
+        });
+        cartProductIds = new Set(cartItems.map(item => item.productId));
+      }
+    }
+
+    // Format products with images, isFavorite, and isCart
+    const formattedProducts = similarProducts.map(product => {
+      const productData = product.toJSON ? product.toJSON() : product;
+      
+      // Ensure images is always returned as an array
+      if (productData.images) {
+        if (typeof productData.images === 'string') {
+          try {
+            productData.images = JSON.parse(productData.images);
+          } catch (e) {
+            productData.images = [];
+          }
+        }
+        if (!Array.isArray(productData.images)) {
+          productData.images = [];
+        }
+      } else {
+        productData.images = [];
+      }
+
+      // Add isFavorite and isCart
+      productData.isFavorite = userId ? favoriteProductIds.has(product.id) : false;
+      productData.isCart = userId ? cartProductIds.has(product.id) : false;
+
+      return productData;
+    });
+
+    return formattedProducts;
   }
 }
 

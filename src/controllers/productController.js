@@ -11,12 +11,15 @@ export const getAllProducts = async (req, res, next) => {
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
       isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
-      minQuantity: req.query.minQuantity ? parseInt(req.query.minQuantity) : undefined
+      minQuantity: req.query.minQuantity ? parseInt(req.query.minQuantity) : undefined,
+      page: req.query.page || 1,
+      limit: req.query.limit || 50,
+      status: req.query.status // 'published', 'pending', 'rejected'
     };
 
-    const products = await productService.getAllProducts(filters);
+    const result = await productService.getAllProducts(filters);
 
-    return sendSuccess(res, products, 'Products retrieved successfully');
+    return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -199,6 +202,62 @@ export const getMyProducts = async (req, res, next) => {
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
     console.error('Error in getMyProducts:', error);
+    next(error);
+  }
+};
+
+export const approveProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.approveProduct(parseInt(id));
+    return sendSuccess(res, product, 'Product approved successfully');
+  } catch (error) {
+    if (error.message === 'Product not found') {
+      return sendError(res, error.message, 404);
+    }
+    next(error);
+  }
+};
+
+export const rejectProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.rejectProduct(parseInt(id));
+    return sendSuccess(res, product, 'Product rejected successfully');
+  } catch (error) {
+    if (error.message === 'Product not found') {
+      return sendError(res, error.message, 404);
+    }
+    next(error);
+  }
+};
+
+export const hideProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const product = await productService.hideProduct(parseInt(id));
+    return sendSuccess(res, product, 'Product hidden successfully');
+  } catch (error) {
+    if (error.message === 'Product not found') {
+      return sendError(res, error.message, 404);
+    }
+    next(error);
+  }
+};
+
+export const getSimilarProducts = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const limit = parseInt(req.query.limit) || 10;
+    const userId = req.user ? req.user.id : null;
+
+    const similarProducts = await productService.getSimilarProducts(parseInt(id), limit, userId);
+
+    return sendSuccess(res, similarProducts, 'Similar products retrieved successfully');
+  } catch (error) {
+    if (error.message === 'Product not found') {
+      return sendError(res, error.message, 404);
+    }
     next(error);
   }
 };

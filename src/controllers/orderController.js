@@ -73,9 +73,17 @@ export const getOrderById = async (req, res, next) => {
 export const getUserOrders = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const orders = await orderService.getUserOrders(userId);
+    const { status, limit = 50, offset = 0 } = req.query;
 
-    return sendSuccess(res, orders, 'Orders retrieved successfully');
+    const options = {
+      status: status || null,
+      limit: parseInt(limit) || 50,
+      offset: parseInt(offset) || 0
+    };
+
+    const result = await orderService.getUserOrders(userId, options);
+
+    return sendSuccess(res, result, 'Orders retrieved successfully');
   } catch (error) {
     next(error);
   }

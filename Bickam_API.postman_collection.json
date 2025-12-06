@@ -1549,6 +1549,43 @@
 					"response": []
 				},
 				{
+					"name": "Get Similar Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional: Include token to get isFavorite and isCart status for each product",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/1/similar?limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"products",
+								"1",
+								"similar"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of similar products to return (default: 10)"
+								}
+							]
+						},
+						"description": "Get similar products based on the given product ID.\n\n**Priority order for finding similar products:**\n1. Products with same subcategory (highest priority)\n2. Products with same category\n3. Products from same vendor\n\n**Query Parameters:**\n- `limit` (optional): Number of similar products to return (default: 10)\n\n**Response:**\nReturns an array of similar products. Each product includes:\n- All product details (id, name, price, images, etc.)\n- vendor information\n- category and subcategory\n- isFavorite: boolean (if Authorization header provided)\n- isCart: boolean (if Authorization header provided)\n\nOnly active products are returned."
+					},
+					"response": []
+				},
+				{
 					"name": "Get Products By Vendor",
 					"request": {
 						"method": "GET",
