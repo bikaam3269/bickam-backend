@@ -17,7 +17,9 @@
     "migrate:shippings": "node create_shippings_table_migration.js",
     "migrate:order-shipping": "node add_order_shipping_fields_migration.js",
     "migrate:user-city": "node add_city_id_to_users_migration.js",
-    "migrate:wallet-requests": "node create_wallet_requests_table_migration.js"
+    "migrate:wallet-requests": "node create_wallet_requests_table_migration.js",
+    "migrate:marketplace-products": "node create_marketplace_products_table_migration.js",
+    "migrate:marketplace-settings": "node create_marketplace_settings_table_migration.js"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +34,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "mysql2": "^3.6.5",
+    "node-cron": "^3.0.3",
     "sequelize": "^6.35.0",
     "twilio": "^5.10.6"
   },

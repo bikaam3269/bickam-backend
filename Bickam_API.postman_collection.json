@@ -4539,6 +4539,618 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Marketplace Products",
+			"item": [
+				{
+					"name": "Public",
+					"item": [
+						{
+							"name": "Get All Approved Products",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products?page=1&limit=50&search=&minPrice=&maxPrice=",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Items per page"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search term"
+										},
+										{
+											"key": "minPrice",
+											"value": "",
+											"description": "Minimum price"
+										},
+										{
+											"key": "maxPrice",
+											"value": "",
+											"description": "Maximum price"
+										}
+									]
+								},
+								"description": "Get all approved marketplace products (public endpoint).\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `search` (optional): Search term for name/description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n\n**Authentication:** Not required\n\n**Response:** List of approved products with pagination."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Product by ID",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Get marketplace product by ID.\n\n**Parameters:**\n- `id`: Product ID\n\n**Authentication:** Optional (for additional info if authenticated)\n\n**Response:** Product details with user information."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "User",
+					"item": [
+						{
+							"name": "Create Product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "منتج مستعمل",
+											"type": "text",
+											"description": "Product name"
+										},
+										{
+											"key": "description",
+											"value": "وصف المنتج",
+											"type": "text",
+											"description": "Product description"
+										},
+										{
+											"key": "phone",
+											"value": "01234567890",
+											"type": "text",
+											"description": "Contact phone number"
+										},
+										{
+											"key": "price",
+											"value": "1000",
+											"type": "text",
+											"description": "Product price"
+										},
+										{
+											"key": "files",
+											"type": "file",
+											"src": [],
+											"description": "Images or videos (up to 10 files)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products"
+									]
+								},
+								"description": "Create a new marketplace product (pending approval).\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `phone` (required): Contact phone number\n- `price` (required): Product price\n- `files` (optional): Array of images/videos (up to 10 files)\n\n**Authentication:** Required\n\n**Response:** Created product with pending status."
+							},
+							"response": []
+						},
+						{
+							"name": "Get My Products",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/my/products?status=",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										"my",
+										"products"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (pending, approved, rejected)"
+										}
+									]
+								},
+								"description": "Get current user's marketplace products.\n\n**Query Parameters:**\n- `status` (optional): Filter by status (pending, approved, rejected)\n\n**Authentication:** Required\n\n**Response:** List of user's products."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete My Product",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Delete a marketplace product (user can delete their own products).\n\n**Parameters:**\n- `id`: Product ID\n\n**Authentication:** Required\n\n**Response:** Success message."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "Get All Products (Admin)",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/admin/all?status=&userId=&page=1&limit=50&search=&minPrice=&maxPrice=",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										"admin",
+										"all"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "",
+											"description": "Filter by status (pending, approved, rejected)"
+										},
+										{
+											"key": "userId",
+											"value": "",
+											"description": "Filter by user ID"
+										},
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Items per page"
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search term"
+										},
+										{
+											"key": "minPrice",
+											"value": "",
+											"description": "Minimum price"
+										},
+										{
+											"key": "maxPrice",
+											"value": "",
+											"description": "Maximum price"
+										}
+									]
+								},
+								"description": "Get all marketplace products with filters (admin only).\n\n**Query Parameters:**\n- `status` (optional): Filter by status\n- `userId` (optional): Filter by user ID\n- `page` (optional): Page number\n- `limit` (optional): Items per page\n- `search` (optional): Search term\n- `minPrice` (optional): Minimum price\n- `maxPrice` (optional): Maximum price\n\n**Authentication:** Required (Admin only)\n\n**Response:** List of products with pagination."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Pending Products",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/admin/pending?page=1&limit=50",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										"admin",
+										"pending"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Items per page"
+										}
+									]
+								},
+								"description": "Get all pending marketplace products (admin only).\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n\n**Authentication:** Required (Admin only)\n\n**Response:** List of pending products with pagination."
+							},
+							"response": []
+						},
+						{
+							"name": "Approve Product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"expirationDays\": 10\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id/approve",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id",
+										"approve"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Approve a pending marketplace product (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters:**\n- `expirationDays` (optional): Number of days until expiration (default: 10)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Approved product with expiration date."
+							},
+							"response": []
+						},
+						{
+							"name": "Reject Product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"rejectionReason\": \"Reason for rejection (optional)\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id/reject",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id",
+										"reject"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Reject a pending marketplace product (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters:**\n- `rejectionReason` (optional): Reason for rejection\n\n**Authentication:** Required (Admin only)\n\n**Response:** Rejected product with rejection reason."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Product Expiration",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"expirationDays\": 15\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id/expiration",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id",
+										"expiration"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Update expiration days for an approved product (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters:**\n- `expirationDays` (required): Number of days until expiration\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated product with new expiration date."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Product (Admin)",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Delete a marketplace product (admin can delete any product).\n\n**Parameters:**\n- `id`: Product ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Success message."
+							},
+							"response": []
+						},
+						{
+							"name": "Settings",
+							"item": [
+								{
+									"name": "Get Default Expiration Days",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/v1/marketplace-products/admin/settings/expiration-days",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"v1",
+												"marketplace-products",
+												"admin",
+												"settings",
+												"expiration-days"
+											]
+										},
+										"description": "Get default expiration days setting (admin only).\n\n**Authentication:** Required (Admin only)\n\n**Response:** Default expiration days value."
+									},
+									"response": []
+								},
+								{
+									"name": "Update Default Expiration Days",
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}",
+												"type": "text"
+											},
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"expirationDays\": 10\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{base_url}}/api/v1/marketplace-products/admin/settings/expiration-days",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"v1",
+												"marketplace-products",
+												"admin",
+												"settings",
+												"expiration-days"
+											]
+										},
+										"description": "Update default expiration days setting (admin only).\n\n**Body Parameters:**\n- `expirationDays` (required): Default number of days until expiration (must be positive)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated default expiration days value."
+									},
+									"response": []
+								},
+								{
+									"name": "Get All Settings",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{auth_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{base_url}}/api/v1/marketplace-products/admin/settings",
+											"host": [
+												"{{base_url}}"
+											],
+											"path": [
+												"api",
+												"v1",
+												"marketplace-products",
+												"admin",
+												"settings"
+											]
+										},
+										"description": "Get all marketplace settings (admin only).\n\n**Authentication:** Required (Admin only)\n\n**Response:** All marketplace settings."
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
 		}
 	],
 	"variable": [

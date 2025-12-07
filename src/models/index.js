@@ -19,6 +19,8 @@ import City from './City.js';
 import Shipping from './Shipping.js';
 import WalletRequest from './WalletRequest.js';
 import WalletInfo from './WalletInfo.js';
+import MarketplaceProduct from './MarketplaceProduct.js';
+import MarketplaceSettings from './MarketplaceSettings.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -135,10 +137,12 @@ const models = {
   LiveStreamMessage,
   LiveStreamLike,
   City,
-  Shipping,
-  WalletRequest,
-  WalletInfo,
-  sequelize
+    Shipping,
+    WalletRequest,
+    WalletInfo,
+    MarketplaceProduct,
+    MarketplaceSettings,
+    sequelize
 };
 
 // Test database connection

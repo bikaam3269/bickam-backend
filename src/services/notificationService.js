@@ -385,7 +385,7 @@ class NotificationService {
       'تم إنشاء الطلب بنجاح',
       `تم إنشاء طلبك رقم #${orderId}. الإجمالي: ${totalAmount} جنيه`,
       {
-        type: NotificationService.NOTIFICATION_TYPES.ORDER_CREATED,
+        type: 'order',
         orderId: orderId.toString(),
         totalAmount: totalAmount.toString(),
         timestamp: new Date().toISOString()
@@ -407,7 +407,7 @@ class NotificationService {
       'طلب جديد',
       `لديك طلب جديد رقم #${orderId} من ${customerName}. المبلغ: ${totalAmount} جنيه`,
       {
-        type: NotificationService.NOTIFICATION_TYPES.ORDER_CREATED,
+        type: 'order',
         orderId: orderId.toString(),
         customerName,
         totalAmount: totalAmount.toString(),
@@ -440,7 +440,7 @@ class NotificationService {
       'تم تحديث حالة الطلب',
       `الطلب رقم #${orderId}: ${message}`,
       {
-        type: NotificationService.NOTIFICATION_TYPES.ORDER_STATUS_CHANGED,
+        type: 'order',
         orderId: orderId.toString(),
         status,
         timestamp: new Date().toISOString()
@@ -563,7 +563,7 @@ class NotificationService {
       'تم استلام الدفع',
       `تم استلام ${amount} جنيه للطلب رقم #${orderId}`,
       {
-        type: NotificationService.NOTIFICATION_TYPES.PAYMENT_RECEIVED,
+        type: 'order',
         orderId: orderId.toString(),
         amount: amount.toString(),
         timestamp: new Date().toISOString()
@@ -583,7 +583,7 @@ class NotificationService {
       'تم تسليم الطلب',
       `تم تسليم طلبك رقم #${orderId}. شكراً لشرائك!`,
       {
-        type: NotificationService.NOTIFICATION_TYPES.ORDER_DELIVERED,
+        type: 'order',
         orderId: orderId.toString(),
         timestamp: new Date().toISOString()
       }
@@ -607,7 +607,7 @@ class NotificationService {
       'تم إلغاء الطلب',
       body,
       {
-        type: NotificationService.NOTIFICATION_TYPES.ORDER_CANCELLED,
+        type: 'order',
         orderId: orderId.toString(),
         reason: reason || '',
         timestamp: new Date().toISOString()

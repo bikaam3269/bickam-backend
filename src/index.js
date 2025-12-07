@@ -4,6 +4,7 @@ import { config } from './config/app.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { connectDatabase } from './models/index.js';
+import { startMarketplaceCleanupJob } from './utils/cronJobs.js';
 
 const app = express();
 
@@ -42,6 +43,9 @@ const startServer = async () => {
       console.log(`Server is running on port ${config.port}`);
       console.log(`Environment: ${config.env}`);
       console.log(`API available at http://localhost:${config.port}${config.api.prefix}`);
+      
+      // Start cron jobs
+      startMarketplaceCleanupJob();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
