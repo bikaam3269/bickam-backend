@@ -200,12 +200,30 @@ export const deleteMarketplaceProduct = async (req, res, next) => {
 export const getUserMarketplaceProducts = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const status = req.query.status || null; // Optional filter by status
+    
+    console.log('========================================');
+    console.log('[getUserMarketplaceProducts] User ID:', userId);
+    console.log('[getUserMarketplaceProducts] User ID Type:', typeof userId);
+    console.log('[getUserMarketplaceProducts] Full User Object:', JSON.stringify(req.user, null, 2));
+    console.log('========================================');
+    
+    // Handle status query parameter - ignore empty strings, dots, or whitespace
+    let status = req.query.status;
+    if (!status || status.trim() === '' || status.trim() === '.') {
+      status = null;
+    } else {
+      status = status.trim();
+    }
+
+    console.log('[getUserMarketplaceProducts] Request:', { userId, status, userType: req.user.type });
 
     const products = await marketplaceProductService.getUserProducts(userId, status);
 
+    console.log('[getUserMarketplaceProducts] Response:', { count: products.length });
+
     return sendSuccess(res, products, 'User marketplace products retrieved successfully');
   } catch (error) {
+    console.error('[getUserMarketplaceProducts] Error:', error);
     next(error);
   }
 };

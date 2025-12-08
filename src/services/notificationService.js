@@ -386,6 +386,7 @@ class NotificationService {
       `تم إنشاء طلبك رقم #${orderId}. الإجمالي: ${totalAmount} جنيه`,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         totalAmount: totalAmount.toString(),
         timestamp: new Date().toISOString()
@@ -408,6 +409,7 @@ class NotificationService {
       `لديك طلب جديد رقم #${orderId} من ${customerName}. المبلغ: ${totalAmount} جنيه`,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         customerName,
         totalAmount: totalAmount.toString(),
@@ -441,6 +443,7 @@ class NotificationService {
       `الطلب رقم #${orderId}: ${message}`,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         status,
         timestamp: new Date().toISOString()
@@ -564,6 +567,7 @@ class NotificationService {
       `تم استلام ${amount} جنيه للطلب رقم #${orderId}`,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         amount: amount.toString(),
         timestamp: new Date().toISOString()
@@ -584,6 +588,7 @@ class NotificationService {
       `تم تسليم طلبك رقم #${orderId}. شكراً لشرائك!`,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         timestamp: new Date().toISOString()
       }
@@ -608,8 +613,31 @@ class NotificationService {
       body,
       {
         type: 'order',
+        id: orderId.toString(), // Add id field for action item
         orderId: orderId.toString(),
         reason: reason || '',
+        timestamp: new Date().toISOString()
+      }
+    );
+  }
+
+  /**
+   * Notify user when marketplace product is approved
+   * @param {number} userId - User ID
+   * @param {number} productId - Marketplace product ID
+   * @param {string} productName - Product name
+   * @returns {Promise<object|null>}
+   */
+  async notifyMarketplaceProductApproved(userId, productId, productName) {
+    return await this.sendNotificationSafely(
+      userId,
+      'تم قبول منتجك',
+      `تم قبول منتجك "${productName}" وهو الآن متاح للعرض`,
+      {
+        type: 'marketplace_approved',
+        id: productId.toString(), // Add id field for action item
+        productId: productId.toString(),
+        productName,
         timestamp: new Date().toISOString()
       }
     );
