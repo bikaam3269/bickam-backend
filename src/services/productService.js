@@ -206,7 +206,84 @@ class ProductService {
       productData.isFavorite = false;
     }
 
+    // Get similar products
+    const similarProducts = await this.getSimilarProducts(id, product.categoryId, product.subcategoryId, 8);
+
+    // Format similar products
+    const formattedSimilarProducts = similarProducts.map(p => {
+      const pData = p.toJSON ? p.toJSON() : p;
+      // Ensure images is always an array
+      if (pData.images) {
+        if (typeof pData.images === 'string') {
+          try {
+            pData.images = JSON.parse(pData.images);
+          } catch (e) {
+            pData.images = [];
+          }
+        }
+        if (!Array.isArray(pData.images)) {
+          pData.images = [];
+        }
+      } else {
+        pData.images = [];
+      }
+      return pData;
+    });
+
+    productData.similarProducts = formattedSimilarProducts;
+
     return productData;
+  }
+
+  /**
+   * Get similar products based on category and subcategory
+   * @param {number} excludeProductId - Product ID to exclude
+   * @param {number} categoryId - Category ID
+   * @param {number} subcategoryId - Subcategory ID
+   * @param {number} limit - Maximum number of similar products to return
+   * @returns {Promise<Array>}
+   */
+  async getSimilarProducts(excludeProductId, categoryId, subcategoryId, limit = 8) {
+    const where = {
+      id: { [Op.ne]: excludeProductId }, // Exclude current product
+      isActive: true
+    };
+
+    // Priority: same subcategory, then same category
+    const similarProducts = await Product.findAll({
+      where: {
+        ...where,
+        [Op.or]: [
+          { subcategoryId: subcategoryId }, // Same subcategory (highest priority)
+          { categoryId: categoryId } // Same category (lower priority)
+        ]
+      },
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+        },
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name']
+        },
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [
+        // Prioritize same subcategory
+        [sequelize.literal(`CASE WHEN subcategory_id = ${subcategoryId} THEN 0 ELSE 1 END`), 'ASC'],
+        ['createdAt', 'DESC']
+      ],
+      limit: parseInt(limit)
+    });
+
+    return similarProducts;
   }
 
   async createProduct(data) {

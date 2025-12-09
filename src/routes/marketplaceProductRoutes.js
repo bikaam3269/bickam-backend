@@ -6,6 +6,7 @@ import {
   getPendingMarketplaceProducts,
   approveMarketplaceProduct,
   rejectMarketplaceProduct,
+  updateMarketplaceProduct,
   updateProductExpiration,
   deleteMarketplaceProduct,
   getUserMarketplaceProducts,
@@ -40,6 +41,7 @@ router.get('/admin/settings/expiration-days', getDefaultExpirationDays);
 router.put('/admin/settings/expiration-days', updateDefaultExpirationDays);
 router.post('/:id/approve', approveMarketplaceProduct);
 router.post('/:id/reject', rejectMarketplaceProduct);
+router.put('/:id', updateMarketplaceProduct);
 router.put('/:id/expiration', updateProductExpiration);
 
 // User routes (after admin routes to avoid conflicts)

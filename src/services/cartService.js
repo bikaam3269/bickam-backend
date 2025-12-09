@@ -152,6 +152,19 @@ class CartService {
 
     return total;
   }
+
+  /**
+   * Get cart items count for a user
+   * @param {number} userId - User ID
+   * @returns {Promise<number>} - Total number of items in cart
+   */
+  async getCartItemsCount(userId) {
+    const count = await Cart.count({
+      where: { userId }
+    });
+
+    return count;
+  }
 }
 
 export default new CartService();

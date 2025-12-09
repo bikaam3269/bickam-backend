@@ -84,3 +84,25 @@ export const getBalance = async (req, res, next) => {
   }
 };
 
+/**
+ * Get wallet transactions for authenticated user
+ */
+export const getTransactions = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { type, limit = 50, offset = 0 } = req.query;
+
+    const options = {
+      type: type || null,
+      limit: parseInt(limit) || 50,
+      offset: parseInt(offset) || 0
+    };
+
+    const result = await walletService.getTransactions(userId, options);
+
+    return sendSuccess(res, result, 'Wallet transactions retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -73,6 +73,13 @@ const MarketplaceProduct = sequelize.define('MarketplaceProduct', {
       min: 0
     }
   },
+  isNegotiable: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'is_negotiable',
+    comment: 'Whether the price is negotiable'
+  },
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
     allowNull: false,

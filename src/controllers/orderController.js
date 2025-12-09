@@ -5,7 +5,7 @@ import { sendSuccess, sendError } from '../utils/responseHelper.js';
 export const createOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { toCityId, shippingAddress, paymentMethod = 'wallet' } = req.body;
+    const { toCityId, shippingAddress, phone, paymentMethod = 'wallet' } = req.body;
 
     // Validate required fields
     if (!toCityId) {
@@ -14,6 +14,17 @@ export const createOrder = async (req, res, next) => {
 
     if (!shippingAddress) {
       return sendError(res, 'Shipping address is required', 400);
+    }
+
+    // Get user phone if not provided in request
+    let orderPhone = phone;
+    if (!orderPhone) {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findByPk(userId);
+      if (!user || !user.phone) {
+        return sendError(res, 'Phone number is required. Please provide phone number or update your profile.', 400);
+      }
+      orderPhone = user.phone;
     }
 
     const toCityIdNum = parseInt(toCityId);
@@ -39,7 +50,8 @@ export const createOrder = async (req, res, next) => {
       userId, 
       orderItems, 
       toCityIdNum,
-      shippingAddress, 
+      shippingAddress,
+      orderPhone,
       paymentMethod
     );
 

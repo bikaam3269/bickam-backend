@@ -23,6 +23,7 @@ class NotificationService {
   };
   /**
    * Save or update FCM token for a user
+   * Prevents duplicate tokens by removing the token from other users first
    * @param {number} userId - User ID
    * @param {string} fcmToken - FCM token
    * @returns {Promise<object>}
@@ -43,6 +44,19 @@ class NotificationService {
       throw new Error('Invalid FCM token');
     }
 
+    // Remove this FCM token from all other users to prevent duplicates
+    // Each device should only have one active token per user
+    await User.update(
+      { fcmToken: null },
+      {
+        where: {
+          fcmToken: fcmToken,
+          id: { [Op.ne]: userId }
+        }
+      }
+    );
+
+    // Save token for current user
     user.fcmToken = fcmToken;
     await user.save();
 

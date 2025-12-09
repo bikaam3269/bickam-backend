@@ -79,6 +79,12 @@ const Order = sequelize.define('Order', {
     allowNull: true,
     defaultValue: 0,
     field: 'remaining_amount'
+  },
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+    field: 'phone',
+    comment: 'Customer phone number for order delivery'
   }
 }, {
   tableName: 'orders',

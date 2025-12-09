@@ -19,6 +19,7 @@ import City from './City.js';
 import Shipping from './Shipping.js';
 import WalletRequest from './WalletRequest.js';
 import WalletInfo from './WalletInfo.js';
+import WalletTransaction from './WalletTransaction.js';
 import MarketplaceProduct from './MarketplaceProduct.js';
 import MarketplaceSettings from './MarketplaceSettings.js';
 
@@ -140,6 +141,7 @@ const models = {
     Shipping,
     WalletRequest,
     WalletInfo,
+    WalletTransaction,
     MarketplaceProduct,
     MarketplaceSettings,
     sequelize

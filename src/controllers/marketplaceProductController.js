@@ -148,6 +148,29 @@ export const rejectMarketplaceProduct = async (req, res, next) => {
 };
 
 /**
+ * Update marketplace product (admin only)
+ */
+export const updateMarketplaceProduct = async (req, res, next) => {
+  try {
+    if (req.user.type !== 'admin') {
+      return sendError(res, 'Unauthorized. Admin access required.', 403);
+    }
+
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const product = await marketplaceProductService.updateProduct(id, updateData);
+
+    return sendSuccess(res, product, 'Product updated successfully');
+  } catch (error) {
+    if (error.message.includes('not found')) {
+      return sendError(res, error.message, 404);
+    }
+    next(error);
+  }
+};
+
+/**
  * Update product expiration (admin only)
  */
 export const updateProductExpiration = async (req, res, next) => {

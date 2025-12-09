@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
+import City from '../models/City.js';
 import Product from '../models/Product.js';
 import Subcategory from '../models/Subcategory.js';
 import Order from '../models/Order.js';
@@ -128,6 +129,7 @@ class VendorService {
             'password',
             'phone',
             'governmentId',
+            'cityId',
             'activity',
             'description',
             'categoryId',
@@ -176,6 +178,11 @@ class VendorService {
                 {
                     model: Category,
                     as: 'category',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: City,
+                    as: 'city',
                     attributes: ['id', 'name']
                 }
             ],

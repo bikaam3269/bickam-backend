@@ -4665,6 +4665,12 @@
 											"description": "Product price"
 										},
 										{
+											"key": "isNegotiable",
+											"value": "false",
+											"type": "text",
+											"description": "Whether the price is negotiable (true/false)"
+										},
+										{
 											"key": "files",
 											"type": "file",
 											"src": [],
@@ -4683,7 +4689,7 @@
 										"marketplace-products"
 									]
 								},
-								"description": "Create a new marketplace product (pending approval).\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `phone` (required): Contact phone number\n- `price` (required): Product price\n- `files` (optional): Array of images/videos (up to 10 files)\n\n**Authentication:** Required\n\n**Response:** Created product with pending status."
+								"description": "Create a new marketplace product (pending approval).\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `phone` (required): Contact phone number\n- `price` (required): Product price\n- `isNegotiable` (optional): Whether the price is negotiable (true/false, default: false)\n- `files` (optional): Array of images/videos (up to 10 files)\n\n**Authentication:** Required\n\n**Response:** Created product with pending status."
 							},
 							"response": []
 						},
@@ -4959,6 +4965,53 @@
 									]
 								},
 								"description": "Reject a pending marketplace product (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters:**\n- `rejectionReason` (optional): Reason for rejection\n\n**Authentication:** Required (Admin only)\n\n**Response:** Rejected product with rejection reason."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Product",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"isNegotiable\": true,\n  \"name\": \"Updated Product Name\",\n  \"description\": \"Updated description\",\n  \"phone\": \"01234567890\",\n  \"price\": 1500\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketplace-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketplace-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Product ID"
+										}
+									]
+								},
+								"description": "Update marketplace product fields (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters (all optional):**\n- `isNegotiable` (optional): Whether the price is negotiable (true/false)\n- `name` (optional): Product name\n- `description` (optional): Product description\n- `phone` (optional): Contact phone number\n- `price` (optional): Product price\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated product information."
 							},
 							"response": []
 						},

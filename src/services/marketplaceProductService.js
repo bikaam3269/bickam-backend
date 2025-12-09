@@ -10,13 +10,13 @@ class MarketplaceProductService {
    * Create a new marketplace product (pending approval)
    */
   async createProduct(userId, productData) {
-    const { name, description, files, phone, price } = productData;
+    const { name, description, files, phone, price, isNegotiable } = productData;
 
     if (!name || !phone || price === undefined) {
       throw new Error('Name, phone, and price are required');
     }
 
-    console.log('[createProduct] Creating product:', { userId, name, phone, price });
+    console.log('[createProduct] Creating product:', { userId, name, phone, price, isNegotiable });
 
     const product = await MarketplaceProduct.create({
       userId,
@@ -25,6 +25,7 @@ class MarketplaceProductService {
       files: files || [],
       phone,
       price: parseFloat(price),
+      isNegotiable: isNegotiable === true || isNegotiable === 'true' || isNegotiable === 1,
       status: 'pending'
     });
 
@@ -248,6 +249,37 @@ class MarketplaceProductService {
     product.expiresAt = null;
 
     await product.save();
+
+    return await this.getProductById(product.id);
+  }
+
+  /**
+   * Update marketplace product (admin only)
+   */
+  async updateProduct(productId, updateData) {
+    const product = await MarketplaceProduct.findByPk(productId);
+    
+    if (!product) {
+      throw new Error('Marketplace product not found');
+    }
+
+    // Allowed fields to update
+    const allowedFields = ['isNegotiable', 'name', 'description', 'phone', 'price'];
+    const fieldsToUpdate = {};
+
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        if (field === 'isNegotiable') {
+          fieldsToUpdate[field] = updateData[field] === true || updateData[field] === 'true' || updateData[field] === 1;
+        } else if (field === 'price') {
+          fieldsToUpdate[field] = parseFloat(updateData[field]);
+        } else {
+          fieldsToUpdate[field] = updateData[field];
+        }
+      }
+    });
+
+    await product.update(fieldsToUpdate);
 
     return await this.getProductById(product.id);
   }

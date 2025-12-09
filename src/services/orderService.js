@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import Order from '../models/Order.js';
 import OrderItem from '../models/OrderItem.js';
 import Product from '../models/Product.js';
@@ -10,7 +11,7 @@ import cartService from './cartService.js';
 import notificationService from './notificationService.js';
 import shippingService from './shippingService.js';
 class OrderService {
-  async createOrder(userId, cartItems, toCityId, shippingAddress, paymentMethod = 'wallet') {
+  async createOrder(userId, cartItems, toCityId, shippingAddress, phone, paymentMethod = 'wallet') {
     if (!cartItems || cartItems.length === 0) {
       throw new Error('Cart is empty');
     }
@@ -113,7 +114,13 @@ class OrderService {
         }
         
         // Wallet payment: deduct what's available (partial payment allowed)
-        const { deducted, remaining } = await walletService.deductBalancePartial(userId, vendorTotal);
+        const { deducted, remaining } = await walletService.deductBalancePartial(
+          userId, 
+          vendorTotal,
+          `دفع طلب رقم #${vendorId}`,
+          null, // orderId will be set after order creation
+          'order'
+        );
         
         if (remaining > 0) {
           // Partial payment: some amount remaining
@@ -136,10 +143,31 @@ class OrderService {
         toCityId,
         shippingPrice,
         shippingAddress,
+        phone,
         paymentMethod,
         paymentStatus,
         remainingAmount
       });
+
+      // Update wallet transaction with order reference if payment was made
+      if (paymentMethod === 'wallet' && deducted > 0) {
+        const WalletTransaction = (await import('../models/WalletTransaction.js')).default;
+        await WalletTransaction.update(
+          { referenceId: order.id },
+          {
+            where: {
+              userId,
+              type: 'payment',
+              referenceId: null,
+              createdAt: {
+                [Op.gte]: new Date(Date.now() - 5000) // Last 5 seconds
+              }
+            },
+            order: [['createdAt', 'DESC']],
+            limit: 1
+          }
+        );
+      }
 
       // Create order items
       for (const item of items) {

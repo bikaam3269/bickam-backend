@@ -16,10 +16,13 @@
     "migrate:cities": "node create_cities_table_migration.js",
     "migrate:shippings": "node create_shippings_table_migration.js",
     "migrate:order-shipping": "node add_order_shipping_fields_migration.js",
+    "migrate:order-phone": "node add_phone_to_orders_migration.js",
     "migrate:user-city": "node add_city_id_to_users_migration.js",
     "migrate:wallet-requests": "node create_wallet_requests_table_migration.js",
     "migrate:marketplace-products": "node create_marketplace_products_table_migration.js",
-    "migrate:marketplace-settings": "node create_marketplace_settings_table_migration.js"
+    "migrate:marketplace-settings": "node create_marketplace_settings_table_migration.js",
+    "migrate:marketplace-negotiable": "node add_is_negotiable_to_marketplace_products_migration.js",
+    "migrate:wallet-transactions": "node create_wallet_transactions_table_migration.js"
   },
   "keywords": [],
   "author": "",

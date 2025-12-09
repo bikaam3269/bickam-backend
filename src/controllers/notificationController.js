@@ -1,4 +1,5 @@
 import notificationService from '../services/notificationService.js';
+import cartService from '../services/cartService.js';
 import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 /**
@@ -198,15 +199,22 @@ export const getMyNotifications = async (req, res, next) => {
 };
 
 /**
- * Get unread notifications count for authenticated user
+ * Get unread notifications count and cart items count for authenticated user
  */
 export const getUnreadCount = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const count = await notificationService.getUnreadCount(userId);
+    // Get both unread notifications count and cart items count
+    const [unreadCount, cartCount] = await Promise.all([
+      notificationService.getUnreadCount(userId),
+      cartService.getCartItemsCount(userId)
+    ]);
 
-    return sendSuccess(res, { count }, 'Unread count retrieved successfully');
+    return sendSuccess(res, { 
+      unreadCount,
+      cartCount 
+    }, 'Unread notifications and cart count retrieved successfully');
   } catch (error) {
     if (error.message === 'User ID is required') {
       return sendError(res, error.message, 400);

@@ -4,7 +4,8 @@ import {
   deposit,
   withdraw,
   addBalance,
-  getBalance
+  getBalance,
+  getTransactions
 } from '../controllers/walletController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
@@ -15,6 +16,7 @@ router.use(authenticate);
 
 router.get('/', getWallet);
 router.get('/balance', getBalance);
+router.get('/transactions', getTransactions);
 router.post('/deposit', deposit);
 router.post('/withdraw', withdraw);
 router.post('/add', addBalance); // Keep for backward compatibility
