@@ -565,7 +565,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"1111111111\"\n}"
+							"raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"1111111111\",\n  \"governmentId\": 1,\n  \"cityId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/1",
@@ -1305,6 +1310,12 @@
 									"type": "text"
 								},
 								{
+									"key": "cityId",
+									"value": "1",
+									"type": "text",
+									"description": "City ID (optional)"
+								},
+								{
 									"key": "logoImage",
 									"type": "file",
 									"src": []
@@ -1426,6 +1437,12 @@
 									"key": "governmentId",
 									"value": "1",
 									"type": "text"
+								},
+								{
+									"key": "cityId",
+									"value": "1",
+									"type": "text",
+									"description": "City ID (optional)"
 								},
 								{
 									"key": "logoImage",
@@ -2836,7 +2853,7 @@
 								}
 							]
 						},
-						"description": "Calculate full order price (products + shipping) for cart items.\n\n**Query Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n\n**Process:**\n1. Get cart items\n2. Group items by vendor\n3. Calculate products total for each vendor\n4. Get shipping price from vendor's city to delivery city\n5. Calculate total (products + shipping) for each vendor\n6. Return breakdown with grand total\n\n**Response:**\n- `productsTotal`: Total price of all products in cart\n- `totalShippingPrice`: Total shipping price for all vendors\n- `grandTotal`: productsTotal + totalShippingPrice\n- `toCityId`: Delivery city ID\n- `vendorsBreakdown`: Array of breakdown per vendor:\n  - `vendorId`, `vendorName`\n  - `fromCityId`, `toCityId`\n  - `productsSubtotal`: Products total for this vendor\n  - `shippingPrice`: Shipping price for this vendor\n  - `shippingInfo`: Shipping details (fromCity, toCity, price)\n  - `vendorTotal`: productsSubtotal + shippingPrice\n  - `items`: Array of cart items for this vendor\n\n**Authentication:** Required (User)\n\n**Example Response:**\n```json\n{\n  \"productsTotal\": 500.00,\n  \"totalShippingPrice\": 50.00,\n  \"grandTotal\": 550.00,\n  \"toCityId\": 2,\n  \"vendorsBreakdown\": [\n    {\n      \"vendorId\": 1,\n      \"vendorName\": \"Vendor Name\",\n      \"fromCityId\": 1,\n      \"toCityId\": 2,\n      \"productsSubtotal\": 500.00,\n      \"shippingPrice\": 50.00,\n      \"shippingInfo\": {\n        \"fromCity\": { \"id\": 1, \"name\": \"Cairo\" },\n        \"toCity\": { \"id\": 2, \"name\": \"Alexandria\" },\n        \"price\": 50.00\n      },\n      \"vendorTotal\": 550.00,\n      \"items\": [...]\n    }\n  ]\n}\n```"
+						"description": "Calculate full order price (products + shipping) for cart items with wallet information.\n\n**Query Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n\n**Process:**\n1. Get cart items\n2. Group items by vendor\n3. Calculate products total for each vendor\n4. Get shipping price from vendor's city to delivery city\n5. Calculate total (products + shipping) for each vendor\n6. Get wallet balance\n7. Return breakdown with grand total and wallet info\n\n**Response:**\n- `productsTotal`: Total price of all products in cart\n- `totalShippingPrice`: Total shipping price for all vendors\n- `grandTotal`: productsTotal + totalShippingPrice\n- `toCityId`: Delivery city ID\n- `vendorsBreakdown`: Array of breakdown per vendor:\n  - `vendorId`, `vendorName`\n  - `fromCityId`, `toCityId`\n  - `productsSubtotal`: Products total for this vendor\n  - `shippingPrice`: Shipping price for this vendor\n  - `shippingInfo`: Shipping details (fromCity, toCity, price)\n  - `vendorTotal`: productsSubtotal + shippingPrice\n  - `items`: Array of cart items for this vendor\n- `wallet`: Wallet information:\n  - `balance`: Current wallet balance\n  - `canPayWithWallet`: Whether user can pay with wallet (balance > 0)\n  - `sufficientBalance`: Whether balance is sufficient for full payment\n  - `remainingAfterPayment`: Remaining balance after payment\n  - `needsAdditionalPayment`: Additional amount needed if balance is insufficient\n\n**Authentication:** Required (User)\n\n**Example Response:**\n```json\n{\n  \"productsTotal\": 500.00,\n  \"totalShippingPrice\": 50.00,\n  \"grandTotal\": 550.00,\n  \"toCityId\": 2,\n  \"vendorsBreakdown\": [\n    {\n      \"vendorId\": 1,\n      \"vendorName\": \"Vendor Name\",\n      \"fromCityId\": 1,\n      \"toCityId\": 2,\n      \"productsSubtotal\": 500.00,\n      \"shippingPrice\": 50.00,\n      \"shippingInfo\": {\n        \"fromCity\": { \"id\": 1, \"name\": \"Cairo\" },\n        \"toCity\": { \"id\": 2, \"name\": \"Alexandria\" },\n        \"price\": 50.00\n      },\n      \"vendorTotal\": 550.00,\n      \"items\": [...]\n    }\n  ],\n  \"wallet\": {\n    \"balance\": 600.00,\n    \"canPayWithWallet\": true,\n    \"sufficientBalance\": true,\n    \"remainingAfterPayment\": 50.00,\n    \"needsAdditionalPayment\": 0\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -2857,7 +2874,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"toCityId\": 2,\n  \"shippingAddress\": \"123 Main St, City, Country\",\n  \"paymentMethod\": \"wallet\"\n}",
+							"raw": "{\n  \"toCityId\": 2,\n  \"shippingAddress\": \"123 Main St, City, Country\",\n  \"phone\": \"01234567890\",\n  \"paymentMethod\": \"wallet\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2875,7 +2892,7 @@
 								"orders"
 							]
 						},
-						"description": "Create a new order from cart items.\n\n**Body Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n- `shippingAddress` (required): Full shipping address text\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Automatic fromCityId:**\n- `fromCityId` is automatically taken from each vendor's `cityId` (vendor location)\n- Each vendor in cart will have their own order with their own `fromCityId`\n- If vendor has no city, order creation will fail with error\n\n**Payment Handling:**\n- **Cash**: paymentStatus = 'paid' (will pay on delivery)\n- **Wallet**: \n  - If balance >= total: Deduct full amount, paymentStatus = 'paid'\n  - If balance < total: Deduct available balance, paymentStatus = 'remaining', remainingAmount = difference\n\n**Shipping:**\n- Shipping price is automatically calculated from shippings table based on vendor's cityId (fromCityId) and toCityId\n- Each vendor order has its own shipping price\n- Shipping price is added to each order total\n\n**Process:**\n1. Get cart items\n2. Group items by vendor (creates separate order for each vendor)\n3. Get each vendor's cityId as fromCityId\n4. Calculate shipping price for each vendor (from vendor city to delivery city)\n5. Process payment based on payment method\n6. Create orders and order items (one order per vendor)\n7. Send notifications to vendors and user\n8. Clear cart\n\n**Authentication:** Required (User)\n\n**Response:** Array of created orders (one per vendor) with items, shipping price, and payment status."
+						"description": "Create a new order from cart items with wallet information.\n\n**Body Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n- `shippingAddress` (required): Full shipping address text\n- `phone` (optional): Contact phone number for the order. If not provided, uses the user's phone from their profile. If user has no phone, order creation will fail.\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Automatic fromCityId:**\n- `fromCityId` is automatically taken from each vendor's `cityId` (vendor location)\n- Each vendor in cart will have their own order with their own `fromCityId`\n- If vendor has no city, order creation will fail with error\n\n**Payment Handling:**\n- **Cash**: paymentStatus = 'paid' (will pay on delivery)\n- **Wallet**: \n  - If balance >= total: Deduct full amount, paymentStatus = 'paid'\n  - If balance < total: Deduct available balance, paymentStatus = 'remaining', remainingAmount = difference\n\n**Shipping:**\n- Shipping price is automatically calculated from shippings table based on vendor's cityId (fromCityId) and toCityId\n- Each vendor order has its own shipping price\n- Shipping price is added to each order total\n\n**Process:**\n1. Get cart items\n2. Group items by vendor (creates separate order for each vendor)\n3. Get each vendor's cityId as fromCityId\n4. Calculate shipping price for each vendor (from vendor city to delivery city)\n5. Process payment based on payment method\n6. Create orders and order items (one order per vendor)\n7. Get wallet balance after order creation\n8. Send notifications to vendors and user\n9. Clear cart\n\n**Authentication:** Required (User)\n\n**Response:**\n- `orders`: Array of created orders (one per vendor) with items, shipping price, and payment status\n- `wallet`: Wallet information after order creation:\n  - `balance`: Current wallet balance after payment\n  - `totalOrderAmount`: Total amount of all orders created\n  - `totalPaid`: Total amount paid from wallet\n  - `totalRemaining`: Total remaining amount to be paid\n  - `remainingAfterPayment`: Remaining balance in wallet\n\n**Example Response:**\n```json\n{\n  \"orders\": [\n    {\n      \"id\": 1,\n      \"total\": 550.00,\n      \"paymentStatus\": \"paid\",\n      \"items\": [...],\n      ...\n    }\n  ],\n  \"wallet\": {\n    \"balance\": 50.00,\n    \"totalOrderAmount\": 550.00,\n    \"totalPaid\": 550.00,\n    \"totalRemaining\": 0,\n    \"remainingAfterPayment\": 50.00\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -4668,7 +4685,14 @@
 											"key": "isNegotiable",
 											"value": "false",
 											"type": "text",
-											"description": "Whether the price is negotiable (true/false)"
+											"description": "Whether the price is negotiable (true/false). Also accepts 'is_negotiable'"
+										},
+										{
+											"key": "is_negotiable",
+											"value": "false",
+											"type": "text",
+											"description": "Alternative field name for isNegotiable (true/false)",
+											"disabled": true
 										},
 										{
 											"key": "files",
@@ -4689,7 +4713,7 @@
 										"marketplace-products"
 									]
 								},
-								"description": "Create a new marketplace product (pending approval).\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `phone` (required): Contact phone number\n- `price` (required): Product price\n- `isNegotiable` (optional): Whether the price is negotiable (true/false, default: false)\n- `files` (optional): Array of images/videos (up to 10 files)\n\n**Authentication:** Required\n\n**Response:** Created product with pending status."
+								"description": "Create a new marketplace product (pending approval).\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `phone` (required): Contact phone number\n- `price` (required): Product price\n- `isNegotiable` or `is_negotiable` (optional): Whether the price is negotiable (true/false, default: false)\n- `files` (optional): Array of images/videos (up to 10 files)\n\n**Authentication:** Required\n\n**Response:** Created product with pending status."
 							},
 							"response": []
 						},
@@ -5011,7 +5035,7 @@
 										}
 									]
 								},
-								"description": "Update marketplace product fields (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters (all optional):**\n- `isNegotiable` (optional): Whether the price is negotiable (true/false)\n- `name` (optional): Product name\n- `description` (optional): Product description\n- `phone` (optional): Contact phone number\n- `price` (optional): Product price\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated product information."
+								"description": "Update marketplace product fields (admin only).\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters (all optional):**\n- `isNegotiable` or `is_negotiable` (optional): Whether the price is negotiable (true/false)\n- `name` (optional): Product name\n- `description` (optional): Product description\n- `phone` (optional): Contact phone number\n- `price` (optional): Product price\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated product information."
 							},
 							"response": []
 						},

@@ -55,7 +55,50 @@ export const createOrder = async (req, res, next) => {
       paymentMethod
     );
 
-    return sendSuccess(res, orders, 'Order created successfully', 201);
+    // Get wallet balance after order creation
+    let walletBalance = 0;
+    let walletInfo = null;
+    try {
+      const walletService = (await import('../services/walletService.js')).default;
+      walletBalance = await walletService.getBalance(userId);
+      
+      // Calculate payment summary
+      const totalOrderAmount = orders.reduce((sum, order) => sum + parseFloat(order.total || 0), 0);
+      const totalPaid = orders.reduce((sum, order) => {
+        if (order.paymentMethod === 'wallet' && order.paymentStatus === 'paid') {
+          return sum + parseFloat(order.total || 0);
+        } else if (order.paymentMethod === 'wallet' && order.paymentStatus === 'remaining') {
+          const paid = parseFloat(order.total || 0) - parseFloat(order.remainingAmount || 0);
+          return sum + paid;
+        }
+        return sum;
+      }, 0);
+      const totalRemaining = orders.reduce((sum, order) => sum + parseFloat(order.remainingAmount || 0), 0);
+
+      walletInfo = {
+        balance: walletBalance,
+        totalOrderAmount: totalOrderAmount,
+        totalPaid: totalPaid,
+        totalRemaining: totalRemaining,
+        remainingAfterPayment: walletBalance
+      };
+    } catch (error) {
+      console.error('Failed to get wallet balance:', error.message);
+      walletInfo = {
+        balance: 0,
+        totalOrderAmount: 0,
+        totalPaid: 0,
+        totalRemaining: 0,
+        remainingAfterPayment: 0
+      };
+    }
+
+    const response = {
+      orders,
+      wallet: walletInfo
+    };
+
+    return sendSuccess(res, response, 'Order created successfully', 201);
   } catch (error) {
     if (error.message === 'Cart is empty' || 
         error.message.includes('not found') ||

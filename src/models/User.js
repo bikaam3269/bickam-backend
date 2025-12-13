@@ -11,7 +11,7 @@ const User = sequelize.define('User', {
     autoIncrement: true
   },
   type: {
-    type: DataTypes.ENUM('user', 'vendor', 'admin'),
+    type: DataTypes.ENUM('user', 'vendor', 'admin', 'marketing'),
     allowNull: false,
     validate: {
       notEmpty: true
@@ -28,11 +28,14 @@ const User = sequelize.define('User', {
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     unique: true,
     validate: {
-      isEmail: true,
-      notEmpty: true
+      isEmail(value) {
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          throw new Error('Email must be a valid email address');
+        }
+      }
     }
   },
   password: {
@@ -45,7 +48,14 @@ const User = sequelize.define('User', {
   },
   phone: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    validate: {
+      isRequiredForMarketing(value) {
+        if (this.type === 'marketing' && !value) {
+          throw new Error('Phone number is required for marketing users');
+        }
+      }
+    }
   },
   governmentId: {
     type: DataTypes.INTEGER,
@@ -54,7 +64,14 @@ const User = sequelize.define('User', {
       model: Government,
       key: 'id'
     },
-    field: 'government_id'
+    field: 'government_id',
+    validate: {
+      isRequiredForMarketing(value) {
+        if (this.type === 'marketing' && !value) {
+          throw new Error('Government is required for marketing users');
+        }
+      }
+    }
   },
   cityId: {
     type: DataTypes.INTEGER,

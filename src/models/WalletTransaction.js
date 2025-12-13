@@ -89,3 +89,4 @@ WalletTransaction.belongsTo(User, {
 
 export default WalletTransaction;
 
+

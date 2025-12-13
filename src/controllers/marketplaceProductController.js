@@ -13,6 +13,7 @@ export const createMarketplaceProduct = async (req, res, next) => {
       description: req.body.description,
       phone: req.body.phone,
       price: req.body.price,
+      isNegotiable: req.body.is_negotiable || req.body.isNegotiable || false,
       files: []
     };
 

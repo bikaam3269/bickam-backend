@@ -94,3 +94,4 @@ createWalletTransactionsTable()
     process.exit(1);
   });
 
+

@@ -22,6 +22,7 @@ import WalletInfo from './WalletInfo.js';
 import WalletTransaction from './WalletTransaction.js';
 import MarketplaceProduct from './MarketplaceProduct.js';
 import MarketplaceSettings from './MarketplaceSettings.js';
+import MarketingProduct from './MarketingProduct.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -144,6 +145,7 @@ const models = {
     WalletTransaction,
     MarketplaceProduct,
     MarketplaceSettings,
+    MarketingProduct,
     sequelize
 };
 

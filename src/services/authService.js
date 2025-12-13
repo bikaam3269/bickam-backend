@@ -23,9 +23,16 @@ class AuthService {
   generateToken(user) {
     const payload = {
       id: user.id,
-      email: user.email,
       type: user.type
     };
+    // Add email to payload only if it exists
+    if (user.email) {
+      payload.email = user.email;
+    }
+    // Add phone to payload for marketing users
+    if (user.type === 'marketing' && user.phone) {
+      payload.phone = user.phone;
+    }
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   }
 
@@ -92,12 +99,20 @@ class AuthService {
     const { type, name, email, password, phone, governmentId, cityId, description, logoImage, categoryId, backgroundImage } = data;
 
     // Validate required fields based on type
-    if (!type || !['user', 'vendor', 'admin'].includes(type)) {
-      throw new Error('Type must be either "user", "vendor", or "admin"');
+    if (!type || !['user', 'vendor', 'admin', 'marketing'].includes(type)) {
+      throw new Error('Type must be either "user", "vendor", "admin", or "marketing"');
     }
 
-    if (!name || !email || !password) {
-      throw new Error('Name, email, and password are required');
+    // Marketing users need: name, phone, password, governmentId
+    if (type === 'marketing') {
+      if (!name || !phone || !password || !governmentId) {
+        throw new Error('Name, phone, password, and government are required for marketing users');
+      }
+    } else {
+      // Other types need: name and password (email is optional)
+      if (!name || !password) {
+        throw new Error('Name and password are required');
+      }
     }
 
     // Validate and format Egyptian phone number if provided
@@ -108,6 +123,8 @@ class AuthService {
         throw new Error(phoneValidation.error);
       }
       formattedPhone = phoneValidation.formatted;
+    } else if (type === 'marketing') {
+      throw new Error('Phone number is required for marketing users');
     }
 
     // Vendor specific validations
@@ -120,20 +137,51 @@ class AuthService {
       // Admin users don't require governmentId or vendor fields
     }
 
-    // Check if email already exists
-    let existingUser;
-    try {
-      existingUser = await User.findOne({ where: { email } });
-    } catch (error) {
-      // Handle database query limit exceeded error
-      if (error.original && error.original.code === 'ER_USER_LIMIT_REACHED') {
-        throw new Error('Database query limit exceeded. Please wait a few minutes and try again, or contact support if the issue persists.');
+    // Check if email already exists (if provided)
+    if (email) {
+      let existingUser;
+      try {
+        existingUser = await User.findOne({ where: { email } });
+      } catch (error) {
+        // Handle database query limit exceeded error
+        if (error.original && error.original.code === 'ER_USER_LIMIT_REACHED') {
+          throw new Error('Database query limit exceeded. Please wait a few minutes and try again, or contact support if the issue persists.');
+        }
+        throw error;
       }
-      throw error;
+      
+      if (existingUser) {
+        throw new Error('Email already exists');
+      }
     }
-    
-    if (existingUser) {
-      throw new Error('Email already exists');
+
+    // Check if phone already exists for marketing users
+    if (type === 'marketing' && formattedPhone) {
+      let existingUser;
+      try {
+        const cleanPhone = formattedPhone.replace('+20', '');
+        existingUser = await User.findOne({
+          where: {
+            [Op.or]: [
+              { phone: formattedPhone },
+              { phone: `+20${cleanPhone}` },
+              { phone: `0${cleanPhone}` },
+              { phone: cleanPhone }
+            ],
+            type: 'marketing'
+          }
+        });
+      } catch (error) {
+        // Handle database query limit exceeded error
+        if (error.original && error.original.code === 'ER_USER_LIMIT_REACHED') {
+          throw new Error('Database query limit exceeded. Please wait a few minutes and try again, or contact support if the issue persists.');
+        }
+        throw error;
+      }
+      
+      if (existingUser) {
+        throw new Error('Phone number already exists for a marketing user');
+      }
     }
 
     // Hash password
@@ -145,13 +193,17 @@ class AuthService {
     const userData = {
       type,
       name,
-      email,
       password: hashedPassword,
       phone: formattedPhone,
       governmentId,
       cityId,
       isVerified: !requiresVerification // Vendors with phone need verification
     };
+
+    // Add email if provided (optional for all types)
+    if (email) {
+      userData.email = email;
+    }
 
     // Add vendor specific fields (only for vendor type)
     if (type === 'vendor') {

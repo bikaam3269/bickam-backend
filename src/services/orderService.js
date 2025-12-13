@@ -596,12 +596,27 @@ class OrderService {
 
     const grandTotal = productsTotal + totalShippingPrice;
 
+    // Get wallet balance
+    let walletBalance = 0;
+    try {
+      walletBalance = await walletService.getBalance(userId);
+    } catch (error) {
+      console.error('Failed to get wallet balance:', error.message);
+    }
+
     return {
       productsTotal,
       totalShippingPrice,
       grandTotal,
       toCityId: parseInt(toCityId),
-      vendorsBreakdown
+      vendorsBreakdown,
+      wallet: {
+        balance: walletBalance,
+        canPayWithWallet: walletBalance > 0,
+        sufficientBalance: walletBalance >= grandTotal,
+        remainingAfterPayment: Math.max(0, walletBalance - grandTotal),
+        needsAdditionalPayment: grandTotal > walletBalance ? grandTotal - walletBalance : 0
+      }
     };
   }
 }

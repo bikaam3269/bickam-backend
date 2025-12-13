@@ -159,7 +159,13 @@ class VendorService {
                         updateData[field] = null;
                     }
                 } else {
-                    updateData[field] = data[field];
+                    // Parse ID fields as integers
+                    if (field === 'cityId' || field === 'governmentId' || field === 'categoryId') {
+                        const parsedValue = parseInt(data[field], 10);
+                        updateData[field] = isNaN(parsedValue) ? null : parsedValue;
+                    } else {
+                        updateData[field] = data[field];
+                    }
                 }
             }
         });
@@ -215,6 +221,11 @@ class VendorService {
                 {
                     model: Category,
                     as: 'category',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: City,
+                    as: 'city',
                     attributes: ['id', 'name']
                 }
             ],
@@ -348,6 +359,11 @@ class VendorService {
                 {
                     model: Category,
                     as: 'category',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: City,
+                    as: 'city',
                     attributes: ['id', 'name']
                 }
             ],

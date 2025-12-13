@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
+import City from '../models/City.js';
 import bcrypt from 'bcrypt';
 
 class UserService {
@@ -25,11 +26,18 @@ class UserService {
 
     const users = await User.findAll({
       where,
-      include: [{
-        model: Government,
-        as: 'government',
-        attributes: ['id', 'name', 'code']
-      }],
+      include: [
+        {
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name']
+        }
+      ],
       attributes: { exclude: ['password'] },
       order: [['createdAt', 'DESC']]
     });
@@ -39,11 +47,18 @@ class UserService {
 
   async getUserById(id) {
     const user = await User.findByPk(id, {
-      include: [{
-        model: Government,
-        as: 'government',
-        attributes: ['id', 'name', 'code']
-      }],
+      include: [
+        {
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name']
+        }
+      ],
       attributes: { exclude: ['password'] }
     });
 
@@ -57,11 +72,18 @@ class UserService {
   async getUserByEmail(email) {
     const user = await User.findOne({
       where: { email },
-      include: [{
-        model: Government,
-        as: 'government',
-        attributes: ['id', 'name', 'code']
-      }],
+      include: [
+        {
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name']
+        }
+      ],
       attributes: { exclude: ['password'] }
     });
 
@@ -89,7 +111,7 @@ class UserService {
     }
 
     // Update only allowed fields
-    const allowedFields = ['name', 'email', 'phone', 'governmentId', 'activity', 'description', 'logoImage'];
+    const allowedFields = ['name', 'email', 'phone', 'governmentId', 'cityId', 'activity', 'description', 'logoImage'];
     if (user.type === 'user' || user.type === 'admin') {
       // Remove vendor-specific fields for user and admin types
       delete data.activity;
@@ -97,13 +119,48 @@ class UserService {
       delete data.logoImage;
     }
 
-    Object.assign(user, data);
+    // Filter and prepare update data
+    const updateData = {};
+    allowedFields.forEach(field => {
+      if (data[field] !== undefined) {
+        // Handle null values
+        if (data[field] === null || data[field] === '' || data[field] === 'null' || data[field] === 'undefined') {
+          if (field !== 'password') {
+            updateData[field] = null;
+          }
+        } else {
+          // Parse ID fields as integers
+          if (field === 'cityId' || field === 'governmentId') {
+            const parsedValue = parseInt(data[field], 10);
+            updateData[field] = isNaN(parsedValue) ? null : parsedValue;
+          } else {
+            updateData[field] = data[field];
+          }
+        }
+      }
+    });
+
+    Object.assign(user, updateData);
     await user.save();
 
-    const userResponse = user.toJSON();
-    delete userResponse.password;
+    // Fetch updated user with associations
+    const updatedUser = await User.findByPk(id, {
+      include: [
+        {
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name']
+        }
+      ],
+      attributes: { exclude: ['password'] }
+    });
 
-    return userResponse;
+    return updatedUser;
   }
 
   async deleteUser(id, currentUser) {
