@@ -31,10 +31,14 @@ export const getUserById = async (req, res, next) => {
   }
 };
 
+/**
+ * Update user profile
+ * Supports multipart/form-data for file uploads (image)
+ */
 export const updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const user = await userService.updateUser(id, req.body, req.user);
+    const user = await userService.updateUser(id, req.body, req.file, req.user);
 
     return sendSuccess(res, user, 'User updated successfully');
   } catch (error) {

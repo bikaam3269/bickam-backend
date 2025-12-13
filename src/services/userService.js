@@ -94,7 +94,7 @@ class UserService {
     return user;
   }
 
-  async updateUser(id, data, currentUser) {
+  async updateUser(id, data, file, currentUser) {
     const user = await User.findByPk(id);
     if (!user) {
       throw new Error('User not found');
@@ -103,6 +103,11 @@ class UserService {
     // Only allow users to update their own profile, or admin can update any
     if (currentUser.id !== parseInt(id) && currentUser.type !== 'admin') {
       throw new Error('Unauthorized to update this user');
+    }
+
+    // Handle file upload (image)
+    if (file) {
+      data.logoImage = `/files/${file.filename}`;
     }
 
     // If password is being updated, hash it
@@ -116,7 +121,7 @@ class UserService {
       // Remove vendor-specific fields for user and admin types
       delete data.activity;
       delete data.description;
-      delete data.logoImage;
+      // But allow logoImage for all user types
     }
 
     // Filter and prepare update data

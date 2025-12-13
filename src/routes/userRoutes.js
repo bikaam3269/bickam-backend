@@ -6,6 +6,7 @@ import {
   deleteUser
 } from '../controllers/userController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.use(authenticate);
 
 router.get('/', getAllUsers);
 router.get('/:id', getUserById);
-router.put('/:id', updateUser);
+router.put('/:id', upload.single('image'), updateUser);
 router.delete('/:id', deleteUser);
 
 export default router;

@@ -557,20 +557,48 @@
 								"key": "Authorization",
 								"value": "Bearer {{auth_token}}",
 								"type": "text"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Updated\",\n  \"phone\": \"1111111111\",\n  \"governmentId\": 1,\n  \"cityId\": 1\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "John Updated",
+									"type": "text",
+									"description": "User name"
+								},
+								{
+									"key": "email",
+									"value": "john@example.com",
+									"type": "text",
+									"description": "User email"
+								},
+								{
+									"key": "phone",
+									"value": "1111111111",
+									"type": "text",
+									"description": "User phone number"
+								},
+								{
+									"key": "governmentId",
+									"value": "1",
+									"type": "text",
+									"description": "Government ID"
+								},
+								{
+									"key": "cityId",
+									"value": "1",
+									"type": "text",
+									"description": "City ID"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "User profile image"
 								}
-							}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/1",
@@ -583,7 +611,8 @@
 								"users",
 								"1"
 							]
-						}
+						},
+						"description": "Update user profile. Supports multipart/form-data for file uploads.\n\n**Body Parameters (form-data):**\n- `name` (optional): User name\n- `email` (optional): User email\n- `phone` (optional): User phone number\n- `governmentId` (optional): Government ID\n- `cityId` (optional): City ID\n- `image` (optional): User profile image file\n\n**Authorization:**\n- Users can update their own profile\n- Admin can update any user profile\n\n**Authentication:** Required\n\n**Response:** Updated user information with associations (government, city)."
 					},
 					"response": []
 				},
