@@ -335,17 +335,35 @@ class LiveStreamService {
       throw new Error('Only the vendor can be a publisher');
     }
 
+    // Ensure userId is a number
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    if (isNaN(numericUserId) || numericUserId <= 0) {
+      throw new Error('Invalid user ID');
+    }
+
+    // Generate token
     const token = agoraService.generateToken(
       liveStream.channelName,
-      userId,
+      numericUserId,
       role
     );
+
+    // Log token generation for debugging
+    console.log('🔑 Agora Token Generated:', {
+      liveStreamId,
+      userId: numericUserId,
+      role,
+      channelName: liveStream.channelName,
+      appId: agoraService.getAppId(),
+      tokenLength: token.length
+    });
 
     return {
       token,
       channelName: liveStream.channelName,
-      uid: userId,
-      role
+      uid: numericUserId,
+      role,
+      appId: agoraService.getAppId() // Add App ID to response
     };
   }
 

@@ -75,6 +75,14 @@ class AgoraService {
   }
 
   /**
+   * Get Agora App ID
+   * @returns {string} Agora App ID
+   */
+  getAppId() {
+    return this.appId;
+  }
+
+  /**
    * Validate Agora configuration
    * @returns {boolean} True if configured correctly
    */
