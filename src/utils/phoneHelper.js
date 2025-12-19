@@ -31,6 +31,7 @@ export const validateAndFormatEgyptianPhone = (phone) => {
 
   // Egyptian mobile numbers should be 10 digits starting with 1
   // Valid formats: 10xxxxxxxx, 11xxxxxxxx, 12xxxxxxxx, 15xxxxxxxx
+  // Also support landline numbers starting with 02 (like 01022980918)
   if (cleaned.length === 10 && cleaned.startsWith('1')) {
     const firstTwo = cleaned.substring(0, 2);
     const validPrefixes = ['10', '11', '12', '15'];
@@ -44,11 +45,20 @@ export const validateAndFormatEgyptianPhone = (phone) => {
     }
   }
 
+  // Support landline numbers starting with 02 (10 digits)
+  if (cleaned.length === 10 && cleaned.startsWith('02')) {
+    return {
+      isValid: true,
+      formatted: `+20${cleaned}`,
+      error: null
+    };
+  }
+
   // If it's 11 digits starting with 01, remove the leading 0
   if (cleaned.length === 11 && cleaned.startsWith('01')) {
     cleaned = cleaned.substring(1);
     const firstTwo = cleaned.substring(0, 2);
-    const validPrefixes = ['10', '11', '12', '15'];
+    const validPrefixes = ['10', '11', '12', '15', '02'];
     
     if (validPrefixes.includes(firstTwo)) {
       return {
@@ -62,7 +72,7 @@ export const validateAndFormatEgyptianPhone = (phone) => {
   return {
     isValid: false,
     formatted: null,
-    error: 'Invalid Egyptian phone number. Must be 10 digits starting with 10, 11, 12, or 15'
+    error: 'Invalid Egyptian phone number. Must be 10 digits starting with 10, 11, 12, 15, or 02'
   };
 };
 

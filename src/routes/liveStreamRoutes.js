@@ -9,6 +9,7 @@ import {
   joinLiveStream,
   leaveLiveStream,
   getLiveStreamToken,
+  validateToken,
   sendMessage,
   getMessages,
   deleteMessage,
@@ -32,6 +33,7 @@ router.put('/:id/end', authenticate, authorize('vendor', 'admin'), endLiveStream
 router.post('/:id/join', authenticate, joinLiveStream);
 router.post('/:id/leave', authenticate, leaveLiveStream);
 router.get('/:id/token', authenticate, getLiveStreamToken);
+router.post('/validate-token', validateToken); // Public endpoint for token validation
 
 // Messages
 router.post('/:id/messages', authenticate, sendMessage);

@@ -54,6 +54,20 @@ class LiveStreamService {
       liveStream.status = 'live';
       await liveStream.save();
 
+      // Automatically join vendor as viewer (publisher is also counted as viewer)
+      try {
+        await LiveStreamViewer.create({
+          liveStreamId: liveStream.id,
+          userId: vendorId,
+          joinedAt: new Date()
+        });
+        // Update viewer count to include vendor
+        await this.updateViewerCount(liveStream.id);
+      } catch (error) {
+        console.error('Failed to join vendor as viewer:', error.message);
+        // Continue even if join fails - vendor can still stream as publisher
+      }
+
       // Notify followers about new live stream
       try {
         await this.notifyFollowersAboutLiveStream(vendorId, liveStream.id, title, vendor.name);
@@ -96,6 +110,31 @@ class LiveStreamService {
     liveStream.startedAt = new Date();
     liveStream.agoraToken = agoraToken;
     await liveStream.save();
+
+    // Automatically join vendor as viewer (publisher is also counted as viewer)
+    try {
+      // Check if vendor already joined
+      const existingViewer = await LiveStreamViewer.findOne({
+        where: {
+          liveStreamId,
+          userId: vendorId,
+          leftAt: null
+        }
+      });
+
+      if (!existingViewer) {
+        await LiveStreamViewer.create({
+          liveStreamId,
+          userId: vendorId,
+          joinedAt: new Date()
+        });
+        // Update viewer count to include vendor
+        await this.updateViewerCount(liveStreamId);
+      }
+    } catch (error) {
+      console.error('Failed to join vendor as viewer:', error.message);
+      // Continue even if join fails - vendor can still stream as publisher
+    }
 
     // Notify followers
     try {
@@ -335,35 +374,111 @@ class LiveStreamService {
       throw new Error('Only the vendor can be a publisher');
     }
 
-    // Ensure userId is a number
+    // Ensure userId is valid
     const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
     if (isNaN(numericUserId) || numericUserId <= 0) {
       throw new Error('Invalid user ID');
     }
 
     // Generate token
-    const token = agoraService.generateToken(
-      liveStream.channelName,
-      numericUserId,
+    // Note: Agora UI uses UID = 0 which allows any UID to join
+    // We use the actual userId for better security, but can fallback to 0 if needed
+    let token;
+    let uidToUse = numericUserId;
+    let useStringUid = false;
+    let tokenGenerationAttempts = [];
+    
+    try {
+      // First try with actual numeric UID (more secure)
+      token = agoraService.generateToken(
+        liveStream.channelName,
+        numericUserId,
+        role,
+        86400, // 24 hours
+        false // use numeric UID
+      );
+      tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: true });
+    } catch (error) {
+      tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: false, error: error.message });
+      console.warn('⚠️ Numeric UID token generation failed, trying UID = 0 (like Agora UI):', error.message);
+      
+      try {
+        // Try with UID = 0 (like Agora UI does) - allows any UID to join
+        token = agoraService.generateToken(
+          liveStream.channelName,
+          0, // UID = 0 allows any UID to join (like Agora UI)
+          role,
+          86400, // 24 hours
+          false // use numeric UID
+        );
+        uidToUse = 0;
+        tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: true });
+        console.log('✅ Token generated with UID = 0 (allows any UID to join, like Agora UI)');
+      } catch (error2) {
+        tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: false, error: error2.message });
+        console.warn('⚠️ UID = 0 token generation failed, trying string UID:', error2.message);
+        
+        // Last resort: try with string UID
+        useStringUid = true;
+        uidToUse = String(numericUserId);
+        token = agoraService.generateToken(
+          liveStream.channelName,
+          uidToUse,
+          role,
+          86400, // 24 hours
+          true // use string UID
+        );
+        tokenGenerationAttempts.push({ method: 'stringUid', uid: uidToUse, success: true });
+      }
+    }
+
+    // Validate token after generation
+    const tokenValidation = agoraService.validateTokenComprehensive(token, {
+      channelName: liveStream.channelName,
+      uid: uidToUse,
       role
-    );
+    });
 
     // Log token generation for debugging
-    console.log('🔑 Agora Token Generated:', {
+    console.log('🔑 Agora Token Generated Successfully:', {
       liveStreamId,
       userId: numericUserId,
+      uidUsed: uidToUse,
+      uidType: useStringUid ? 'string' : 'number',
       role,
       channelName: liveStream.channelName,
       appId: agoraService.getAppId(),
-      tokenLength: token.length
+      tokenLength: token ? token.length : 0,
+      tokenPreview: token ? token.substring(0, 50) + '...' : 'null',
+      attempts: tokenGenerationAttempts,
+      validation: {
+        isValid: tokenValidation.isValid,
+        errors: tokenValidation.errors,
+        warnings: tokenValidation.warnings
+      },
+      note: uidToUse === 0 ? 'Token allows any UID to join (like Agora UI)' : 'Token requires specific UID'
     });
+
+    // If token validation failed, log warning but still return token (let Agora SDK validate it)
+    if (!tokenValidation.isValid) {
+      console.warn('⚠️ Token validation failed, but returning token anyway. Agora SDK will validate it on join:', {
+        errors: tokenValidation.errors,
+        warnings: tokenValidation.warnings
+      });
+    }
 
     return {
       token,
       channelName: liveStream.channelName,
-      uid: numericUserId,
+      uid: useStringUid ? uidToUse : numericUserId, // Return the actual UID used
+      uidType: useStringUid ? 'string' : 'number', // Indicate UID type
       role,
-      appId: agoraService.getAppId() // Add App ID to response
+      appId: agoraService.getAppId(), // Add App ID to response
+      validation: {
+        isValid: tokenValidation.isValid,
+        errors: tokenValidation.errors,
+        warnings: tokenValidation.warnings
+      }
     };
   }
 

@@ -4365,7 +4365,43 @@
 										}
 									]
 								},
-								"description": "Get Agora token to join the live stream.\n\n**Parameters:**\n- `id`: Live stream ID\n- `role` (query): 'publisher' (vendor only) or 'subscriber' (viewer, default)\n\n**Authentication:** Required\n\n**Response:** Agora token, channel name, user ID, and role. Use this token with Agora RTC SDK in the frontend."
+								"description": "Get Agora token to join the live stream.\n\n**Parameters:**\n- `id`: Live stream ID\n- `role` (query): 'publisher' (vendor only) or 'subscriber' (viewer, default)\n\n**Authentication:** Required\n\n**Response:** Agora token, channel name, user ID, role, appId, and validation details. Use this token with Agora RTC SDK in the frontend.\n\n**Response includes:**\n- `token`: Agora RTC token\n- `channelName`: Channel name to join\n- `uid`: User ID (number or string based on uidType)\n- `uidType`: 'number' or 'string'\n- `role`: 'publisher' or 'subscriber'\n- `appId`: Agora App ID\n- `validation`: Token validation result with `isValid`, `errors`, and `warnings`"
+							},
+							"response": []
+						},
+						{
+							"name": "Validate Token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"token\": \"00639eda0b38ebe46dfa8f0f34ae13979eaIAA2HvCHfLZO0v+TP4rnyCJZrisPuw1xoYk8Y/6Z+EFgCGnmc0DhJV2hIgCuP4iai1xBaQQAAQCLXEFpAgCLXEFpAwCLXEFpBACLXEFp\",\n  \"channelName\": \"channel_5_1234567890\",\n  \"uid\": 10,\n  \"role\": \"subscriber\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/validate-token",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										"validate-token"
+									]
+								},
+								"description": "Validate an Agora token format and structure.\n\n**Body Parameters:**\n- `token` (required): Agora token to validate\n- `channelName` (optional): Expected channel name for validation\n- `uid` (optional): Expected UID for validation\n- `role` (optional): Expected role for validation\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\n- `isValid`: Boolean indicating if token is valid\n- `errors`: Array of validation errors\n- `warnings`: Array of validation warnings\n- `details`: Detailed validation information including:\n  - `format`: 'valid' or 'invalid'\n  - `length`: Token length\n  - `startsWith`: First 10 characters of token\n  - `appIdMatch`: Whether App ID matches configured App ID\n  - `appIdFound`: Whether App ID is found in token\n  - `validatedAt`: ISO timestamp of validation\n  - `tokenPreview`: First 50 characters of token\n\n**Validation Checks:**\n- Token format (starts with '006')\n- Token length (50-1000 characters)\n- App ID match with configured App ID\n- Token structure validity"
 							},
 							"response": []
 						}
