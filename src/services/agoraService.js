@@ -95,10 +95,13 @@ class AgoraService {
       method: tokenGenerationMethod,
       appId: this.appId,
       appCertificateLength: this.appCertificate.length,
+      appCertificatePreview: this.appCertificate ? `${this.appCertificate.substring(0, 8)}...${this.appCertificate.substring(24)}` : 'null',
       tokenLength: token ? token.length : 0,
       tokenStartsWith: token ? token.substring(0, 10) : 'null',
+      tokenPreview: token ? `${token.substring(0, 20)}...${token.substring(token.length - 20)}` : 'null',
       expirationTimeInSeconds,
-      expiresAt: new Date((currentTime + expirationTimeInSeconds) * 1000).toISOString()
+      expiresAt: new Date((currentTime + expirationTimeInSeconds) * 1000).toISOString(),
+      note: uid === 0 ? 'UID = 0 allows any UID to join (like Agora UI)' : 'Token requires specific UID'
     });
 
     if (!token || token.length === 0) {

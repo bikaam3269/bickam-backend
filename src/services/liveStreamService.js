@@ -381,42 +381,43 @@ class LiveStreamService {
     }
 
     // Generate token
-    // Note: Agora UI uses UID = 0 which allows any UID to join
-    // We use the actual userId for better security, but can fallback to 0 if needed
+    // IMPORTANT: Use UID = 0 (like Agora UI) to avoid token validation issues
+    // UID = 0 allows any UID to join, which matches Agora UI behavior
     let token;
-    let uidToUse = numericUserId;
+    let uidToUse = 0; // Use 0 by default (like Agora UI) - allows any UID to join
     let useStringUid = false;
     let tokenGenerationAttempts = [];
     
     try {
-      // First try with actual numeric UID (more secure)
+      // Use UID = 0 first (like Agora UI does) - this is the most compatible approach
       token = agoraService.generateToken(
         liveStream.channelName,
-        numericUserId,
+        0, // UID = 0 allows any UID to join (like Agora UI)
         role,
         86400, // 24 hours
         false // use numeric UID
       );
-      tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: true });
+      tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: true });
+      console.log('✅ Token generated with UID = 0 (allows any UID to join, like Agora UI)');
     } catch (error) {
-      tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: false, error: error.message });
-      console.warn('⚠️ Numeric UID token generation failed, trying UID = 0 (like Agora UI):', error.message);
+      tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: false, error: error.message });
+      console.warn('⚠️ UID = 0 token generation failed, trying numeric UID:', error.message);
       
       try {
-        // Try with UID = 0 (like Agora UI does) - allows any UID to join
+        // Fallback to actual numeric UID
         token = agoraService.generateToken(
           liveStream.channelName,
-          0, // UID = 0 allows any UID to join (like Agora UI)
+          numericUserId,
           role,
           86400, // 24 hours
           false // use numeric UID
         );
-        uidToUse = 0;
-        tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: true });
-        console.log('✅ Token generated with UID = 0 (allows any UID to join, like Agora UI)');
+        uidToUse = numericUserId;
+        tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: true });
+        console.log('✅ Token generated with numeric UID:', numericUserId);
       } catch (error2) {
-        tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: false, error: error2.message });
-        console.warn('⚠️ UID = 0 token generation failed, trying string UID:', error2.message);
+        tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: false, error: error2.message });
+        console.warn('⚠️ Numeric UID token generation failed, trying string UID:', error2.message);
         
         // Last resort: try with string UID
         useStringUid = true;
@@ -429,6 +430,7 @@ class LiveStreamService {
           true // use string UID
         );
         tokenGenerationAttempts.push({ method: 'stringUid', uid: uidToUse, success: true });
+        console.log('✅ Token generated with string UID:', uidToUse);
       }
     }
 
