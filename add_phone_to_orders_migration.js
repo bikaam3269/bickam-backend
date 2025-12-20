@@ -8,7 +8,7 @@ async function addPhoneToOrders() {
   let connection;
   
   try {
-    console.log('Connecting to database...');
+    console.log('🔄 Connecting to database...');
     connection = await mysql.createConnection({
       host: config.host,
       port: config.port,
@@ -17,10 +17,10 @@ async function addPhoneToOrders() {
       database: config.database
     });
 
-    console.log('Connected to database successfully');
+    console.log('✅ Connected to database successfully');
 
-    // Check if phone column exists
-    console.log('Checking phone column...');
+    // Check if column already exists
+    console.log('📊 Checking if phone column exists in orders table...');
     const [columns] = await connection.execute(`
       SELECT COLUMN_NAME 
       FROM INFORMATION_SCHEMA.COLUMNS 
@@ -30,19 +30,22 @@ async function addPhoneToOrders() {
     `, [config.database]);
 
     if (columns.length === 0) {
+      console.log('🔄 Adding phone column to orders table...');
       await connection.execute(`
         ALTER TABLE orders 
-        ADD COLUMN phone VARCHAR(20) NOT NULL COMMENT 'Customer phone number for order delivery'
+        ADD COLUMN phone VARCHAR(20) NOT NULL DEFAULT '' 
+        COMMENT 'Customer phone number for order delivery'
+        AFTER remaining_amount
       `);
-      console.log('✅ Added phone column to orders');
+      console.log('✅ Successfully added phone column to orders table');
     } else {
-      console.log('✅ phone column already exists in orders');
+      console.log('✅ phone column already exists in orders table');
     }
 
     console.log('\n✅ Migration completed successfully');
 
   } catch (error) {
-    console.error('❌ Error adding phone to orders:', error.message);
+    console.error('❌ Error adding phone column:', error.message);
     throw error;
   } finally {
     if (connection) {
@@ -54,12 +57,10 @@ async function addPhoneToOrders() {
 
 addPhoneToOrders()
   .then(() => {
-    console.log('\n✅ Migration completed successfully');
+    console.log('\n✅ All operations completed');
     process.exit(0);
   })
   .catch((error) => {
     console.error('\n❌ Migration failed:', error);
     process.exit(1);
   });
-
-
