@@ -19,6 +19,10 @@ import walletRequestRoutes from './walletRequestRoutes.js';
 import walletInfoRoutes from './walletInfoRoutes.js';
 import marketplaceProductRoutes from './marketplaceProductRoutes.js';
 import marketingProductRoutes from './marketingProductRoutes.js';
+import marketingCartRoutes from './marketingCartRoutes.js';
+import marketingOrderRoutes from './marketingOrderRoutes.js';
+import appSettingsRoutes from './appSettingsRoutes.js';
+import affiliateRoutes from './affiliateRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -52,6 +56,10 @@ router.use('/wallet-requests', walletRequestRoutes);
 router.use('/wallet-info', walletInfoRoutes);
 router.use('/marketplace-products', marketplaceProductRoutes);
 router.use('/marketing-products', marketingProductRoutes);
+router.use('/marketing-cart', marketingCartRoutes);
+router.use('/marketing-orders', marketingOrderRoutes);
+router.use('/app-settings', appSettingsRoutes);
+router.use('/affiliates', affiliateRoutes);
 
 export default router;
 

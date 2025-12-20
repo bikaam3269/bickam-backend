@@ -68,6 +68,11 @@ const LiveStream = sequelize.define('LiveStream', {
     allowNull: false,
     defaultValue: 0,
     field: 'viewer_count'
+  },
+  image: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'image'
   }
 }, {
   tableName: 'live_streams',

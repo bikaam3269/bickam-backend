@@ -5,8 +5,9 @@ const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
 class AgoraService {
   constructor() {
     // Try to get from environment variables first, fallback to hardcoded values
-    this.appId = process.env.AGORA_APP_ID || '39eda0b38ebe46dfa8f0f34ae13979ea';
-    this.appCertificate =  '6fba24e49439495895d64b1c2f84272f';
+    this.appId =  '90125dcd7d7949be8b9c617d24a15347';
+    this.appCertificate =  'bdcf4557d7854cb7a2d4c4f28b337ebe';
+    
   
     if (!this.appId || !this.appCertificate) {
       console.warn('⚠️  Agora credentials not found in environment variables');
@@ -251,6 +252,102 @@ class AgoraService {
     }
 
     return validation;
+  }
+
+  /**
+   * Deep validation: Try to generate a test token with same parameters and compare
+   * This helps verify if App Certificate is correct
+   * @param {string} token - Token to validate
+   * @param {string} channelName - Channel name
+   * @param {number|string} uid - UID
+   * @param {string} role - Role
+   * @returns {object} Deep validation result
+   */
+  async deepValidateToken(token, channelName, uid, role) {
+    const result = {
+      isValid: false,
+      errors: [],
+      warnings: [],
+      diagnostics: {},
+      recommendations: []
+    };
+
+    // Basic format validation first
+    const formatValidation = this.validateToken(token, channelName, uid, role);
+    result.errors.push(...formatValidation.errors);
+    result.warnings.push(...formatValidation.warnings);
+
+    if (!formatValidation.isValid) {
+      result.diagnostics.formatValid = false;
+      return result;
+    }
+
+    result.diagnostics.formatValid = true;
+
+    // Try to generate a test token with same parameters
+    try {
+      const testToken = this.generateToken(channelName, uid, role, 86400, typeof uid === 'string');
+      
+      // Compare tokens
+      if (testToken && testToken.length > 0) {
+        result.diagnostics.testTokenGenerated = true;
+        result.diagnostics.testTokenLength = testToken.length;
+        result.diagnostics.originalTokenLength = token.length;
+        
+        // Check if lengths are similar (they won't be identical due to timestamp)
+        const lengthDiff = Math.abs(testToken.length - token.length);
+        if (lengthDiff > 50) {
+          result.warnings.push(`Token length difference is significant (${lengthDiff} chars). This might indicate different generation parameters.`);
+        } else {
+          result.diagnostics.lengthSimilar = true;
+        }
+
+        // Check if both start with same prefix
+        if (testToken.startsWith('006') && token.startsWith('006')) {
+          result.diagnostics.bothStartWith006 = true;
+          
+          // Extract App IDs
+          const testAppId = testToken.substring(3, 35);
+          const tokenAppId = token.substring(3, 35);
+          
+          if (testAppId === tokenAppId && tokenAppId === this.appId) {
+            result.diagnostics.appIdConsistent = true;
+          } else {
+            result.errors.push(`App ID mismatch: test=${testAppId}, token=${tokenAppId}, configured=${this.appId}`);
+          }
+        }
+      } else {
+        result.errors.push('Failed to generate test token. App Certificate might be incorrect.');
+        result.recommendations.push('Verify App Certificate is enabled and correct in Agora Console');
+      }
+    } catch (error) {
+      result.errors.push(`Test token generation failed: ${error.message}`);
+      result.recommendations.push('App Certificate might be incorrect or not enabled in Agora Console');
+      result.recommendations.push('Verify App Certificate matches Agora Console exactly');
+    }
+
+    // Check App Certificate
+    if (this.appCertificate.length !== 32) {
+      result.errors.push(`App Certificate length is ${this.appCertificate.length}, expected 32`);
+      result.recommendations.push('App Certificate must be exactly 32 characters');
+    } else {
+      result.diagnostics.certificateLengthValid = true;
+    }
+
+    // Final validation
+    if (result.errors.length === 0 && result.diagnostics.testTokenGenerated) {
+      result.isValid = true;
+      result.diagnostics.overallStatus = 'Token structure is valid and App Certificate appears correct';
+    } else if (result.errors.length === 0) {
+      result.isValid = true;
+      result.diagnostics.overallStatus = 'Token format is valid, but could not verify App Certificate';
+      result.warnings.push('Could not verify App Certificate - token might still fail in SDK');
+    } else {
+      result.isValid = false;
+      result.diagnostics.overallStatus = 'Token validation failed - see errors above';
+    }
+
+    return result;
   }
 }
 

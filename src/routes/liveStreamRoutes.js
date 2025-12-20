@@ -14,15 +14,17 @@ import {
   getMessages,
   deleteMessage,
   toggleLike,
-  getLikesCount
+  getLikesCount,
+  getViewerCount
 } from '../controllers/liveStreamController.js';
 import { authenticate, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/authMiddleware.js';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
 // Live Stream Management
-router.post('/', authenticate, authorize('vendor', 'admin'), createLiveStream);
+router.post('/', authenticate, authorize('vendor', 'admin'), upload.single('image'), createLiveStream);
 router.get('/', optionalAuthenticate, getActiveLiveStreams);
 router.get('/vendor/:vendorId', getVendorLiveStreams);
 router.get('/:id', optionalAuthenticate, getLiveStream);
@@ -42,7 +44,10 @@ router.delete('/:id/messages/:messageId', authenticate, deleteMessage);
 
 // Likes
 router.post('/:id/like', authenticate, toggleLike);
-router.get('/:id/likes', getLikesCount);
+router.get('/:id/likes', optionalAuthenticate, getLikesCount); // Optional auth - returns userLiked if authenticated
+
+// Viewers
+router.get('/:id/viewers', getViewerCount); // Get viewer count (public)
 
 export default router;
 

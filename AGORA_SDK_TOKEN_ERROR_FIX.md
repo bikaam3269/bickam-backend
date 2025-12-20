@@ -243,3 +243,4 @@ The fix is to:
 4. ✅ **Use App ID from token response** in Flutter
 5. ✅ **Match all parameters** exactly (channel, uid, role)
 
+

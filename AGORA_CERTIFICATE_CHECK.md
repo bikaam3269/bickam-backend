@@ -127,3 +127,4 @@ this.appCertificate = 'your_32_character_certificate_here'; // ✅ من Agora Co
 4. **UID = 0 يسمح لأي UID بالانضمام** (مثل Agora UI)
 5. **الكود الآن يحاول 3 طرق تلقائياً** إذا فشلت الأولى
 
+

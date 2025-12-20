@@ -16,7 +16,7 @@ class LiveStreamService {
    * @returns {Promise<object>} Created live stream
    */
   async createLiveStream(vendorId, data) {
-    const { title, description, scheduledAt } = data;
+    const { title, description, scheduledAt, image } = data;
 
     if (!title) {
       throw new Error('Title is required');
@@ -45,7 +45,8 @@ class LiveStreamService {
       agoraToken,
       status: scheduledAt ? 'scheduled' : 'live',
       scheduledAt: scheduledAt || null,
-      viewerCount: 0
+      viewerCount: 0,
+      image: image || null
     }), 15000);
 
     // If starting immediately, set started_at
@@ -501,6 +502,36 @@ class LiveStreamService {
       { viewerCount: activeViewers },
       { where: { id: liveStreamId } }
     );
+
+    return activeViewers;
+  }
+
+  /**
+   * Get viewer count for a live stream
+   * @param {number} liveStreamId - Live stream ID
+   * @returns {Promise<number>} Current viewer count
+   */
+  async getViewerCount(liveStreamId) {
+    const liveStream = await LiveStream.findByPk(liveStreamId);
+    if (!liveStream) {
+      throw new Error('Live stream not found');
+    }
+
+    // Get actual active viewers count (real-time)
+    const activeViewers = await LiveStreamViewer.count({
+      where: {
+        liveStreamId,
+        leftAt: null
+      }
+    });
+
+    // Update stored count for consistency
+    if (liveStream.viewerCount !== activeViewers) {
+      await LiveStream.update(
+        { viewerCount: activeViewers },
+        { where: { id: liveStreamId } }
+      );
+    }
 
     return activeViewers;
   }

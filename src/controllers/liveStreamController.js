@@ -32,7 +32,29 @@ const validatePagination = (limit, offset) => {
 export const createLiveStream = async (req, res, next) => {
   try {
     // Authorization is handled by authorize middleware in routes
-    const liveStream = await liveStreamService.createLiveStream(req.user.id, req.body);
+    // Extract data from form-data
+    const liveStreamData = {
+      title: req.body.title,
+      description: req.body.description || null,
+      scheduledAt: req.body.scheduledAt || null,
+      image: null
+    };
+    
+    // Handle uploaded image (if any)
+    if (req.file) {
+      liveStreamData.image = req.file.filename;
+    }
+    
+    // Parse scheduledAt if provided (form-data sends dates as strings)
+    if (liveStreamData.scheduledAt) {
+      const parsedDate = new Date(liveStreamData.scheduledAt);
+      if (isNaN(parsedDate.getTime())) {
+        return sendError(res, 'Invalid scheduledAt date format. Use ISO 8601 format (e.g., 2025-12-20T10:00:00Z)', 400);
+      }
+      liveStreamData.scheduledAt = parsedDate.toISOString();
+    }
+    
+    const liveStream = await liveStreamService.createLiveStream(req.user.id, liveStreamData);
     return sendSuccess(res, liveStream, 'Live stream created successfully', 201);
   } catch (error) {
     if (error.message.includes('required') || error.message.includes('not found') || error.message.includes('not a vendor')) {
@@ -203,7 +225,7 @@ export const getLiveStreamToken = async (req, res, next) => {
 
 export const validateToken = async (req, res, next) => {
   try {
-    const { token, channelName, uid, role } = req.body;
+    const { token, channelName, uid, role, deep = false } = req.body;
 
     if (!token) {
       return sendError(res, 'Token is required', 400);
@@ -212,18 +234,62 @@ export const validateToken = async (req, res, next) => {
     // Import agoraService here to avoid circular dependency
     const agoraService = (await import('../services/agoraService.js')).default;
 
-    const validation = agoraService.validateTokenComprehensive(token, {
+    // Basic format validation
+    const formatValidation = agoraService.validateTokenComprehensive(token, {
       channelName,
       uid,
       role
     });
 
-    return sendSuccess(res, {
-      isValid: validation.isValid,
-      errors: validation.errors,
-      warnings: validation.warnings,
-      details: validation.details
-    }, validation.isValid ? 'Token is valid' : 'Token validation failed');
+    let result = {
+      isValid: formatValidation.isValid,
+      errors: formatValidation.errors,
+      warnings: formatValidation.warnings,
+      details: formatValidation.details,
+      formatValidation: {
+        isValid: formatValidation.isValid,
+        errors: formatValidation.errors,
+        warnings: formatValidation.warnings
+      }
+    };
+
+    // Deep validation (tries to generate test token to verify App Certificate)
+    if (deep && channelName && (uid !== undefined && uid !== null) && role) {
+      try {
+        const deepValidation = await agoraService.deepValidateToken(
+          token,
+          channelName,
+          uid,
+          role
+        );
+
+        result.deepValidation = {
+          isValid: deepValidation.isValid,
+          errors: deepValidation.errors,
+          warnings: deepValidation.warnings,
+          diagnostics: deepValidation.diagnostics,
+          recommendations: deepValidation.recommendations
+        };
+
+        // Overall validation: both must pass
+        result.isValid = formatValidation.isValid && deepValidation.isValid;
+        
+        // Combine errors and warnings
+        result.errors = [...formatValidation.errors, ...deepValidation.errors];
+        result.warnings = [...formatValidation.warnings, ...deepValidation.warnings];
+      } catch (error) {
+        result.deepValidation = {
+          isValid: false,
+          error: error.message,
+          recommendations: ['Deep validation failed - check App Certificate configuration']
+        };
+        result.warnings.push('Deep validation could not complete');
+      }
+    } else if (deep) {
+      result.warnings.push('Deep validation requires channelName, uid, and role parameters');
+    }
+
+    return sendSuccess(res, result, result.isValid ? 'Token is valid' : 'Token validation failed');
   } catch (error) {
     next(error);
   }
@@ -335,11 +401,33 @@ export const getLikesCount = async (req, res, next) => {
   try {
     const liveStreamId = validateId(req.params.id, 'live stream ID');
     
-    const count = await liveStreamLikeService.getLikesCount(liveStreamId);
-    return sendSuccess(res, { likesCount: count }, 'Likes count retrieved successfully');
+    // Get user ID if authenticated (optional)
+    const userId = req.user ? req.user.id : null;
+    
+    // Get likes count and user like status
+    const likesInfo = await liveStreamLikeService.getLikesInfo(liveStreamId, userId);
+    
+    return sendSuccess(res, likesInfo, 'Likes information retrieved successfully');
   } catch (error) {
     if (error.message === 'Invalid live stream ID') {
       return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};
+
+export const getViewerCount = async (req, res, next) => {
+  try {
+    const liveStreamId = validateId(req.params.id, 'live stream ID');
+    
+    const viewerCount = await liveStreamService.getViewerCount(liveStreamId);
+    return sendSuccess(res, { viewerCount }, 'Viewer count retrieved successfully');
+  } catch (error) {
+    if (error.message === 'Invalid live stream ID') {
+      return sendError(res, error.message, 400);
+    }
+    if (error.message === 'Live stream not found') {
+      return sendError(res, error.message, 404);
     }
     next(error);
   }

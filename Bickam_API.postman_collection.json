@@ -238,6 +238,57 @@
 					"response": []
 				},
 				{
+					"name": "Register Marketing",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.environment.set(\"auth_token\", jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"marketing\",\n  \"name\": \"أحمد محمد\",\n  \"password\": \"password123\",\n  \"phone\": \"01012345678\",\n  \"governmentId\": 1,\n  \"cityId\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new marketing user (marketer) account.\n\n**Body Parameters:**\n- `type` (required): Must be 'marketing'\n- `name` (required): Marketer's full name\n- `password` (required): Marketer's password (minimum 6 characters)\n- `phone` (required): Marketer's phone number (Egyptian format, e.g., 01012345678 or +201012345678)\n- `governmentId` (required): Government ID (required for marketing users)\n- `cityId` (optional): City ID (must belong to the specified government)\n- `email` (optional): Marketer's email address (not required for marketing users)\n\n**Required Fields for Marketing Users:**\n- name, phone, password, governmentId are required\n- email is optional\n\n**Verification:**\n- Verification code is sent via WhatsApp to the provided phone number\n- Marketer must verify phone before login\n\n**Response:** Marketing user object and JWT token (if verified). If phone verification required, token will be null until verified."
+					},
+					"response": []
+				},
+				{
 					"name": "Login",
 					"event": [
 						{
@@ -3110,6 +3161,403 @@
 			]
 		},
 		{
+			"name": "Marketing Cart",
+			"item": [
+				{
+					"name": "Get Marketing Cart",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-cart",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-cart"
+							]
+						},
+						"description": "Get marketing cart for authenticated marketer.\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Array of cart items with marketing product details."
+					},
+					"response": []
+				},
+				{
+					"name": "Add to Marketing Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"marketingProductId\": 1,\n  \"quantity\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-cart",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-cart"
+							]
+						},
+						"description": "Add marketing product to cart.\n\n**Body Parameters:**\n- `marketingProductId` (required): Marketing product ID\n- `quantity` (optional): Quantity to add (default: 1)\n\n**Authentication:** Required (Marketer only)\n\n**Note:** If product already exists in cart, quantity will be increased."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Marketing Cart Item",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"quantity\": 3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-cart/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-cart",
+								"1"
+							]
+						},
+						"description": "Update cart item quantity.\n\n**Path Parameters:**\n- `id`: Cart item ID\n\n**Body Parameters:**\n- `quantity` (required): New quantity (must be at least 1)\n\n**Authentication:** Required (Marketer only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove from Marketing Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-cart/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-cart",
+								"1"
+							]
+						},
+						"description": "Remove item from marketing cart.\n\n**Path Parameters:**\n- `id`: Cart item ID\n\n**Authentication:** Required (Marketer only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Marketing Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-cart/clear",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-cart",
+								"clear"
+							]
+						},
+						"description": "Clear all items from marketing cart.\n\n**Authentication:** Required (Marketer only)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Marketing Orders",
+			"item": [
+				{
+					"name": "Create Marketing Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"toCityId\": 2,\n  \"shippingAddress\": \"123 Main St, City, Country\",\n  \"phone\": \"01234567890\",\n  \"paymentMethod\": \"wallet\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders"
+							]
+						},
+						"description": "Create a new marketing order from marketing cart items.\n\n**Note:** Cart items are automatically taken from the marketer's marketing cart. No need to send cartItems in the request.\n\n**Body Parameters:**\n- `toCityId` (optional): Destination city ID (delivery location)\n- `shippingAddress` (optional): Full shipping address text\n- `phone` (required): Contact phone number for the order\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Process:**\n1. Gets all items from marketer's marketing cart\n2. Groups items by marketing product location (cityId)\n3. Creates separate order for each location\n4. Calculates shipping price for each location\n5. Processes payment based on payment method\n6. Clears all cart items after order creation\n7. Sends notifications\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Array of created orders (one per location)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Marketer Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders/marketer?status=pending&paymentStatus=paid",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders",
+								"marketer"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by order status: pending, confirmed, processing, shipped, delivered, cancelled",
+									"disabled": true
+								},
+								{
+									"key": "paymentStatus",
+									"value": "paid",
+									"description": "Filter by payment status: pending, paid, failed, refunded, remaining",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all orders for the authenticated marketer.\n\n**Query Parameters:**\n- `status` (optional): Filter by order status\n- `paymentStatus` (optional): Filter by payment status\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Array of orders with items and details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Marketing Order By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders",
+								"1"
+							]
+						},
+						"description": "Get marketing order by ID.\n\n**Path Parameters:**\n- `id`: Order ID\n\n**Authentication:** Required (Marketer can see own orders, Admin can see all)\n\n**Response:** Order details with items."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Marketing Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"confirmed\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders/1/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders",
+								"1",
+								"status"
+							]
+						},
+						"description": "Update marketing order status.\n\n**Path Parameters:**\n- `id`: Order ID\n\n**Body Parameters:**\n- `status` (required): New status - 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'\n\n**Authentication:** Required (Admin only)\n\n**Note:** Sends notification to marketer when status is updated."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Affiliates",
+			"item": [
+				{
+					"name": "Get Marketers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/affiliates/marketers?search=&governmentId=&cityId=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"affiliates",
+								"marketers"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "",
+									"description": "Search in name, email, or phone",
+									"disabled": true
+								},
+								{
+									"key": "governmentId",
+									"value": "",
+									"description": "Filter by government ID",
+									"disabled": true
+								},
+								{
+									"key": "cityId",
+									"value": "",
+									"description": "Filter by city ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all marketers (users with type 'marketing').\n\n**Query Parameters:**\n- `search` (optional): Search in name, email, or phone\n- `governmentId` (optional): Filter by government ID\n- `cityId` (optional): Filter by city ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Array of marketers with government and city details."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Marketer By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/affiliates/marketers/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"affiliates",
+								"marketers",
+								"1"
+							]
+						},
+						"description": "Get marketer by ID.\n\n**Path Parameters:**\n- `id`: Marketer ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Marketer details with government and city."
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "Categories",
 			"item": [
 				{
@@ -4060,20 +4508,36 @@
 										"key": "Authorization",
 										"value": "Bearer {{auth_token}}",
 										"type": "text"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
 									}
 								],
 								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"title\": \"Live Product Showcase\",\n  \"description\": \"Join us for a live showcase of our new products\",\n  \"scheduledAt\": null\n}",
-									"options": {
-										"raw": {
-											"language": "json"
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "Live Product Showcase",
+											"type": "text",
+											"description": "Title of the live stream (required)"
+										},
+										{
+											"key": "description",
+											"value": "Join us for a live showcase of our new products",
+											"type": "text",
+											"description": "Description of the live stream (optional)"
+										},
+										{
+											"key": "scheduledAt",
+											"value": "",
+											"type": "text",
+											"description": "Scheduled start time in ISO 8601 format (e.g., 2025-12-20T10:00:00Z). Leave empty to start immediately (optional)"
+										},
+										{
+											"key": "image",
+											"type": "file",
+											"src": [],
+											"description": "Live stream thumbnail/image (optional)"
 										}
-									}
+									]
 								},
 								"url": {
 									"raw": "{{base_url}}/api/v1/live-streams",
@@ -4086,7 +4550,7 @@
 										"live-streams"
 									]
 								},
-								"description": "Create a new live stream. Only vendors can create live streams.\n\n**Fields:**\n- `title` (required): Title of the live stream\n- `description` (optional): Description of the live stream\n- `scheduledAt` (optional): Scheduled start time (ISO 8601 format). If null, stream starts immediately.\n\n**Response:** Returns created live stream with Agora channel name and token."
+								"description": "Create a new live stream. Only vendors can create live streams.\n\n**Request must be form-data (multipart/form-data)**\n\n**Fields:**\n- `title` (required, text): Title of the live stream\n- `description` (optional, text): Description of the live stream\n- `scheduledAt` (optional, text): Scheduled start time in ISO 8601 format (e.g., 2025-12-20T10:00:00Z). If empty or null, stream starts immediately.\n- `image` (optional, file): Live stream thumbnail/image\n\n**Response:** Returns created live stream with Agora channel name, token, and image filename."
 							},
 							"response": []
 						},
@@ -4382,7 +4846,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"token\": \"00639eda0b38ebe46dfa8f0f34ae13979eaIAA2HvCHfLZO0v+TP4rnyCJZrisPuw1xoYk8Y/6Z+EFgCGnmc0DhJV2hIgCuP4iai1xBaQQAAQCLXEFpAgCLXEFpAwCLXEFpBACLXEFp\",\n  \"channelName\": \"channel_5_1234567890\",\n  \"uid\": 10,\n  \"role\": \"subscriber\"\n}",
+									"raw": "{\n  \"token\": \"00639eda0b38ebe46dfa8f0f34ae13979eaIAA2HvCHfLZO0v+TP4rnyCJZrisPuw1xoYk8Y/6Z+EFgCGnmc0DhJV2hIgCuP4iai1xBaQQAAQCLXEFpAgCLXEFpAwCLXEFpBACLXEFp\",\n  \"channelName\": \"channel_5_1234567890\",\n  \"uid\": 10,\n  \"role\": \"subscriber\",\n  \"deep\": false\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -4401,7 +4865,43 @@
 										"validate-token"
 									]
 								},
-								"description": "Validate an Agora token format and structure.\n\n**Body Parameters:**\n- `token` (required): Agora token to validate\n- `channelName` (optional): Expected channel name for validation\n- `uid` (optional): Expected UID for validation\n- `role` (optional): Expected role for validation\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\n- `isValid`: Boolean indicating if token is valid\n- `errors`: Array of validation errors\n- `warnings`: Array of validation warnings\n- `details`: Detailed validation information including:\n  - `format`: 'valid' or 'invalid'\n  - `length`: Token length\n  - `startsWith`: First 10 characters of token\n  - `appIdMatch`: Whether App ID matches configured App ID\n  - `appIdFound`: Whether App ID is found in token\n  - `validatedAt`: ISO timestamp of validation\n  - `tokenPreview`: First 50 characters of token\n\n**Validation Checks:**\n- Token format (starts with '006')\n- Token length (50-1000 characters)\n- App ID match with configured App ID\n- Token structure validity"
+								"description": "Validate an Agora token format and structure.\n\n**Body Parameters:**\n- `token` (required): Agora token to validate\n- `channelName` (optional): Expected channel name for validation\n- `uid` (optional): Expected UID for validation\n- `role` (optional): Expected role for validation\n- `deep` (optional, default: false): Enable deep validation - tries to generate test token to verify App Certificate\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\n- `isValid`: Boolean indicating if token is valid\n- `errors`: Array of validation errors\n- `warnings`: Array of validation warnings\n- `details`: Detailed validation information\n- `formatValidation`: Basic format validation results\n- `deepValidation` (if deep=true): Deep validation that tests App Certificate by generating test token\n\n**Validation Checks:**\n- Token format (starts with '006')\n- Token length (50-1000 characters)\n- App ID match with configured App ID\n- Token structure validity\n- **Deep validation (if enabled)**: Tests App Certificate by generating test token with same parameters"
+							},
+							"response": []
+						},
+						{
+							"name": "Deep Validate Token (Test App Certificate)",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"token\": \"00639eda0b38ebe46dfa8f0f34ae13979eaIAA2HvCHfLZO0v+TP4rnyCJZrisPuw1xoYk8Y/6Z+EFgCGnmc0DhJV2hIgCuP4iai1xBaQQAAQCLXEFpAgCLXEFpAwCLXEFpBACLXEFp\",\n  \"channelName\": \"channel_5_1234567890\",\n  \"uid\": 10,\n  \"role\": \"subscriber\",\n  \"deep\": true\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/live-streams/validate-token",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams",
+										"validate-token"
+									]
+								},
+								"description": "Deep validation of Agora token - tests App Certificate by generating test token.\n\n**This endpoint:**\n- Validates token format\n- **Generates a test token** with same parameters to verify App Certificate\n- Compares token structures\n- Provides detailed diagnostics and recommendations\n\n**Body Parameters:**\n- `token` (required): Agora token to validate\n- `channelName` (required for deep validation): Channel name\n- `uid` (required for deep validation): UID used in token\n- `role` (required for deep validation): Role (publisher/subscriber)\n- `deep` (required): Must be `true` for deep validation\n\n**Deep Validation Checks:**\n- ✅ Tries to generate test token with same parameters\n- ✅ Verifies App Certificate is working\n- ✅ Compares token structures\n- ✅ Provides specific recommendations if App Certificate is wrong\n\n**Use this when:**\n- Token format validation passes but SDK still returns errInvalidToken\n- You want to verify App Certificate is correct\n- You need detailed diagnostics"
 							},
 							"response": []
 						}
@@ -5289,6 +5789,391 @@
 									"response": []
 								}
 							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Marketing Products",
+			"description": "Marketing Products are different from Marketplace Products:\n- **Marketing Products**: Added directly by Admin (no approval needed). Used for affiliate/marketing commission system.\n- **Marketplace Products**: Added by users, require admin approval (status: pending/approved/rejected). Used for used products marketplace.\n\nAll Marketing Product endpoints require Admin authentication.",
+			"item": [
+				{
+					"name": "Public",
+					"item": [
+						{
+							"name": "Get All Marketing Products",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketing-products?page=1&limit=50&governmentId=&cityId=&categoryId=&subcategoryId=&search=&minPrice=&maxPrice=&isActive=",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketing-products"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"description": "Page number"
+										},
+										{
+											"key": "limit",
+											"value": "50",
+											"description": "Items per page"
+										},
+										{
+											"key": "governmentId",
+											"value": "",
+											"description": "Filter by government ID",
+											"disabled": true
+										},
+										{
+											"key": "cityId",
+											"value": "",
+											"description": "Filter by city ID",
+											"disabled": true
+										},
+										{
+											"key": "categoryId",
+											"value": "",
+											"description": "Filter by category ID",
+											"disabled": true
+										},
+										{
+											"key": "subcategoryId",
+											"value": "",
+											"description": "Filter by subcategory ID",
+											"disabled": true
+										},
+										{
+											"key": "search",
+											"value": "",
+											"description": "Search in name/description",
+											"disabled": true
+										},
+										{
+											"key": "minPrice",
+											"value": "",
+											"description": "Minimum price",
+											"disabled": true
+										},
+										{
+											"key": "maxPrice",
+											"value": "",
+											"description": "Maximum price",
+											"disabled": true
+										},
+										{
+											"key": "isActive",
+											"value": "",
+											"description": "Filter by active status (true/false)",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Get all marketing products (public endpoint).\n\n**Note:** Marketing products are added directly by Admin (no approval needed).\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government ID\n- `cityId` (optional): Filter by city ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search term for name/description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n\n**Authentication:** Not required\n\n**Response:** List of marketing products with pagination."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Marketing Product by ID",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketing-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketing-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Marketing Product ID"
+										}
+									]
+								},
+								"description": "Get marketing product by ID.\n\n**Parameters:**\n- `id`: Marketing Product ID\n\n**Authentication:** Optional\n\n**Response:** Marketing product details with category, subcategory, government, and city information."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Admin",
+					"item": [
+						{
+							"name": "Create Marketing Product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "منتج تسويق",
+											"type": "text",
+											"description": "Product name (required)"
+										},
+										{
+											"key": "description",
+											"value": "وصف المنتج",
+											"type": "text",
+											"description": "Product description"
+										},
+										{
+											"key": "price",
+											"value": "1000",
+											"type": "text",
+											"description": "Product price"
+										},
+										{
+											"key": "isPrice",
+											"value": "true",
+											"type": "text",
+											"description": "Whether price is set (true/false)"
+										},
+										{
+											"key": "discount",
+											"value": "10",
+											"type": "text",
+											"description": "Discount percentage (0-100)"
+										},
+										{
+											"key": "quantity",
+											"value": "100",
+											"type": "text",
+											"description": "Product quantity in stock"
+										},
+										{
+											"key": "categoryId",
+											"value": "1",
+											"type": "text",
+											"description": "Category ID (required)"
+										},
+										{
+											"key": "subcategoryId",
+											"value": "1",
+											"type": "text",
+											"description": "Subcategory ID (required)"
+										},
+										{
+											"key": "governmentId",
+											"value": "1",
+											"type": "text",
+											"description": "Government ID (required)"
+										},
+										{
+											"key": "cityId",
+											"value": "1",
+											"type": "text",
+											"description": "City ID (required)"
+										},
+										{
+											"key": "isActive",
+											"value": "true",
+											"type": "text",
+											"description": "Whether product is active (true/false, default: true)"
+										},
+										{
+											"key": "images",
+											"type": "file",
+											"src": [],
+											"description": "Product images (up to 5 files)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketing-products",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketing-products"
+									]
+								},
+								"description": "Create a new marketing product. **Admin only** - No approval needed, product is created directly.\n\n**Note:** Marketing products are different from Marketplace products:\n- Marketing Products: Added by Admin directly (no approval)\n- Marketplace Products: Added by users, require admin approval\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `description` (optional): Product description\n- `price` (optional): Product price\n- `isPrice` (optional): Whether price is set (true/false)\n- `discount` (optional): Discount percentage (0-100, default: 0)\n- `quantity` (optional): Product quantity in stock (default: 0)\n- `categoryId` (required): Category ID\n- `subcategoryId` (required): Subcategory ID\n- `governmentId` (required): Government ID (location)\n- `cityId` (required): City ID (location)\n- `isActive` (optional): Whether product is active (true/false, default: true)\n- `images` (optional): Array of product images (up to 5 files)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Created marketing product (no approval needed)."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Marketing Product",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "منتج تسويق محدث",
+											"type": "text",
+											"description": "Product name"
+										},
+										{
+											"key": "description",
+											"value": "وصف محدث",
+											"type": "text",
+											"description": "Product description"
+										},
+										{
+											"key": "price",
+											"value": "1200",
+											"type": "text",
+											"description": "Product price"
+										},
+										{
+											"key": "isPrice",
+											"value": "true",
+											"type": "text",
+											"description": "Whether price is set"
+										},
+										{
+											"key": "discount",
+											"value": "15",
+											"type": "text",
+											"description": "Discount percentage"
+										},
+										{
+											"key": "quantity",
+											"value": "50",
+											"type": "text",
+											"description": "Product quantity"
+										},
+										{
+											"key": "categoryId",
+											"value": "1",
+											"type": "text",
+											"description": "Category ID"
+										},
+										{
+											"key": "subcategoryId",
+											"value": "1",
+											"type": "text",
+											"description": "Subcategory ID"
+										},
+										{
+											"key": "governmentId",
+											"value": "1",
+											"type": "text",
+											"description": "Government ID"
+										},
+										{
+											"key": "cityId",
+											"value": "1",
+											"type": "text",
+											"description": "City ID"
+										},
+										{
+											"key": "isActive",
+											"value": "true",
+											"type": "text",
+											"description": "Whether product is active"
+										},
+										{
+											"key": "existingImages",
+											"value": "[\"image1.jpg\", \"image2.jpg\"]",
+											"type": "text",
+											"description": "Existing images to keep (JSON array)"
+										},
+										{
+											"key": "images",
+											"type": "file",
+											"src": [],
+											"description": "New images to add (up to 5 files)"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketing-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketing-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Marketing Product ID"
+										}
+									]
+								},
+								"description": "Update a marketing product. **Admin only**.\n\n**Body Parameters (form-data):**\n- All fields are optional (only include fields to update)\n- `existingImages`: JSON array of existing image filenames to keep\n- `images`: New images to add (will be merged with existingImages if provided)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated marketing product."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Marketing Product",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/marketing-products/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"marketing-products",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1",
+											"description": "Marketing Product ID"
+										}
+									]
+								},
+								"description": "Delete a marketing product. **Admin only**.\n\n**Parameters:**\n- `id`: Marketing Product ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Success message."
+							},
+							"response": []
 						}
 					]
 				}

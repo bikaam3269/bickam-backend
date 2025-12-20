@@ -57,6 +57,22 @@ class LiveStreamLikeService {
   }
 
   /**
+   * Get likes count and user like status for a live stream
+   * @param {number} liveStreamId - Live stream ID
+   * @param {number|null} userId - User ID (optional)
+   * @returns {Promise<object>} Likes count and user like status
+   */
+  async getLikesInfo(liveStreamId, userId = null) {
+    const count = await this.getLikesCount(liveStreamId);
+    const userLiked = userId ? await this.checkUserLiked(liveStreamId, userId) : false;
+
+    return {
+      likesCount: count,
+      userLiked: userLiked
+    };
+  }
+
+  /**
    * Check if user liked a live stream
    * @param {number} liveStreamId - Live stream ID
    * @param {number} userId - User ID

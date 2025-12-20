@@ -23,6 +23,10 @@ import WalletTransaction from './WalletTransaction.js';
 import MarketplaceProduct from './MarketplaceProduct.js';
 import MarketplaceSettings from './MarketplaceSettings.js';
 import MarketingProduct from './MarketingProduct.js';
+import MarketingCart from './MarketingCart.js';
+import MarketingOrder from './MarketingOrder.js';
+import MarketingOrderItem from './MarketingOrderItem.js';
+import AppSettings from './AppSettings.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -120,6 +124,14 @@ LiveStreamLike.belongsTo(LiveStream, {
   as: 'liveStream'
 });
 
+// Marketing Order associations
+MarketingOrder.hasMany(MarketingOrderItem, {
+  foreignKey: 'marketingOrderId',
+  as: 'items'
+});
+
+// Note: MarketingOrderItem.belongsTo(MarketingOrder) is already defined in MarketingOrderItem.js
+
 // Initialize all models
 const models = {
   User,
@@ -146,6 +158,10 @@ const models = {
     MarketplaceProduct,
     MarketplaceSettings,
     MarketingProduct,
+    MarketingCart,
+    MarketingOrder,
+    MarketingOrderItem,
+    AppSettings,
     sequelize
 };
 
