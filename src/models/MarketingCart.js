@@ -61,3 +61,4 @@ MarketingCart.belongsTo(MarketingProduct, {
 
 export default MarketingCart;
 
+

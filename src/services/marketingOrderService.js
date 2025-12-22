@@ -438,6 +438,171 @@ class MarketingOrderService {
 
     return order;
   }
+
+  /**
+   * Calculate order price for marketing cart
+   */
+  async calculateOrderPrice(marketerId, toCityId) {
+    if (!toCityId) {
+      throw new Error('To city ID is required');
+    }
+
+    // Verify user is a marketer
+    const marketer = await User.findByPk(marketerId);
+    if (!marketer || marketer.type !== 'marketing') {
+      throw new Error('User is not a marketer');
+    }
+
+    // Get cart items from marketing cart (same way as createOrder)
+    const cartItems = await MarketingCart.findAll({
+      where: { marketerId },
+      include: [
+        {
+          model: MarketingProduct,
+          as: 'marketingProduct',
+          required: true, // Use INNER JOIN to ensure product exists
+          include: [
+            {
+              model: City,
+              as: 'city',
+              attributes: ['id', 'name']
+            }
+          ]
+        }
+      ]
+    });
+    
+    console.log(`[DEBUG] Marketing cart items found: ${cartItems?.length || 0} for marketerId: ${marketerId}`);
+    
+    if (!cartItems || cartItems.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
+    // Group items by location (cityId) and calculate totals
+    const locationGroups = {};
+    const locationCityMap = {};
+    let productsTotal = 0;
+
+    for (const cartItem of cartItems) {
+      const marketingProduct = cartItem.marketingProduct;
+
+      if (!marketingProduct) {
+        throw new Error(`Marketing product ${cartItem.marketingProductId} not found`);
+      }
+
+      if (!marketingProduct.isActive) {
+        throw new Error(`Marketing product ${cartItem.marketingProductId} is not active`);
+      }
+
+      if (!marketingProduct.cityId) {
+        throw new Error(`Marketing product ${cartItem.marketingProductId} has no city.`);
+      }
+
+      const productCityId = marketingProduct.cityId;
+
+      // Store product cityId
+      if (!locationCityMap[productCityId]) {
+        locationCityMap[productCityId] = productCityId;
+      }
+
+      if (!locationGroups[productCityId]) {
+        locationGroups[productCityId] = {
+          cityId: productCityId,
+          cityName: marketingProduct.city?.name || null,
+          items: [],
+          productsSubtotal: 0
+        };
+      }
+
+      const price = marketingProduct.price && marketingProduct.isPrice ? parseFloat(marketingProduct.price) : 0;
+      const discount = marketingProduct.discount || 0;
+      const discountedPrice = price * (1 - discount / 100);
+      const subtotal = discountedPrice * cartItem.quantity;
+
+      locationGroups[productCityId].items.push({
+        marketingProductId: marketingProduct.id,
+        productName: marketingProduct.name,
+        quantity: cartItem.quantity,
+        price: discountedPrice,
+        subtotal
+      });
+
+      locationGroups[productCityId].productsSubtotal += subtotal;
+      productsTotal += subtotal;
+    }
+
+    // Calculate shipping for each location
+    const locationsBreakdown = [];
+    let totalShippingPrice = 0;
+
+    for (const [cityId, locationData] of Object.entries(locationGroups)) {
+      const fromCityId = parseInt(cityId);
+      
+      // Get shipping price
+      let shippingPrice = 0;
+      let shippingInfo = null;
+      
+      if (fromCityId && toCityId) {
+        try {
+          const shipping = await shippingService.getShippingPrice(fromCityId, toCityId);
+          shippingPrice = parseFloat(shipping.price);
+          shippingInfo = {
+            fromCity: shipping.fromCity,
+            toCity: shipping.toCity,
+            price: shippingPrice
+          };
+        } catch (error) {
+          // If shipping price not found, shippingPrice remains 0
+          shippingInfo = {
+            fromCity: locationData.cityName,
+            toCity: null,
+            price: 0,
+            error: 'Shipping price not found for this route'
+          };
+        }
+      }
+
+      const locationTotal = locationData.productsSubtotal + shippingPrice;
+      totalShippingPrice += shippingPrice;
+
+      locationsBreakdown.push({
+        cityId: fromCityId,
+        cityName: locationData.cityName,
+        fromCityId: fromCityId,
+        toCityId: toCityId,
+        productsSubtotal: locationData.productsSubtotal,
+        shippingPrice: shippingPrice,
+        shippingInfo: shippingInfo,
+        locationTotal: locationTotal,
+        items: locationData.items
+      });
+    }
+
+    const grandTotal = productsTotal + totalShippingPrice;
+
+    // Get wallet balance
+    let walletBalance = 0;
+    try {
+      walletBalance = await walletService.getBalance(marketerId);
+    } catch (error) {
+      console.error('Failed to get wallet balance:', error.message);
+    }
+
+    return {
+      productsTotal,
+      totalShippingPrice,
+      grandTotal,
+      toCityId: parseInt(toCityId),
+      locationsBreakdown,
+      wallet: {
+        balance: walletBalance,
+        canPayWithWallet: walletBalance > 0,
+        sufficientBalance: walletBalance >= grandTotal,
+        remainingAfterPayment: Math.max(0, walletBalance - grandTotal),
+        needsAdditionalPayment: grandTotal > walletBalance ? grandTotal - walletBalance : 0
+      }
+    };
+  }
 }
 
 export default new MarketingOrderService();

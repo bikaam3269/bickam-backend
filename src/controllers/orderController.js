@@ -1,5 +1,6 @@
 import orderService from '../services/orderService.js';
 import cartService from '../services/cartService.js';
+import marketingOrderService from '../services/marketingOrderService.js';
 import { sendSuccess, sendError } from '../utils/responseHelper.js';
 
 export const createOrder = async (req, res, next) => {
@@ -208,6 +209,7 @@ export const cancelOrder = async (req, res, next) => {
 export const calculateOrderPrice = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const userType = req.user.type;
     const { toCityId } = req.query;
 
     // Validate required fields
@@ -220,12 +222,23 @@ export const calculateOrderPrice = async (req, res, next) => {
       return sendError(res, 'Invalid to city ID', 400);
     }
 
-    const priceBreakdown = await orderService.calculateOrderPrice(userId, toCityIdNum);
+    // Check user type and use appropriate cart
+    let priceBreakdown;
+    if (userType === 'marketing') {
+      // Use marketing cart for marketers
+      console.log(`[DEBUG] User type is marketing, userId: ${userId}, calculating marketing cart price`);
+      priceBreakdown = await marketingOrderService.calculateOrderPrice(userId, toCityIdNum);
+    } else {
+      // Use regular cart for regular users
+      console.log(`[DEBUG] User type is ${userType}, userId: ${userId}, calculating regular cart price`);
+      priceBreakdown = await orderService.calculateOrderPrice(userId, toCityIdNum);
+    }
 
     return sendSuccess(res, priceBreakdown, 'Order price calculated successfully');
   } catch (error) {
     if (error.message === 'Cart is empty' || 
         error.message === 'To city ID is required' ||
+        error.message === 'User is not a marketer' ||
         error.message.includes('not found') ||
         error.message.includes('city') ||
         error.message.includes('has no city')) {
