@@ -3,6 +3,8 @@ import Discount from '../models/Discount.js';
 import DiscountProduct from '../models/DiscountProduct.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import Government from '../models/Government.js';
+import Category from '../models/Category.js';
 
 class DiscountService {
   /**
@@ -159,38 +161,91 @@ class DiscountService {
   }
 
   /**
-   * Get all active discounts (for users)
+   * Get all active discounts (for users) with filters
+   * @param {object} filters - Filter options (governmentId, categoryId, minPrice, maxPrice)
    * @returns {Promise<array>}
    */
-  async getAllActiveDiscounts() {
+  async getAllActiveDiscounts(filters = {}) {
     const now = new Date();
-    
+    const { governmentId, categoryId, minPrice, maxPrice } = filters;
+
+    // Build vendor filter
+    const vendorWhere = {};
+    if (governmentId) {
+      vendorWhere.governmentId = parseInt(governmentId);
+    }
+
+    // Build product filter
+    const productWhere = {};
+    if (categoryId) {
+      productWhere.categoryId = parseInt(categoryId);
+    }
+
+    // Build discount include with nested filters
+    const discountInclude = [
+      {
+        model: User,
+        as: 'vendor',
+        attributes: ['id', 'name', 'email', 'logoImage', 'governmentId'],
+        where: Object.keys(vendorWhere).length > 0 ? vendorWhere : undefined,
+        required: Object.keys(vendorWhere).length > 0,
+        include: [{
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name']
+        }]
+      },
+      {
+        model: DiscountProduct,
+        as: 'products',
+        include: [{
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'name', 'price', 'images', 'categoryId'],
+          where: Object.keys(productWhere).length > 0 ? productWhere : undefined,
+          required: Object.keys(productWhere).length > 0,
+          include: [{
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          }]
+        }]
+      }
+    ];
+
     const discounts = await Discount.findAll({
       where: {
         isActive: true,
         startDate: { [Op.lte]: now },
         endDate: { [Op.gte]: now }
       },
-      include: [
-        {
-          model: User,
-          as: 'vendor',
-          attributes: ['id', 'name', 'email', 'logoImage']
-        },
-        {
-          model: DiscountProduct,
-          as: 'products',
-          include: [{
-            model: Product,
-            as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
-          }]
-        }
-      ],
+      include: discountInclude,
       order: [['createdAt', 'DESC']]
     });
 
-    return discounts;
+    // Filter by price if minPrice or maxPrice is provided
+    let filteredDiscounts = discounts;
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filteredDiscounts = discounts.filter(discount => {
+        // Check if any product in the discount matches the price range
+        return discount.products.some(discountProduct => {
+          if (!discountProduct.product || !discountProduct.product.price) {
+            return false;
+          }
+
+          const originalPrice = parseFloat(discountProduct.product.price);
+          const discountPercent = parseFloat(discount.discount);
+          const discountedPrice = originalPrice * (1 - discountPercent / 100);
+
+          const min = minPrice !== undefined ? parseFloat(minPrice) : 0;
+          const max = maxPrice !== undefined ? parseFloat(maxPrice) : Infinity;
+
+          return discountedPrice >= min && discountedPrice <= max;
+        });
+      });
+    }
+
+    return filteredDiscounts;
   }
 
   /**
@@ -468,6 +523,59 @@ class DiscountService {
       originalPrice: originalPrice,
       discountedPrice: parseFloat(discountedPrice.toFixed(2)),
       product: discountProduct.product
+    };
+  }
+
+  /**
+   * Delete expired discounts (discounts where endDate has passed)
+   * This is called by cron job
+   * @returns {Promise<object>}
+   */
+  async deleteExpiredDiscounts() {
+    const now = new Date();
+    
+    // Find all expired discounts
+    const expiredDiscounts = await Discount.findAll({
+      where: {
+        endDate: { [Op.lt]: now }
+      },
+      include: [{
+        model: DiscountProduct,
+        as: 'products'
+      }]
+    });
+
+    if (expiredDiscounts.length === 0) {
+      return {
+        deletedCount: 0,
+        discounts: []
+      };
+    }
+
+    const discountIds = expiredDiscounts.map(d => d.id);
+    
+    // Delete discount products first (due to foreign key constraint)
+    const deletedProductsCount = await DiscountProduct.destroy({
+      where: {
+        discountId: { [Op.in]: discountIds }
+      }
+    });
+
+    // Delete expired discounts
+    const deletedCount = await Discount.destroy({
+      where: {
+        id: { [Op.in]: discountIds }
+      }
+    });
+
+    return {
+      deletedCount,
+      deletedProductsCount,
+      discounts: expiredDiscounts.map(d => ({
+        id: d.id,
+        title: d.title,
+        endDate: d.endDate
+      }))
     };
   }
 }

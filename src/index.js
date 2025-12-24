@@ -4,7 +4,7 @@ import { config } from './config/app.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { connectDatabase } from './models/index.js';
-import { startMarketplaceCleanupJob } from './utils/cronJobs.js';
+import { startMarketplaceCleanupJob, startDiscountCleanupJob } from './utils/cronJobs.js';
 
 const app = express();
 
@@ -46,6 +46,7 @@ const startServer = async () => {
       
       // Start cron jobs
       startMarketplaceCleanupJob();
+      startDiscountCleanupJob();
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -6188,7 +6188,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/discounts/all",
+							"raw": "{{base_url}}/api/v1/discounts/all?governmentId=1&categoryId=2&minPrice=10&maxPrice=100",
 							"host": [
 								"{{base_url}}"
 							],
@@ -6197,9 +6197,35 @@
 								"v1",
 								"discounts",
 								"all"
+							],
+							"query": [
+								{
+									"key": "governmentId",
+									"value": "1",
+									"description": "Filter by vendor government ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "categoryId",
+									"value": "2",
+									"description": "Filter by product category ID (optional)",
+									"disabled": true
+								},
+								{
+									"key": "minPrice",
+									"value": "10",
+									"description": "Minimum discounted price (optional)",
+									"disabled": true
+								},
+								{
+									"key": "maxPrice",
+									"value": "100",
+									"description": "Maximum discounted price (optional)",
+									"disabled": true
+								}
 							]
 						},
-						"description": "Get all active discounts. **Public endpoint** - No authentication required.\n\n**Response:** Array of all active discounts with vendor and product information."
+						"description": "Get all active discounts with optional filters. **Public endpoint** - No authentication required.\n\n**Query Parameters (all optional):**\n- `governmentId`: Filter discounts by vendor's government ID\n- `categoryId`: Filter discounts by product category ID\n- `minPrice`: Minimum discounted price (after discount is applied)\n- `maxPrice`: Maximum discounted price (after discount is applied)\n\n**Examples:**\n- Get all discounts: `/api/v1/discounts/all`\n- Filter by government: `/api/v1/discounts/all?governmentId=1`\n- Filter by category: `/api/v1/discounts/all?categoryId=2`\n- Filter by price range: `/api/v1/discounts/all?minPrice=10&maxPrice=100`\n- Combine filters: `/api/v1/discounts/all?governmentId=1&categoryId=2&minPrice=10&maxPrice=100`\n\n**Response:** Array of filtered active discounts with vendor and product information."
 					},
 					"response": []
 				},

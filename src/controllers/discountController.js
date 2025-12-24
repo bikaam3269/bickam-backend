@@ -151,11 +151,19 @@ export const checkProductInDiscount = async (req, res, next) => {
 };
 
 /**
- * Get all active discounts (for users)
+ * Get all active discounts (for users) with filters
  */
 export const getAllActiveDiscounts = async (req, res, next) => {
   try {
-    const discounts = await discountService.getAllActiveDiscounts();
+    const { governmentId, categoryId, minPrice, maxPrice } = req.query;
+
+    const filters = {};
+    if (governmentId) filters.governmentId = governmentId;
+    if (categoryId) filters.categoryId = categoryId;
+    if (minPrice) filters.minPrice = minPrice;
+    if (maxPrice) filters.maxPrice = maxPrice;
+
+    const discounts = await discountService.getAllActiveDiscounts(filters);
 
     return sendSuccess(res, discounts, 'Active discounts retrieved successfully');
   } catch (error) {
