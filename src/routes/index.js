@@ -50,6 +50,7 @@ router.use('/categories', categoryRoutes);
 router.use('/subcategories', subcategoryRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/vendors', vendorRoutes);
+router.use('/merchants', vendorRoutes); // Alias for vendors
 router.use('/live-streams', liveStreamRoutes);
 router.use('/cities', cityRoutes);
 router.use('/shippings', shippingRoutes);

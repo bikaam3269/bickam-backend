@@ -20,6 +20,7 @@ class ProductService {
       maxPrice, 
       isActive, 
       minQuantity,
+      governmentId,
       page = 1,
       limit = 50,
       status // 'published', 'pending', 'rejected' - based on isActive
@@ -74,20 +75,28 @@ class ProductService {
       where.quantity = { [Op.gte]: minQuantity };
     }
 
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    // Build include array for vendor
+    const vendorInclude = {
+      model: User,
+      as: 'vendor',
+      attributes: ['id', 'name', 'email', 'type'],
+      required: governmentId !== undefined // If filtering by government, make vendor required
+    };
 
-    // Get total count
-    const totalCount = await Product.count({ where });
+    // Filter by government (governate) through vendor
+    if (governmentId !== undefined) {
+      vendorInclude.where = {
+        governmentId: governmentId
+      };
+    }
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
     // Get products with pagination
     const products = await Product.findAndCountAll({
       where,
       include: [
-        {
-          model: User,
-          as: 'vendor',
-          attributes: ['id', 'name', 'email', 'type']
-        },
+        vendorInclude,
         {
           model: Category,
           as: 'category',
@@ -101,8 +110,12 @@ class ProductService {
       ],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
-      offset: offset
+      offset: offset,
+      distinct: true // Important when using includes with where conditions
     });
+
+    // Get total count from findAndCountAll result
+    const totalCount = products.count;
 
     // Ensure images is always returned as an array, not a stringified array
     const formattedProducts = products.rows.map(product => {

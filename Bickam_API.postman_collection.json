@@ -1562,7 +1562,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/products?categoryId=1&subcategoryId=1&search=laptop",
+							"raw": "{{base_url}}/api/v1/products?page=1&limit=50&governmentId=1",
 							"host": [
 								"{{base_url}}"
 							],
@@ -1572,6 +1572,24 @@
 								"products"
 							],
 							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)",
+									"disabled": false
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Items per page (default: 50)",
+									"disabled": false
+								},
+								{
+									"key": "governmentId",
+									"value": "1",
+									"description": "Filter by government (governate) ID",
+									"disabled": true
+								},
 								{
 									"key": "vendorId",
 									"value": "1",
@@ -1619,9 +1637,16 @@
 									"value": "10",
 									"description": "Minimum quantity in stock",
 									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "published",
+									"description": "Filter by status (published, pending, rejected)",
+									"disabled": true
 								}
 							]
-						}
+						},
+						"description": "Get all products with pagination and filters.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government (governate) ID - filters products by vendor's government\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search by name or description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n- `minQuantity` (optional): Minimum quantity in stock\n- `status` (optional): Filter by status (published, pending, rejected)\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\nReturns products array and pagination object:\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Products retrieved successfully\",\n  \"data\": {\n    \"products\": [...],\n    \"pagination\": {\n      \"total\": 10,\n      \"page\": 1,\n      \"limit\": 50,\n      \"totalPages\": 1,\n      \"hasMore\": false\n    }\n  }\n}\n```"
 					},
 					"response": []
 				},

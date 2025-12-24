@@ -12,6 +12,7 @@ export const getAllProducts = async (req, res, next) => {
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
       isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
       minQuantity: req.query.minQuantity ? parseInt(req.query.minQuantity) : undefined,
+      governmentId: req.query.governmentId ? parseInt(req.query.governmentId) : undefined,
       page: req.query.page || 1,
       limit: req.query.limit || 50,
       status: req.query.status // 'published', 'pending', 'rejected'
