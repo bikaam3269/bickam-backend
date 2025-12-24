@@ -6178,6 +6178,339 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "Discounts",
+			"item": [
+				{
+					"name": "Get All Active Discounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								"all"
+							]
+						},
+						"description": "Get all active discounts. **Public endpoint** - No authentication required.\n\n**Response:** Array of all active discounts with vendor and product information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discounts by Vendor ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/vendor/:vendorId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								"vendor",
+								":vendorId"
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "1",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Get all active discounts for a specific vendor. **Public endpoint** - No authentication required.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Response:** Array of active discounts for the specified vendor."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Product in Discount",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/product/:productId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								"product",
+								":productId"
+							],
+							"variable": [
+								{
+									"key": "productId",
+									"value": "1",
+									"description": "Product ID"
+								}
+							]
+						},
+						"description": "Check if a product is currently in an active discount. **Public endpoint** - No authentication required.\n\n**Parameters:**\n- `productId`: Product ID to check\n\n**Response:**\n- If product is in discount: Returns discount details, discount percentage, original price, discounted price, and product info\n- If product is not in discount: Returns `{ inDiscount: false }`\n\n**Example Response (in discount):**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"inDiscount\": true,\n    \"discount\": {\n      \"id\": 1,\n      \"title\": \"خصم الشتاء\",\n      \"discount\": 20,\n      \"startDate\": \"2025-01-01T00:00:00.000Z\",\n      \"endDate\": \"2025-01-31T23:59:59.000Z\",\n      \"vendor\": {...}\n    },\n    \"discountPercentage\": 20,\n    \"originalPrice\": 100.00,\n    \"discountedPrice\": 80.00,\n    \"product\": {\n      \"id\": 1,\n      \"name\": \"Product Name\",\n      \"price\": 100.00\n    }\n  }\n}\n```\n\n**Example Response (not in discount):**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"inDiscount\": false\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Discount",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "خصم الشتاء",
+									"type": "text",
+									"description": "Discount title (required)"
+								},
+								{
+									"key": "body",
+									"value": "خصم خاص على جميع المنتجات",
+									"type": "text",
+									"description": "Discount description (optional)"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "Discount banner image (optional)"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-01-01T00:00:00.000Z",
+									"type": "text",
+									"description": "Discount start date (required, ISO format)"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-01-31T23:59:59.000Z",
+									"type": "text",
+									"description": "Discount end date (required, ISO format)"
+								},
+								{
+									"key": "discount",
+									"value": "20",
+									"type": "text",
+									"description": "Discount percentage (required, 0-100) - applies to all products"
+								},
+								{
+									"key": "products",
+									"value": "[1, 2, 3]",
+									"type": "text",
+									"description": "Array of product IDs (required, JSON string) - e.g. [1, 2, 3]"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts"
+							]
+						},
+						"description": "Create a new discount. **Vendor only**.\n\n**Body Parameters (form-data):**\n- `title` (required): Discount title\n- `body` (optional): Discount description\n- `image` (optional): Discount banner image file\n- `startDate` (required): Discount start date (ISO format)\n- `endDate` (required): Discount end date (ISO format, must be after startDate)\n- `discount` (required): Discount percentage (0-100) - applies to all products\n- `products` (required): JSON string array of product IDs - e.g. [1, 2, 3]\n\n**Validation:**\n- Products must belong to the authenticated vendor\n- Products cannot be in another active discount that overlaps with the new discount period\n- Discount percentage must be between 0 and 100\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Created discount with products. Discounted price is calculated automatically: originalPrice * (1 - discount/100)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Discounts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/my",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								"my"
+							]
+						},
+						"description": "Get all discounts for the authenticated vendor. **Vendor only**.\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Array of discounts with products (includes both active and inactive discounts)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Discount by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Discount ID"
+								}
+							]
+						},
+						"description": "Get a specific discount by ID. **Vendor only** - Can only access own discounts.\n\n**Parameters:**\n- `id`: Discount ID\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Discount details with products."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Discount",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "خصم محدث",
+									"type": "text",
+									"description": "Discount title (optional)"
+								},
+								{
+									"key": "body",
+									"value": "وصف محدث",
+									"type": "text",
+									"description": "Discount description (optional)"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "New discount banner image (optional)"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-02-01T00:00:00.000Z",
+									"type": "text",
+									"description": "Discount start date (optional, ISO format)"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-02-28T23:59:59.000Z",
+									"type": "text",
+									"description": "Discount end date (optional, ISO format)"
+								},
+								{
+									"key": "discount",
+									"value": "25",
+									"type": "text",
+									"description": "Discount percentage (optional, 0-100) - applies to all products"
+								},
+								{
+									"key": "products",
+									"value": "[3, 4, 5]",
+									"type": "text",
+									"description": "Array of product IDs to replace existing products (optional, JSON string) - e.g. [3, 4, 5]"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Discount ID"
+								}
+							]
+						},
+						"description": "Update a discount. **Vendor only** - Can only update own discounts.\n\n**Body Parameters (form-data):**\n- All fields are optional (only include fields to update)\n- `discount`: Discount percentage (0-100) - applies to all products\n- `products`: If provided, replaces all existing products in the discount (array of product IDs)\n- Same validation rules apply as create discount\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Updated discount with products."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Discount",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Discount ID"
+								}
+							]
+						},
+						"description": "Delete a discount. **Vendor only** - Can only delete own discounts.\n\n**Parameters:**\n- `id`: Discount ID\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Success message."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [

@@ -27,6 +27,8 @@ import MarketingCart from './MarketingCart.js';
 import MarketingOrder from './MarketingOrder.js';
 import MarketingOrderItem from './MarketingOrderItem.js';
 import AppSettings from './AppSettings.js';
+import Discount from './Discount.js';
+import DiscountProduct from './DiscountProduct.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -132,6 +134,17 @@ MarketingOrder.hasMany(MarketingOrderItem, {
 
 // Note: MarketingOrderItem.belongsTo(MarketingOrder) is already defined in MarketingOrderItem.js
 
+// Discount associations
+Discount.hasMany(DiscountProduct, {
+  foreignKey: 'discountId',
+  as: 'products'
+});
+
+Product.hasMany(DiscountProduct, {
+  foreignKey: 'productId',
+  as: 'discounts'
+});
+
 // Initialize all models
 const models = {
   User,
@@ -162,6 +175,8 @@ const models = {
     MarketingOrder,
     MarketingOrderItem,
     AppSettings,
+    Discount,
+    DiscountProduct,
     sequelize
 };
 

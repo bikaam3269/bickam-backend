@@ -23,6 +23,7 @@ import marketingCartRoutes from './marketingCartRoutes.js';
 import marketingOrderRoutes from './marketingOrderRoutes.js';
 import appSettingsRoutes from './appSettingsRoutes.js';
 import affiliateRoutes from './affiliateRoutes.js';
+import discountRoutes from './discountRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -60,6 +61,7 @@ router.use('/marketing-cart', marketingCartRoutes);
 router.use('/marketing-orders', marketingOrderRoutes);
 router.use('/app-settings', appSettingsRoutes);
 router.use('/affiliates', affiliateRoutes);
+router.use('/discounts', discountRoutes);
 
 export default router;
 

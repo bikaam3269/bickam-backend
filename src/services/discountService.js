@@ -1,0 +1,476 @@
+import { Op } from 'sequelize';
+import Discount from '../models/Discount.js';
+import DiscountProduct from '../models/DiscountProduct.js';
+import Product from '../models/Product.js';
+import User from '../models/User.js';
+
+class DiscountService {
+  /**
+   * Create a new discount
+   * @param {number} vendorId - Vendor ID
+   * @param {object} discountData - Discount data (title, body, image, startDate, endDate, products)
+   * @returns {Promise<object>}
+   */
+  async createDiscount(vendorId, discountData) {
+    const { title, body, image, startDate, endDate, discount, products } = discountData;
+
+    // Validate required fields
+    if (!title || !startDate || !endDate || discount === undefined || discount === null) {
+      throw new Error('Title, start date, end date, and discount percentage are required');
+    }
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      throw new Error('Products array is required and must not be empty');
+    }
+
+    // Validate discount percentage
+    const discountPercent = parseFloat(discount);
+    if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+      throw new Error('Discount must be a number between 0 and 100');
+    }
+
+    // Validate date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end <= start) {
+      throw new Error('End date must be after start date');
+    }
+
+    // Check if vendor exists
+    const vendor = await User.findByPk(vendorId);
+    if (!vendor || vendor.type !== 'vendor') {
+      throw new Error('Vendor not found');
+    }
+
+    // Validate products - products is now just an array of product IDs
+    const productIds = Array.isArray(products) ? products : [];
+    if (productIds.length === 0) {
+      throw new Error('Products array must contain at least one product ID');
+    }
+
+    const existingProducts = await Product.findAll({
+      where: {
+        id: { [Op.in]: productIds },
+        vendorId: vendorId
+      }
+    });
+
+    if (existingProducts.length !== productIds.length) {
+      throw new Error('Some products not found or do not belong to this vendor');
+    }
+
+    // Check if any product is already in an active discount that overlaps with the new discount period
+    const existingDiscountProducts = await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [{
+        model: Discount,
+        as: 'discount',
+        where: {
+          isActive: true,
+          [Op.or]: [
+            // Discount starts before new discount ends and ends after new discount starts (overlap)
+            {
+              startDate: { [Op.lte]: end },
+              endDate: { [Op.gte]: start }
+            }
+          ]
+        }
+      }]
+    });
+
+    if (existingDiscountProducts.length > 0) {
+      const conflictingProducts = existingDiscountProducts.map(dp => dp.productId);
+      throw new Error(`Products with IDs [${conflictingProducts.join(', ')}] are already in an active discount`);
+    }
+
+    // Create discount
+    const discountRecord = await Discount.create({
+      vendorId,
+      title,
+      body: body || null,
+      image: image || null,
+      startDate: start,
+      endDate: end,
+      discount: discountPercent,
+      isActive: true
+    });
+
+    // Create discount products (just product IDs, no discountedPrice)
+    const discountProducts = await DiscountProduct.bulkCreate(
+      productIds.map(productId => ({
+        discountId: discountRecord.id,
+        productId: productId
+      }))
+    );
+
+    // Fetch discount with relations
+    const discountWithRelations = await Discount.findByPk(discountRecord.id, {
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: DiscountProduct,
+          as: 'products',
+          include: [{
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'price', 'images']
+          }]
+        }
+      ]
+    });
+
+    return discountWithRelations;
+  }
+
+  /**
+   * Get all discounts for a vendor
+   * @param {number} vendorId - Vendor ID
+   * @returns {Promise<array>}
+   */
+  async getVendorDiscounts(vendorId) {
+    const discounts = await Discount.findAll({
+      where: { vendorId },
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: DiscountProduct,
+          as: 'products',
+          include: [{
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'price', 'images']
+          }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return discounts;
+  }
+
+  /**
+   * Get all active discounts (for users)
+   * @returns {Promise<array>}
+   */
+  async getAllActiveDiscounts() {
+    const now = new Date();
+    
+    const discounts = await Discount.findAll({
+      where: {
+        isActive: true,
+        startDate: { [Op.lte]: now },
+        endDate: { [Op.gte]: now }
+      },
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email', 'logoImage']
+        },
+        {
+          model: DiscountProduct,
+          as: 'products',
+          include: [{
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'price', 'images']
+          }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return discounts;
+  }
+
+  /**
+   * Get discounts by vendor ID (for users)
+   * @param {number} vendorId - Vendor ID
+   * @returns {Promise<array>}
+   */
+  async getDiscountsByVendorId(vendorId) {
+    const now = new Date();
+    
+    const discounts = await Discount.findAll({
+      where: {
+        vendorId: vendorId,
+        isActive: true,
+        startDate: { [Op.lte]: now },
+        endDate: { [Op.gte]: now }
+      },
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email', 'logoImage']
+        },
+        {
+          model: DiscountProduct,
+          as: 'products',
+          include: [{
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'price', 'images']
+          }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return discounts;
+  }
+
+  /**
+   * Get discount by ID
+   * @param {number} discountId - Discount ID
+   * @param {number} vendorId - Vendor ID (optional, for security)
+   * @returns {Promise<object>}
+   */
+  async getDiscountById(discountId, vendorId = null) {
+    const where = { id: discountId };
+    if (vendorId) {
+      where.vendorId = vendorId;
+    }
+
+    const discount = await Discount.findOne({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'email']
+        },
+        {
+          model: DiscountProduct,
+          as: 'products',
+          include: [{
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'price', 'images']
+          }]
+        }
+      ]
+    });
+
+    if (!discount) {
+      throw new Error('Discount not found');
+    }
+
+    return discount;
+  }
+
+  /**
+   * Update discount
+   * @param {number} discountId - Discount ID
+   * @param {number} vendorId - Vendor ID
+   * @param {object} updateData - Update data
+   * @returns {Promise<object>}
+   */
+  async updateDiscount(discountId, vendorId, updateData) {
+    const discount = await Discount.findOne({
+      where: { id: discountId, vendorId }
+    });
+
+    if (!discount) {
+      throw new Error('Discount not found');
+    }
+
+    const { title, body, image, startDate, endDate, products } = updateData;
+
+    // Validate date range if both dates are provided
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end <= start) {
+        throw new Error('End date must be after start date');
+      }
+    }
+
+    // Update discount fields
+    if (title !== undefined) discount.title = title;
+    if (body !== undefined) discount.body = body;
+    if (image !== undefined) discount.image = image;
+    if (startDate !== undefined) discount.startDate = new Date(startDate);
+    if (endDate !== undefined) discount.endDate = new Date(endDate);
+    if (discount !== undefined && discount !== null) {
+      const discountPercent = parseFloat(discount);
+      if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
+        throw new Error('Discount must be a number between 0 and 100');
+      }
+      discount.discount = discountPercent;
+    }
+
+    await discount.save();
+
+    // Update products if provided
+    if (products && Array.isArray(products)) {
+      // Delete existing discount products
+      await DiscountProduct.destroy({
+        where: { discountId: discount.id }
+      });
+
+      // Validate products - products is now just an array of product IDs
+      const productIds = products;
+      const existingProducts = await Product.findAll({
+        where: {
+          id: { [Op.in]: productIds },
+          vendorId: vendorId
+        }
+      });
+
+      if (existingProducts.length !== productIds.length) {
+        throw new Error('Some products not found or do not belong to this vendor');
+      }
+
+      // Check if any product is already in another active discount
+      const existingDiscountProducts = await DiscountProduct.findAll({
+        where: {
+          productId: { [Op.in]: productIds },
+          discountId: { [Op.ne]: discountId } // Exclude current discount
+        },
+        include: [{
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            [Op.or]: [
+              {
+                startDate: { [Op.lte]: discount.endDate },
+                endDate: { [Op.gte]: discount.startDate }
+              }
+            ]
+          }
+        }]
+      });
+
+      if (existingDiscountProducts.length > 0) {
+        const conflictingProducts = existingDiscountProducts.map(dp => dp.productId);
+        throw new Error(`Products with IDs [${conflictingProducts.join(', ')}] are already in an active discount`);
+      }
+
+      // Create new discount products (just product IDs)
+      await DiscountProduct.bulkCreate(
+        productIds.map(productId => ({
+          discountId: discount.id,
+          productId: productId
+        }))
+      );
+    }
+
+    // Fetch updated discount with relations
+    return await this.getDiscountById(discountId, vendorId);
+  }
+
+  /**
+   * Delete discount
+   * @param {number} discountId - Discount ID
+   * @param {number} vendorId - Vendor ID
+   * @returns {Promise<object>}
+   */
+  async deleteDiscount(discountId, vendorId) {
+    const discount = await Discount.findOne({
+      where: { id: discountId, vendorId }
+    });
+
+    if (!discount) {
+      throw new Error('Discount not found');
+    }
+
+    await discount.destroy();
+
+    return { message: 'Discount deleted successfully' };
+  }
+
+  /**
+   * Get active discounts for products
+   * @param {array} productIds - Product IDs
+   * @returns {Promise<array>}
+   */
+  async getActiveDiscountsForProducts(productIds) {
+    const now = new Date();
+    
+    const discountProducts = await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [{
+        model: Discount,
+        as: 'discount',
+        where: {
+          isActive: true,
+          startDate: { [Op.lte]: now },
+          endDate: { [Op.gte]: now }
+        }
+      }]
+    });
+
+    return discountProducts;
+  }
+
+  /**
+   * Check if a product is in an active discount
+   * @param {number} productId - Product ID
+   * @returns {Promise<object|null>}
+   */
+  async checkProductInDiscount(productId) {
+    const now = new Date();
+    
+    const discountProduct = await DiscountProduct.findOne({
+      where: {
+        productId: productId
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          include: [{
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email']
+          }]
+        },
+        {
+          model: Product,
+          as: 'product',
+          attributes: ['id', 'name', 'price']
+        }
+      ]
+    });
+
+    if (!discountProduct) {
+      return null;
+    }
+
+    // Calculate discounted price based on discount percentage
+    const discountPercent = parseFloat(discountProduct.discount.discount);
+    const originalPrice = parseFloat(discountProduct.product.price);
+    const discountedPrice = originalPrice * (1 - discountPercent / 100);
+
+    return {
+      inDiscount: true,
+      discount: discountProduct.discount,
+      discountPercentage: discountPercent,
+      originalPrice: originalPrice,
+      discountedPrice: parseFloat(discountedPrice.toFixed(2)),
+      product: discountProduct.product
+    };
+  }
+}
+
+export default new DiscountService();
+
