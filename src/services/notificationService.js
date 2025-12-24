@@ -699,8 +699,33 @@ class NotificationService {
       }]
     });
 
+    // Add 'itemId' field to each notification based on data (at top level)
+    const notifications = rows.map(notification => {
+      const notificationData = notification.toJSON();
+      const data = notificationData.data;
+      
+      // Extract 'id' from data if exists and add as 'itemId' at top level
+      if (data && typeof data === 'object') {
+        if (data.id) {
+          notificationData.itemId = data.id; // Add id at top level as itemId
+        } else if (data.liveStreamId) {
+          notificationData.itemId = data.liveStreamId.toString();
+        } else if (data.orderId) {
+          notificationData.itemId = data.orderId.toString();
+        } else if (data.productId) {
+          notificationData.itemId = data.productId.toString();
+        } else if (data.vendorId) {
+          notificationData.itemId = data.vendorId.toString();
+        } else if (data.followerId) {
+          notificationData.itemId = data.followerId.toString();
+        }
+      }
+      
+      return notificationData;
+    });
+
     return {
-      notifications: rows,
+      notifications,
       total: count,
       limit: parseInt(limit),
       offset: parseInt(offset)
@@ -839,7 +864,28 @@ class NotificationService {
       throw new Error('Notification not found');
     }
 
-    return notification;
+    // Add 'id' field to notification based on data
+    const notificationData = notification.toJSON();
+    const data = notificationData.data;
+    
+    // Extract 'id' from data if exists
+    if (data && typeof data === 'object') {
+      if (data.id) {
+        notificationData.relatedId = data.id; // Add id at top level
+      } else if (data.liveStreamId) {
+        notificationData.relatedId = data.liveStreamId.toString();
+      } else if (data.orderId) {
+        notificationData.relatedId = data.orderId.toString();
+      } else if (data.productId) {
+        notificationData.relatedId = data.productId.toString();
+      } else if (data.vendorId) {
+        notificationData.relatedId = data.vendorId.toString();
+      } else if (data.followerId) {
+        notificationData.relatedId = data.followerId.toString();
+      }
+    }
+    
+    return notificationData;
   }
 
   /**
@@ -890,8 +936,33 @@ class NotificationService {
       }]
     });
 
+    // Add 'id' field to each notification based on data
+    const notifications = rows.map(notification => {
+      const notificationData = notification.toJSON();
+      const data = notificationData.data;
+      
+      // Extract 'id' from data if exists
+      if (data && typeof data === 'object') {
+        if (data.id) {
+          notificationData.relatedId = data.id; // Add id at top level (use relatedId to avoid conflict with notification.id)
+        } else if (data.liveStreamId) {
+          notificationData.relatedId = data.liveStreamId.toString();
+        } else if (data.orderId) {
+          notificationData.relatedId = data.orderId.toString();
+        } else if (data.productId) {
+          notificationData.relatedId = data.productId.toString();
+        } else if (data.vendorId) {
+          notificationData.relatedId = data.vendorId.toString();
+        } else if (data.followerId) {
+          notificationData.relatedId = data.followerId.toString();
+        }
+      }
+      
+      return notificationData;
+    });
+
     return {
-      notifications: rows,
+      notifications,
       total: count,
       limit: parseInt(limit),
       offset: parseInt(offset),

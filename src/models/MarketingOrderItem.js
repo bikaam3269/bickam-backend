@@ -70,3 +70,5 @@ MarketingOrderItem.belongsTo(MarketingProduct, {
 export default MarketingOrderItem;
 
 
+
+

@@ -19,3 +19,5 @@ router.get('/marketers/:id', authorize('admin'), getMarketerById);
 export default router;
 
 
+
+

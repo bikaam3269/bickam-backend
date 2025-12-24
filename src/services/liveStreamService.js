@@ -567,8 +567,9 @@ class LiveStreamService {
           `${vendorName} بدأ بث مباشر: ${title}`,
           {
             type: 'live_stream_started',
-            liveStreamId,
-            vendorId,
+            id: liveStreamId.toString(), // Use 'id' as the main identifier
+            liveStreamId: liveStreamId.toString(), // Also keep for backward compatibility
+            vendorId: vendorId.toString(),
             vendorName
           }
         );
