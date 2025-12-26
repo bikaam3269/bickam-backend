@@ -1646,9 +1646,49 @@
 								}
 							]
 						},
-						"description": "Get all products with pagination and filters.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government (governate) ID - filters products by vendor's government\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search by name or description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n- `minQuantity` (optional): Minimum quantity in stock\n- `status` (optional): Filter by status (published, pending, rejected)\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\nReturns products array and pagination object:\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Products retrieved successfully\",\n  \"data\": {\n    \"products\": [...],\n    \"pagination\": {\n      \"total\": 10,\n      \"page\": 1,\n      \"limit\": 50,\n      \"totalPages\": 1,\n      \"hasMore\": false\n    }\n  }\n}\n```"
+						"description": "Get all products with pagination and filters.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government (governate) ID - filters products by vendor's government\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search by name or description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n- `minQuantity` (optional): Minimum quantity in stock\n- `status` (optional): Filter by status (published, pending, rejected)\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\nReturns products array and pagination object."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/products?page=1&limit=50",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"products"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "50"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"statusCode\": 200,\n    \"message\": \"Products retrieved successfully\",\n    \"data\": {\n        \"products\": [\n            {\n                \"id\": 12,\n                \"name\": \"منتج تجريبي\",\n                \"vendorId\": 10,\n                \"price\": \"2000.00\",\n                \"originalPrice\": 2000,\n                \"finalPrice\": 2000,\n                \"isPrice\": true,\n                \"description\": \"[{\\\"insert\\\":\\\"سسسسسسسسسسسسسسسسسسسسسسسسسس\\\",\\\"attributes\\\":{\\\"bold\\\":true}},{\\\"insert\\\":\\\"\\\\n\\\"}]\",\n                \"categoryId\": 1,\n                \"subcategoryId\": 1,\n                \"discount\": \"0.00\",\n                \"quantity\": 10,\n                \"isActive\": true,\n                \"images\": [\n                    \"images-1764937651097-395437279.png\",\n                    \"images-1764937651097-39408601.png\",\n                    \"images-1764937651098-742177108.png\"\n                ],\n                \"status\": \"published\",\n                \"createdAt\": \"2025-12-05T12:27:31.000Z\",\n                \"updatedAt\": \"2025-12-05T12:27:31.000Z\",\n                \"vendor\": {\n                    \"id\": 10,\n                    \"name\": \"testVendor\",\n                    \"email\": \"testVendor@gmail.com\",\n                    \"type\": \"vendor\"\n                },\n                \"category\": {\n                    \"id\": 1,\n                    \"name\": \"wears\"\n                },\n                \"subcategory\": {\n                    \"id\": 1,\n                    \"name\": \"Laptops\"\n                }\n            }\n        ],\n        \"pagination\": {\n            \"total\": 10,\n            \"page\": 1,\n            \"limit\": 50,\n            \"totalPages\": 1,\n            \"hasMore\": false\n        }\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Get Product By ID",
