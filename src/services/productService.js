@@ -372,8 +372,23 @@ class ProductService {
     }
 
     // Only vendor who owns the product or admin can update
+    // Exception: If vendorId is null or product has no owner, vendor can claim it
     if (product.vendorId && currentUser.type !== 'admin' && currentUser.id !== product.vendorId) {
       throw new Error('Unauthorized to update this product');
+    }
+
+    // If vendor is trying to update vendorId, only allow if:
+    // 1. Current vendorId is null (unclaimed product)
+    // 2. Current vendorId matches the user (transferring to themselves - no change)
+    // 3. User is admin
+    if (data.vendorId !== undefined && currentUser.type === 'vendor') {
+      if (product.vendorId !== null && product.vendorId !== currentUser.id) {
+        throw new Error('Cannot change product owner. Product already belongs to another vendor.');
+      }
+      // If product has no owner or belongs to current user, allow setting vendorId
+      if (product.vendorId === null || product.vendorId === currentUser.id) {
+        data.vendorId = currentUser.id; // Force to current user's ID for security
+      }
     }
 
     // Validate images if provided

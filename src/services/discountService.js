@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 import Discount from '../models/Discount.js';
 import DiscountProduct from '../models/DiscountProduct.js';
 import Product from '../models/Product.js';
@@ -60,21 +61,65 @@ class DiscountService {
       throw new Error('Products array must contain at least one product ID');
     }
 
-    const existingProducts = await Product.findAll({
-      where: {
-        id: { [Op.in]: productIds },
-        vendorId: vendorId
+    // Ensure productIds are integers
+    const normalizedProductIds = productIds.map(id => {
+      const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+      if (isNaN(numId)) {
+        throw new Error(`Invalid product ID: ${id}`);
       }
+      return numId;
     });
 
-    if (existingProducts.length !== productIds.length) {
-      throw new Error('Some products not found or do not belong to this vendor');
+    console.log('Creating discount for vendorId:', vendorId);
+    console.log('Product IDs to validate:', normalizedProductIds);
+
+    // First, check if products exist (regardless of vendor)
+    const allProductsCheck = await Product.findAll({
+      where: {
+        id: { [Op.in]: normalizedProductIds }
+      },
+      attributes: ['id', 'vendorId']
+    });
+
+    console.log('All products found (any vendor):', allProductsCheck.map(p => ({ id: p.id, vendorId: p.vendorId })));
+
+    // Check if all products exist
+    const foundProductIds = allProductsCheck.map(p => p.id);
+    const notFoundProducts = normalizedProductIds.filter(id => !foundProductIds.includes(id));
+    
+    if (notFoundProducts.length > 0) {
+      throw new Error(`Products [${notFoundProducts.join(', ')}] do not exist.`);
+    }
+
+    // Check if products belong to the current vendor
+    const existingProducts = allProductsCheck.filter(p => p.vendorId === vendorId);
+    const wrongVendorProducts = allProductsCheck.filter(p => p.vendorId !== vendorId && p.vendorId !== null);
+    const productsWithNoOwner = allProductsCheck.filter(p => p.vendorId === null);
+
+    console.log('Products belonging to vendor:', existingProducts.map(p => ({ id: p.id, vendorId: p.vendorId })));
+    console.log('Products NOT belonging to vendor:', wrongVendorProducts.map(p => ({ id: p.id, vendorId: p.vendorId })));
+    console.log('Products with no owner:', productsWithNoOwner.map(p => ({ id: p.id, vendorId: p.vendorId })));
+
+    // If there are products that don't belong to this vendor, try to fix them if they have no owner
+    if (productsWithNoOwner.length > 0) {
+      console.log('Fixing products with null vendorId:', productsWithNoOwner.map(p => p.id));
+      // Update products with null vendorId to current vendor
+      await Product.update(
+        { vendorId: vendorId },
+        { where: { id: { [Op.in]: productsWithNoOwner.map(p => p.id) } } }
+      );
+    }
+
+    // Check again after fixing null vendorIds
+    if (wrongVendorProducts.length > 0) {
+      const vendorInfo = wrongVendorProducts.map(p => `Product ${p.id} belongs to vendor ${p.vendorId}`).join(', ');
+      throw new Error(`Products [${wrongVendorProducts.map(p => p.id).join(', ')}] belong to a different vendor (${vendorInfo}). You can only create discounts for your own products. Please update the product's vendorId first using PUT /api/v1/products/${wrongVendorProducts[0].id} with vendorId=${vendorId}, or use products that belong to you (vendor ${vendorId}). Use GET /api/v1/products/my to see your products.`);
     }
 
     // Check if any product is already in an active discount that overlaps with the new discount period
     const existingDiscountProducts = await DiscountProduct.findAll({
       where: {
-        productId: { [Op.in]: productIds }
+        productId: { [Op.in]: normalizedProductIds }
       },
       include: [{
         model: Discount,
@@ -111,7 +156,7 @@ class DiscountService {
 
     // Create discount products (just product IDs, no discountedPrice)
     const discountProducts = await DiscountProduct.bulkCreate(
-      productIds.map(productId => ({
+      normalizedProductIds.map(productId => ({
         discountId: discountRecord.id,
         productId: productId
       }))
@@ -119,6 +164,7 @@ class DiscountService {
 
     // Fetch discount with relations
     const discountWithRelations = await Discount.findByPk(discountRecord.id, {
+      attributes: ['id', 'vendorId', 'title', 'body', 'image', 'startDate', 'endDate', 'discount', 'isActive', 'createdAt', 'updatedAt'],
       include: [
         {
           model: User,
@@ -148,6 +194,7 @@ class DiscountService {
   async getVendorDiscounts(vendorId) {
     const discounts = await Discount.findAll({
       where: { vendorId },
+      attributes: ['id', 'vendorId', 'title', 'body', 'image', 'startDate', 'endDate', 'discount', 'isActive', 'createdAt', 'updatedAt'],
       include: [
         {
           model: User,
@@ -229,6 +276,7 @@ class DiscountService {
         startDate: { [Op.lte]: now },
         endDate: { [Op.gte]: now }
       },
+      attributes: ['id', 'vendorId', 'title', 'body', 'image', 'startDate', 'endDate', 'discount', 'isActive', 'createdAt', 'updatedAt'],
       include: discountInclude,
       order: [['createdAt', 'DESC']]
     });
@@ -273,6 +321,7 @@ class DiscountService {
         startDate: { [Op.lte]: now },
         endDate: { [Op.gte]: now }
       },
+      attributes: ['id', 'vendorId', 'title', 'body', 'image', 'startDate', 'endDate', 'discount', 'isActive', 'createdAt', 'updatedAt'],
       include: [
         {
           model: User,
@@ -309,6 +358,7 @@ class DiscountService {
 
     const discount = await Discount.findOne({
       where,
+      attributes: ['id', 'vendorId', 'title', 'body', 'image', 'startDate', 'endDate', 'discount', 'isActive', 'createdAt', 'updatedAt'],
       include: [
         {
           model: User,

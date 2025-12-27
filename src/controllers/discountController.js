@@ -1,5 +1,7 @@
 import discountService from '../services/discountService.js';
 import { sendSuccess, sendError } from '../utils/responseHelper.js';
+import Product from '../models/Product.js';
+import { Op } from 'sequelize';
 
 /**
  * Create a new discount
@@ -16,18 +18,43 @@ export const createDiscount = async (req, res, next) => {
     }
 
     // Handle products - it might come as a string that needs to be parsed
+    console.log('Received products:', products, 'Type:', typeof products);
     let productsArray = products;
     if (typeof products === 'string') {
       try {
+        // Try to parse as JSON first
         productsArray = JSON.parse(products);
       } catch (e) {
-        return sendError(res, 'Products must be a valid array', 400);
+        // If JSON.parse fails, try to parse as comma-separated string like "11" or "11,12,13"
+        const trimmed = products.trim();
+        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+          // It's already in array format string, try to parse again
+          try {
+            productsArray = JSON.parse(trimmed);
+          } catch (e2) {
+            return sendError(res, `Products must be a valid array. Received: ${products}`, 400);
+          }
+        } else {
+          // Try to split by comma and convert to numbers
+          const parts = trimmed.split(',').map(p => p.trim()).filter(p => p);
+          if (parts.length > 0) {
+            productsArray = parts.map(p => {
+              const num = parseInt(p, 10);
+              return isNaN(num) ? p : num;
+            });
+          } else {
+            return sendError(res, `Products must be a valid array. Received: ${products}`, 400);
+          }
+        }
       }
     }
 
     if (!productsArray || !Array.isArray(productsArray) || productsArray.length === 0) {
-      return sendError(res, 'Products array is required and must not be empty', 400);
+      return sendError(res, `Products array is required and must not be empty. Received: ${JSON.stringify(products)}`, 400);
     }
+
+    console.log('Parsed productsArray:', productsArray);
+    console.log('Vendor ID:', vendorId);
 
     const discountRecord = await discountService.createDiscount(vendorId, {
       title,

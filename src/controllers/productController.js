@@ -125,6 +125,10 @@ export const updateProduct = async (req, res, next) => {
     if (productData.isActive !== undefined) {
       productData.isActive = productData.isActive === 'true' || productData.isActive === true || productData.isActive === '1' || productData.isActive === 1;
     }
+    // Allow vendor to set vendorId if they're updating their own product or if product has no owner
+    if (req.user.type === 'vendor' && productData.vendorId === undefined) {
+      // Don't set vendorId automatically - let the service handle it
+    }
 
     const product = await productService.updateProduct(id, productData, req.user);
 

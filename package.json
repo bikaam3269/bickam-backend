@@ -24,7 +24,8 @@
     "migrate:marketplace-negotiable": "node add_is_negotiable_to_marketplace_products_migration.js",
     "migrate:wallet-transactions": "node create_wallet_transactions_table_migration.js",
     "migrate:marketing-type": "node add_marketing_type_to_users_migration.js",
-    "migrate:marketing-products": "node create_marketing_products_table_migration.js"
+    "migrate:marketing-products": "node create_marketing_products_table_migration.js",
+    "migrate:discounts": "node create_discounts_table_migration.js"
   },
   "keywords": [],
   "author": "",
