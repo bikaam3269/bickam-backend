@@ -15,7 +15,17 @@ export const createDiscount = async (req, res, next) => {
       return sendError(res, 'Title, start date, end date, and discount percentage are required', 400);
     }
 
-    if (!products || !Array.isArray(products) || products.length === 0) {
+    // Handle products - it might come as a string that needs to be parsed
+    let productsArray = products;
+    if (typeof products === 'string') {
+      try {
+        productsArray = JSON.parse(products);
+      } catch (e) {
+        return sendError(res, 'Products must be a valid array', 400);
+      }
+    }
+
+    if (!productsArray || !Array.isArray(productsArray) || productsArray.length === 0) {
       return sendError(res, 'Products array is required and must not be empty', 400);
     }
 
@@ -26,7 +36,7 @@ export const createDiscount = async (req, res, next) => {
       startDate,
       endDate,
       discount: parseFloat(discount),
-      products // Now just array of product IDs
+      products: productsArray // Now just array of product IDs
     });
 
     return sendSuccess(res, discountRecord, 'Discount created successfully', 201);
@@ -92,7 +102,24 @@ export const updateDiscount = async (req, res, next) => {
     if (startDate !== undefined) updateData.startDate = startDate;
     if (endDate !== undefined) updateData.endDate = endDate;
     if (discountPercent !== undefined && discountPercent !== null) updateData.discount = parseFloat(discountPercent);
-    if (products !== undefined) updateData.products = products; // Now just array of product IDs
+    
+    // Handle products - it might come as a string that needs to be parsed
+    if (products !== undefined) {
+      let productsArray = products;
+      if (typeof products === 'string') {
+        try {
+          productsArray = JSON.parse(products);
+        } catch (e) {
+          return sendError(res, 'Products must be a valid array', 400);
+        }
+      }
+      if (productsArray !== undefined) {
+        if (!Array.isArray(productsArray) || productsArray.length === 0) {
+          return sendError(res, 'Products must be a valid non-empty array', 400);
+        }
+        updateData.products = productsArray; // Now just array of product IDs
+      }
+    }
 
     const updatedDiscount = await discountService.updateDiscount(parseInt(id), vendorId, updateData);
 

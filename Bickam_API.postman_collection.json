@@ -6406,7 +6406,7 @@
 									"key": "products",
 									"value": "[1, 2, 3]",
 									"type": "text",
-									"description": "Array of product IDs (required, JSON string) - e.g. [1, 2, 3]"
+									"description": "Array of product IDs (required) - Can be sent as JSON string \"[1, 2, 3]\" or array [1, 2, 3]"
 								}
 							]
 						},
@@ -6421,7 +6421,7 @@
 								"discounts"
 							]
 						},
-						"description": "Create a new discount. **Vendor only**.\n\n**Body Parameters (form-data):**\n- `title` (required): Discount title\n- `body` (optional): Discount description\n- `image` (optional): Discount banner image file\n- `startDate` (required): Discount start date (ISO format)\n- `endDate` (required): Discount end date (ISO format, must be after startDate)\n- `discount` (required): Discount percentage (0-100) - applies to all products\n- `products` (required): JSON string array of product IDs - e.g. [1, 2, 3]\n\n**Validation:**\n- Products must belong to the authenticated vendor\n- Products cannot be in another active discount that overlaps with the new discount period\n- Discount percentage must be between 0 and 100\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Created discount with products. Discounted price is calculated automatically: originalPrice * (1 - discount/100)"
+						"description": "Create a new discount. **Vendor only**.\n\n**Body Parameters (form-data):**\n- `title` (required): Discount title\n- `body` (optional): Discount description\n- `image` (optional): Discount banner image file\n- `startDate` (required): Discount start date (ISO format)\n- `endDate` (required): Discount end date (ISO format, must be after startDate)\n- `discount` (required): Discount percentage (0-100) - applies to all products\n- `products` (required): Array of product IDs - Can be sent as JSON string \"[1, 2, 3]\" or array [1, 2, 3]. The API will automatically parse JSON strings.\n\n**Validation:**\n- Products must belong to the authenticated vendor\n- Products cannot be in another active discount that overlaps with the new discount period\n- Discount percentage must be between 0 and 100\n- Products array must not be empty\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Created discount with products. Discounted price is calculated automatically: originalPrice * (1 - discount/100)"
 					},
 					"response": []
 				},
@@ -6540,7 +6540,7 @@
 									"key": "products",
 									"value": "[3, 4, 5]",
 									"type": "text",
-									"description": "Array of product IDs to replace existing products (optional, JSON string) - e.g. [3, 4, 5]"
+									"description": "Array of product IDs to replace existing products (optional) - Can be sent as JSON string \"[3, 4, 5]\" or array [3, 4, 5]"
 								}
 							]
 						},
@@ -6563,7 +6563,7 @@
 								}
 							]
 						},
-						"description": "Update a discount. **Vendor only** - Can only update own discounts.\n\n**Body Parameters (form-data):**\n- All fields are optional (only include fields to update)\n- `discount`: Discount percentage (0-100) - applies to all products\n- `products`: If provided, replaces all existing products in the discount (array of product IDs)\n- Same validation rules apply as create discount\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Updated discount with products."
+						"description": "Update a discount. **Vendor only** - Can only update own discounts.\n\n**Body Parameters (form-data):**\n- All fields are optional (only include fields to update)\n- `discount`: Discount percentage (0-100) - applies to all products\n- `products`: If provided, replaces all existing products in the discount. Can be sent as JSON string \"[3, 4, 5]\" or array [3, 4, 5]. The API will automatically parse JSON strings.\n- Same validation rules apply as create discount\n- Products array must not be empty if provided\n\n**Authentication:** Required (Vendor only)\n\n**Response:** Updated discount with products."
 					},
 					"response": []
 				},

@@ -21,7 +21,17 @@ class DiscountService {
       throw new Error('Title, start date, end date, and discount percentage are required');
     }
 
-    if (!products || !Array.isArray(products) || products.length === 0) {
+    // Handle products - ensure it's an array
+    let productsArray = products;
+    if (typeof products === 'string') {
+      try {
+        productsArray = JSON.parse(products);
+      } catch (e) {
+        throw new Error('Products must be a valid array');
+      }
+    }
+
+    if (!productsArray || !Array.isArray(productsArray) || productsArray.length === 0) {
       throw new Error('Products array is required and must not be empty');
     }
 
@@ -45,7 +55,7 @@ class DiscountService {
     }
 
     // Validate products - products is now just an array of product IDs
-    const productIds = Array.isArray(products) ? products : [];
+    const productIds = Array.isArray(productsArray) ? productsArray : [];
     if (productIds.length === 0) {
       throw new Error('Products array must contain at least one product ID');
     }
@@ -368,14 +378,28 @@ class DiscountService {
     await discount.save();
 
     // Update products if provided
-    if (products && Array.isArray(products)) {
+    if (products !== undefined) {
+      // Handle products - ensure it's an array
+      let productsArray = products;
+      if (typeof products === 'string') {
+        try {
+          productsArray = JSON.parse(products);
+        } catch (e) {
+          throw new Error('Products must be a valid array');
+        }
+      }
+
+      if (!Array.isArray(productsArray) || productsArray.length === 0) {
+        throw new Error('Products must be a valid non-empty array');
+      }
+
       // Delete existing discount products
       await DiscountProduct.destroy({
         where: { discountId: discount.id }
       });
 
       // Validate products - products is now just an array of product IDs
-      const productIds = products;
+      const productIds = productsArray;
       const existingProducts = await Product.findAll({
         where: {
           id: { [Op.in]: productIds },
