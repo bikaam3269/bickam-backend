@@ -24,10 +24,10 @@ router.post('/', (req, res, next) => {
 }, createOrder);
 
 router.get('/marketer', (req, res, next) => {
-  if (req.user.type !== 'marketing') {
+  if (req.user.type !== 'marketing' && req.user.type !== 'admin') {
     return res.status(403).json({
       success: false,
-      error: { message: 'Only marketers can view their orders' }
+      error: { message: 'Only marketers and admins can view orders' }
     });
   }
   next();

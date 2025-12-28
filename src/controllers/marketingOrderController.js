@@ -31,17 +31,25 @@ export const createOrder = async (req, res, next) => {
 };
 
 /**
- * Get all orders for authenticated marketer
+ * Get all orders for authenticated marketer (or all orders for admin)
  */
 export const getMarketerOrders = async (req, res, next) => {
   try {
-    const marketerId = req.user.id;
+    // If admin, pass null to get all orders. Otherwise, use marketer ID
+    const marketerId = req.user.type === 'admin' ? null : req.user.id;
     const filters = {
       status: req.query.status,
       paymentStatus: req.query.paymentStatus
     };
 
-    const orders = await marketingOrderService.getMarketerOrders(marketerId, filters);
+    // If admin, use getAllMarketingOrders. Otherwise, use getMarketerOrders
+    let orders;
+    if (req.user.type === 'admin') {
+      orders = await marketingOrderService.getAllMarketingOrders(filters);
+    } else {
+      orders = await marketingOrderService.getMarketerOrders(marketerId, filters);
+    }
+    
     return sendSuccess(res, orders, 'Marketing orders retrieved successfully');
   } catch (error) {
     next(error);

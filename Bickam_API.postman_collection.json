@@ -1449,6 +1449,34 @@
 					"response": []
 				},
 				{
+					"name": "Get Dashboard Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/vendors/me/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vendors",
+								"me",
+								"dashboard"
+							]
+						},
+						"description": "Get vendor dashboard statistics including:\n- **stats**: Total orders, products, revenue, followers, orders by status\n- **charts**: Revenue and orders data for last 7 days\n- **recentOrders**: Last 10 orders\n\n**Authentication:** Required (vendor token)\n\n**Response Schema:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Dashboard statistics retrieved successfully\",\n  \"data\": {\n    \"stats\": {\n      \"totalOrders\": 156,\n      \"totalProducts\": 45,\n      \"activeProducts\": 40,\n      \"totalRevenue\": 125000.00,\n      \"completedRevenue\": 120000.00,\n      \"todayRevenue\": 3500.00,\n      \"monthlyRevenue\": 45000.00,\n      \"last7DaysRevenue\": 12000.00,\n      \"last30DaysRevenue\": 50000.00,\n      \"totalFollowers\": 320,\n      \"ordersByStatus\": {\n        \"pending\": 12,\n        \"confirmed\": 20,\n        \"processing\": 15,\n        \"shipped\": 10,\n        \"delivered\": 144,\n        \"cancelled\": 5\n      }\n    },\n    \"charts\": {\n      \"revenue\": [\n        {\"date\": \"2025-01-22\", \"revenue\": 500.00},\n        ...\n      ],\n      \"orders\": [\n        {\"date\": \"2025-01-22\", \"orders\": 5},\n        ...\n      ]\n    },\n    \"recentOrders\": [\n      {\n        \"id\": 123,\n        \"customer\": \"أحمد محمد\",\n        \"amount\": 250.00,\n        \"status\": \"pending\",\n        \"date\": \"2025-01-28T10:00:00.000Z\"\n      }\n    ]\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
 					"name": "Update My Profile",
 					"request": {
 						"method": "PUT",

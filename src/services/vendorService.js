@@ -400,6 +400,189 @@ class VendorService {
             }
         };
     }
+
+    /**
+     * Get vendor dashboard statistics
+     * @param {number} vendorId - The vendor ID
+     */
+    async getVendorDashboardStats(vendorId) {
+        const now = new Date();
+        const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLast7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const startOfLast30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+        // Total orders
+        const totalOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId) }
+        });
+
+        // Orders by status
+        const pendingOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'pending' }
+        });
+
+        const confirmedOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'confirmed' }
+        });
+
+        const processingOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'processing' }
+        });
+
+        const shippedOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'shipped' }
+        });
+
+        const deliveredOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'delivered' }
+        });
+
+        const cancelledOrders = await Order.count({
+            where: { vendorId: parseInt(vendorId), status: 'cancelled' }
+        });
+
+        // Total products
+        const totalProducts = await Product.count({
+            where: { vendorId: parseInt(vendorId) }
+        });
+
+        // Active products
+        const activeProducts = await Product.count({
+            where: { vendorId: parseInt(vendorId), isActive: true }
+        });
+
+        // Total followers
+        const totalFollowers = await followService.getFollowCount(parseInt(vendorId));
+
+        // Revenue calculations
+        const allOrders = await Order.findAll({
+            where: { vendorId: parseInt(vendorId) },
+            attributes: ['total', 'status', 'createdAt']
+        });
+
+        let totalRevenue = 0;
+        let todayRevenue = 0;
+        let monthlyRevenue = 0;
+        let last7DaysRevenue = 0;
+        let last30DaysRevenue = 0;
+
+        allOrders.forEach(order => {
+            const orderTotal = parseFloat(order.total) || 0;
+            totalRevenue += orderTotal;
+
+            const orderDate = new Date(order.createdAt);
+            if (orderDate >= startOfToday) {
+                todayRevenue += orderTotal;
+            }
+            if (orderDate >= startOfMonth) {
+                monthlyRevenue += orderTotal;
+            }
+            if (orderDate >= startOfLast7Days) {
+                last7DaysRevenue += orderTotal;
+            }
+            if (orderDate >= startOfLast30Days) {
+                last30DaysRevenue += orderTotal;
+            }
+        });
+
+        // Revenue by status (only delivered orders count as revenue)
+        const completedRevenue = allOrders
+            .filter(order => order.status === 'delivered')
+            .reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+
+        // Chart data - Revenue for last 7 days
+        const revenueChartData = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const dayRevenue = allOrders
+                .filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= date && orderDate < nextDate;
+                })
+                .reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+
+            revenueChartData.push({
+                date: date.toISOString().split('T')[0],
+                revenue: parseFloat(dayRevenue.toFixed(2))
+            });
+        }
+
+        // Chart data - Orders for last 7 days
+        const ordersChartData = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const dayOrders = allOrders.filter(order => {
+                const orderDate = new Date(order.createdAt);
+                return orderDate >= date && orderDate < nextDate;
+            }).length;
+
+            ordersChartData.push({
+                date: date.toISOString().split('T')[0],
+                orders: dayOrders
+            });
+        }
+
+        // Recent orders (last 10)
+        const recentOrders = await Order.findAll({
+            where: { vendorId: parseInt(vendorId) },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'phone']
+                }
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: 10
+        });
+
+        const formattedRecentOrders = recentOrders.map(order => ({
+            id: order.id,
+            customer: order.user?.name || 'غير معروف',
+            amount: parseFloat(order.total) || 0,
+            status: order.status,
+            date: order.createdAt
+        }));
+
+        return {
+            stats: {
+                totalOrders,
+                totalProducts,
+                activeProducts,
+                totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+                completedRevenue: parseFloat(completedRevenue.toFixed(2)),
+                todayRevenue: parseFloat(todayRevenue.toFixed(2)),
+                monthlyRevenue: parseFloat(monthlyRevenue.toFixed(2)),
+                last7DaysRevenue: parseFloat(last7DaysRevenue.toFixed(2)),
+                last30DaysRevenue: parseFloat(last30DaysRevenue.toFixed(2)),
+                totalFollowers,
+                ordersByStatus: {
+                    pending: pendingOrders,
+                    confirmed: confirmedOrders,
+                    processing: processingOrders,
+                    shipped: shippedOrders,
+                    delivered: deliveredOrders,
+                    cancelled: cancelledOrders
+                }
+            },
+            charts: {
+                revenue: revenueChartData,
+                orders: ordersChartData
+            },
+            recentOrders: formattedRecentOrders
+        };
+    }
 }
 
 export default new VendorService();
