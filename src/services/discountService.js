@@ -208,8 +208,10 @@ class DiscountService {
       ]
     });
 
-    // Format products to ensure images is always an array
+    // Format products to ensure images is always an array and calculate discounted price
     const formattedDiscount = discountWithRelations.toJSON ? discountWithRelations.toJSON() : discountWithRelations;
+    const discountPercentage = parseFloat(formattedDiscount.discount) || 0;
+    
     if (formattedDiscount.products && Array.isArray(formattedDiscount.products)) {
       formattedDiscount.products = formattedDiscount.products.map(discountProduct => {
         if (discountProduct.product) {
@@ -228,6 +230,22 @@ class DiscountService {
             }
           } else {
             productData.images = [];
+          }
+          
+          // Calculate discounted price based on discount percentage
+          const originalPrice = productData.price ? parseFloat(productData.price) : 0;
+          if (originalPrice > 0 && discountPercentage > 0) {
+            const discountAmount = (originalPrice * discountPercentage) / 100;
+            const discountedPrice = originalPrice - discountAmount;
+            productData.originalPrice = originalPrice;
+            productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
+            productData.finalPrice = productData.discountedPrice;
+            productData.discountPercentage = discountPercentage;
+          } else {
+            productData.originalPrice = originalPrice;
+            productData.discountedPrice = originalPrice;
+            productData.finalPrice = originalPrice;
+            productData.discountPercentage = 0;
           }
         }
         return discountProduct;
@@ -281,9 +299,11 @@ class DiscountService {
       order: [['createdAt', 'DESC']]
     });
 
-    // Format products to ensure images is always an array
+    // Format products to ensure images is always an array and calculate discounted price
     const formattedDiscounts = discounts.map(discount => {
       const discountData = discount.toJSON ? discount.toJSON() : discount;
+      const discountPercentage = parseFloat(discountData.discount) || 0;
+      
       if (discountData.products && Array.isArray(discountData.products)) {
         discountData.products = discountData.products.map(discountProduct => {
           if (discountProduct.product) {
@@ -302,6 +322,22 @@ class DiscountService {
               }
             } else {
               productData.images = [];
+            }
+            
+            // Calculate discounted price based on discount percentage
+            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
+            if (originalPrice > 0 && discountPercentage > 0) {
+              const discountAmount = (originalPrice * discountPercentage) / 100;
+              const discountedPrice = originalPrice - discountAmount;
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
+              productData.finalPrice = productData.discountedPrice;
+              productData.discountPercentage = discountPercentage;
+            } else {
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = originalPrice;
+              productData.finalPrice = originalPrice;
+              productData.discountPercentage = 0;
             }
           }
           return discountProduct;
@@ -410,9 +446,11 @@ class DiscountService {
       });
     }
 
-    // Format products to ensure images is always an array
+    // Format products to ensure images is always an array and calculate discounted price
     const formattedDiscounts = filteredDiscounts.map(discount => {
       const discountData = discount.toJSON ? discount.toJSON() : discount;
+      const discountPercentage = parseFloat(discountData.discount) || 0;
+      
       if (discountData.products && Array.isArray(discountData.products)) {
         discountData.products = discountData.products.map(discountProduct => {
           if (discountProduct.product) {
@@ -431,6 +469,22 @@ class DiscountService {
               }
             } else {
               productData.images = [];
+            }
+            
+            // Calculate discounted price based on discount percentage
+            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
+            if (originalPrice > 0 && discountPercentage > 0) {
+              const discountAmount = (originalPrice * discountPercentage) / 100;
+              const discountedPrice = originalPrice - discountAmount;
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
+              productData.finalPrice = productData.discountedPrice;
+              productData.discountPercentage = discountPercentage;
+            } else {
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = originalPrice;
+              productData.finalPrice = originalPrice;
+              productData.discountPercentage = 0;
             }
           }
           return discountProduct;
@@ -493,9 +547,11 @@ class DiscountService {
       order: [['createdAt', 'DESC']]
     });
 
-    // Format products to ensure images is always an array
+    // Format products to ensure images is always an array and calculate discounted price
     const formattedDiscounts = discounts.map(discount => {
       const discountData = discount.toJSON ? discount.toJSON() : discount;
+      const discountPercentage = parseFloat(discountData.discount) || 0;
+      
       if (discountData.products && Array.isArray(discountData.products)) {
         discountData.products = discountData.products.map(discountProduct => {
           if (discountProduct.product) {
@@ -514,6 +570,22 @@ class DiscountService {
               }
             } else {
               productData.images = [];
+            }
+            
+            // Calculate discounted price based on discount percentage
+            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
+            if (originalPrice > 0 && discountPercentage > 0) {
+              const discountAmount = (originalPrice * discountPercentage) / 100;
+              const discountedPrice = originalPrice - discountAmount;
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
+              productData.finalPrice = productData.discountedPrice;
+              productData.discountPercentage = discountPercentage;
+            } else {
+              productData.originalPrice = originalPrice;
+              productData.discountedPrice = originalPrice;
+              productData.finalPrice = originalPrice;
+              productData.discountPercentage = 0;
             }
           }
           return discountProduct;
@@ -578,8 +650,10 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    // Format products to ensure images is always an array
+    // Format products to ensure images is always an array and calculate discounted price
     const discountData = discount.toJSON ? discount.toJSON() : discount;
+    const discountPercentage = parseFloat(discountData.discount) || 0;
+    
     if (discountData.products && Array.isArray(discountData.products)) {
       discountData.products = discountData.products.map(discountProduct => {
         if (discountProduct.product) {
@@ -598,6 +672,22 @@ class DiscountService {
             }
           } else {
             productData.images = [];
+          }
+          
+          // Calculate discounted price based on discount percentage
+          const originalPrice = productData.price ? parseFloat(productData.price) : 0;
+          if (originalPrice > 0 && discountPercentage > 0) {
+            const discountAmount = (originalPrice * discountPercentage) / 100;
+            const discountedPrice = originalPrice - discountAmount;
+            productData.originalPrice = originalPrice;
+            productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
+            productData.finalPrice = productData.discountedPrice;
+            productData.discountPercentage = discountPercentage;
+          } else {
+            productData.originalPrice = originalPrice;
+            productData.discountedPrice = originalPrice;
+            productData.finalPrice = originalPrice;
+            productData.discountPercentage = 0;
           }
         }
         return discountProduct;
