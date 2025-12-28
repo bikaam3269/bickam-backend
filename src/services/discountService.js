@@ -6,6 +6,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
+import Subcategory from '../models/Subcategory.js';
 
 class DiscountService {
   /**
@@ -18,7 +19,7 @@ class DiscountService {
     const { title, body, image, startDate, endDate, discount, products } = discountData;
 
     // Validate required fields
-    if (!title || !startDate || !endDate || discount === undefined || discount === null) {
+    if (!title || !startDate || !endDate || discount === undefined || discount === null || discount === '') {
       throw new Error('Title, start date, end date, and discount percentage are required');
     }
 
@@ -36,8 +37,16 @@ class DiscountService {
       throw new Error('Products array is required and must not be empty');
     }
 
-    // Validate discount percentage
-    const discountPercent = parseFloat(discount);
+    // Validate discount percentage - convert to number if it's a string
+    let discountPercent;
+    if (typeof discount === 'string') {
+      discountPercent = parseFloat(discount);
+    } else if (typeof discount === 'number') {
+      discountPercent = discount;
+    } else {
+      discountPercent = parseFloat(discount);
+    }
+    
     if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
       throw new Error('Discount must be a number between 0 and 100');
     }
@@ -177,13 +186,55 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              },
+              {
+                model: User,
+                as: 'vendor',
+                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+              }
+            ]
           }]
         }
       ]
     });
 
-    return discountWithRelations;
+    // Format products to ensure images is always an array
+    const formattedDiscount = discountWithRelations.toJSON ? discountWithRelations.toJSON() : discountWithRelations;
+    if (formattedDiscount.products && Array.isArray(formattedDiscount.products)) {
+      formattedDiscount.products = formattedDiscount.products.map(discountProduct => {
+        if (discountProduct.product) {
+          const productData = discountProduct.product;
+          // Ensure images is always returned as an array, not a stringified array
+          if (productData.images) {
+            if (typeof productData.images === 'string') {
+              try {
+                productData.images = JSON.parse(productData.images);
+              } catch (e) {
+                productData.images = [];
+              }
+            }
+            if (!Array.isArray(productData.images)) {
+              productData.images = [];
+            }
+          } else {
+            productData.images = [];
+          }
+        }
+        return discountProduct;
+      });
+    }
+
+    return formattedDiscount;
   }
 
   /**
@@ -207,14 +258,59 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              },
+              {
+                model: User,
+                as: 'vendor',
+                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+              }
+            ]
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    return discounts;
+    // Format products to ensure images is always an array
+    const formattedDiscounts = discounts.map(discount => {
+      const discountData = discount.toJSON ? discount.toJSON() : discount;
+      if (discountData.products && Array.isArray(discountData.products)) {
+        discountData.products = discountData.products.map(discountProduct => {
+          if (discountProduct.product) {
+            const productData = discountProduct.product;
+            // Ensure images is always returned as an array, not a stringified array
+            if (productData.images) {
+              if (typeof productData.images === 'string') {
+                try {
+                  productData.images = JSON.parse(productData.images);
+                } catch (e) {
+                  productData.images = [];
+                }
+              }
+              if (!Array.isArray(productData.images)) {
+                productData.images = [];
+              }
+            } else {
+              productData.images = [];
+            }
+          }
+          return discountProduct;
+        });
+      }
+      return discountData;
+    });
+
+    return formattedDiscounts;
   }
 
   /**
@@ -258,14 +354,25 @@ class DiscountService {
         include: [{
           model: Product,
           as: 'product',
-          attributes: ['id', 'name', 'price', 'images', 'categoryId'],
           where: Object.keys(productWhere).length > 0 ? productWhere : undefined,
           required: Object.keys(productWhere).length > 0,
-          include: [{
-            model: Category,
-            as: 'category',
-            attributes: ['id', 'name']
-          }]
+          include: [
+            {
+              model: Category,
+              as: 'category',
+              attributes: ['id', 'name']
+            },
+            {
+              model: Subcategory,
+              as: 'subcategory',
+              attributes: ['id', 'name']
+            },
+            {
+              model: User,
+              as: 'vendor',
+              attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+            }
+          ]
         }]
       }
     ];
@@ -303,7 +410,36 @@ class DiscountService {
       });
     }
 
-    return filteredDiscounts;
+    // Format products to ensure images is always an array
+    const formattedDiscounts = filteredDiscounts.map(discount => {
+      const discountData = discount.toJSON ? discount.toJSON() : discount;
+      if (discountData.products && Array.isArray(discountData.products)) {
+        discountData.products = discountData.products.map(discountProduct => {
+          if (discountProduct.product) {
+            const productData = discountProduct.product;
+            // Ensure images is always returned as an array, not a stringified array
+            if (productData.images) {
+              if (typeof productData.images === 'string') {
+                try {
+                  productData.images = JSON.parse(productData.images);
+                } catch (e) {
+                  productData.images = [];
+                }
+              }
+              if (!Array.isArray(productData.images)) {
+                productData.images = [];
+              }
+            } else {
+              productData.images = [];
+            }
+          }
+          return discountProduct;
+        });
+      }
+      return discountData;
+    });
+
+    return formattedDiscounts;
   }
 
   /**
@@ -334,14 +470,59 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              },
+              {
+                model: User,
+                as: 'vendor',
+                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+              }
+            ]
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    return discounts;
+    // Format products to ensure images is always an array
+    const formattedDiscounts = discounts.map(discount => {
+      const discountData = discount.toJSON ? discount.toJSON() : discount;
+      if (discountData.products && Array.isArray(discountData.products)) {
+        discountData.products = discountData.products.map(discountProduct => {
+          if (discountProduct.product) {
+            const productData = discountProduct.product;
+            // Ensure images is always returned as an array, not a stringified array
+            if (productData.images) {
+              if (typeof productData.images === 'string') {
+                try {
+                  productData.images = JSON.parse(productData.images);
+                } catch (e) {
+                  productData.images = [];
+                }
+              }
+              if (!Array.isArray(productData.images)) {
+                productData.images = [];
+              }
+            } else {
+              productData.images = [];
+            }
+          }
+          return discountProduct;
+        });
+      }
+      return discountData;
+    });
+
+    return formattedDiscounts;
   }
 
   /**
@@ -371,7 +552,23 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              },
+              {
+                model: User,
+                as: 'vendor',
+                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
+              }
+            ]
           }]
         }
       ]
@@ -381,7 +578,33 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    return discount;
+    // Format products to ensure images is always an array
+    const discountData = discount.toJSON ? discount.toJSON() : discount;
+    if (discountData.products && Array.isArray(discountData.products)) {
+      discountData.products = discountData.products.map(discountProduct => {
+        if (discountProduct.product) {
+          const productData = discountProduct.product;
+          // Ensure images is always returned as an array, not a stringified array
+          if (productData.images) {
+            if (typeof productData.images === 'string') {
+              try {
+                productData.images = JSON.parse(productData.images);
+              } catch (e) {
+                productData.images = [];
+              }
+            }
+            if (!Array.isArray(productData.images)) {
+              productData.images = [];
+            }
+          } else {
+            productData.images = [];
+          }
+        }
+        return discountProduct;
+      });
+    }
+
+    return discountData;
   }
 
   /**
@@ -400,7 +623,7 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    const { title, body, image, startDate, endDate, products } = updateData;
+    const { title, body, image, startDate, endDate, products, discount: discountValue } = updateData;
 
     // Validate date range if both dates are provided
     if (startDate && endDate) {
@@ -417,8 +640,17 @@ class DiscountService {
     if (image !== undefined) discount.image = image;
     if (startDate !== undefined) discount.startDate = new Date(startDate);
     if (endDate !== undefined) discount.endDate = new Date(endDate);
-    if (discount !== undefined && discount !== null) {
-      const discountPercent = parseFloat(discount);
+    if (discountValue !== undefined && discountValue !== null && discountValue !== '') {
+      // Convert to number if it's a string
+      let discountPercent;
+      if (typeof discountValue === 'string') {
+        discountPercent = parseFloat(discountValue);
+      } else if (typeof discountValue === 'number') {
+        discountPercent = discountValue;
+      } else {
+        discountPercent = parseFloat(discountValue);
+      }
+      
       if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
         throw new Error('Discount must be a number between 0 and 100');
       }
