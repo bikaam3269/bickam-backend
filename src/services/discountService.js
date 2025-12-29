@@ -6,6 +6,60 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
+import Subcategory from '../models/Subcategory.js';
+
+/**
+ * Helper function to apply discount prices to products in discount
+ * @param {object} discount - Discount object with products
+ * @returns {object} - Discount with products having calculated prices
+ */
+const applyDiscountToProducts = (discount) => {
+  const discountData = discount.toJSON ? discount.toJSON() : discount;
+  const discountPercentage = parseFloat(discountData.discount || 0);
+
+  if (discountData.products && Array.isArray(discountData.products)) {
+    discountData.products = discountData.products.map(discountProduct => {
+      const product = discountProduct.product;
+      if (product) {
+        // Ensure images is always returned as an array, not a stringified array
+        let images = product.images || [];
+        if (typeof images === 'string') {
+          try {
+            images = JSON.parse(images);
+          } catch (e) {
+            images = [];
+          }
+        }
+        if (!Array.isArray(images)) {
+          images = [];
+        }
+
+        // Check if product has price and isPrice is true
+        const price = product.price && product.isPrice ? parseFloat(product.price || 0) : 0;
+        const originalPrice = price;
+        const finalPrice = discountPercentage > 0 && price > 0
+          ? price * (1 - discountPercentage / 100)
+          : price;
+
+        return {
+          ...discountProduct,
+          product: {
+            ...product,
+            images,
+            originalPrice: parseFloat(originalPrice.toFixed(2)),
+            finalPrice: parseFloat(finalPrice.toFixed(2)),
+            discount: discountPercentage.toString(),
+            isFavorite: false, // Default to false, can be set if userId is available
+            isCart: false // Default to false, can be set if userId is available
+          }
+        };
+      }
+      return discountProduct;
+    });
+  }
+
+  return discountData;
+};
 
 class DiscountService {
   /**
@@ -177,13 +231,25 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            attributes: ['id', 'name', 'vendorId', 'price', 'isPrice', 'description', 'categoryId', 'subcategoryId', 'discount', 'quantity', 'isActive', 'images', 'createdAt', 'updatedAt'],
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              }
+            ]
           }]
         }
       ]
     });
 
-    return discountWithRelations;
+    return applyDiscountToProducts(discountWithRelations);
   }
 
   /**
@@ -207,14 +273,27 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            attributes: ['id', 'name', 'vendorId', 'price', 'isPrice', 'description', 'categoryId', 'subcategoryId', 'discount', 'quantity', 'isActive', 'images', 'createdAt', 'updatedAt'],
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              }
+            ]
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    return discounts;
+    // Apply discount to products
+    return discounts.map(discount => applyDiscountToProducts(discount));
   }
 
   /**
@@ -252,22 +331,29 @@ class DiscountService {
           attributes: ['id', 'name']
         }]
       },
-      {
-        model: DiscountProduct,
-        as: 'products',
-        include: [{
-          model: Product,
-          as: 'product',
-          attributes: ['id', 'name', 'price', 'images', 'categoryId'],
-          where: Object.keys(productWhere).length > 0 ? productWhere : undefined,
-          required: Object.keys(productWhere).length > 0,
+        {
+          model: DiscountProduct,
+          as: 'products',
           include: [{
-            model: Category,
-            as: 'category',
-            attributes: ['id', 'name']
+            model: Product,
+            as: 'product',
+            attributes: ['id', 'name', 'vendorId', 'price', 'isPrice', 'description', 'categoryId', 'subcategoryId', 'discount', 'quantity', 'isActive', 'images', 'createdAt', 'updatedAt'],
+            where: Object.keys(productWhere).length > 0 ? productWhere : undefined,
+            required: Object.keys(productWhere).length > 0,
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              }
+            ]
           }]
-        }]
-      }
+        }
     ];
 
     const discounts = await Discount.findAll({
@@ -303,7 +389,8 @@ class DiscountService {
       });
     }
 
-    return filteredDiscounts;
+    // Apply discount to products
+    return filteredDiscounts.map(discount => applyDiscountToProducts(discount));
   }
 
   /**
@@ -334,14 +421,27 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            attributes: ['id', 'name', 'vendorId', 'price', 'isPrice', 'description', 'categoryId', 'subcategoryId', 'discount', 'quantity', 'isActive', 'images', 'createdAt', 'updatedAt'],
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              }
+            ]
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    return discounts;
+    // Apply discount to products
+    return discounts.map(discount => applyDiscountToProducts(discount));
   }
 
   /**
@@ -371,7 +471,19 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            attributes: ['id', 'name', 'price', 'images']
+            attributes: ['id', 'name', 'vendorId', 'price', 'isPrice', 'description', 'categoryId', 'subcategoryId', 'discount', 'quantity', 'isActive', 'images', 'createdAt', 'updatedAt'],
+            include: [
+              {
+                model: Category,
+                as: 'category',
+                attributes: ['id', 'name']
+              },
+              {
+                model: Subcategory,
+                as: 'subcategory',
+                attributes: ['id', 'name']
+              }
+            ]
           }]
         }
       ]
@@ -381,7 +493,8 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    return discount;
+    // Apply discount to products
+    return applyDiscountToProducts(discount);
   }
 
   /**

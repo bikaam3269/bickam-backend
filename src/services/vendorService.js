@@ -622,6 +622,119 @@ class VendorService {
             }
         };
     }
+
+    /**
+     * Get vendor revenue with date filtering
+     * @param {number} vendorId - Vendor ID
+     * @param {Date|null} fromDate - Start date (optional)
+     * @param {Date|null} toDate - End date (optional)
+     * @returns {Promise<object>}
+     */
+    async getVendorRevenue(vendorId, fromDate = null, toDate = null) {
+        // Verify vendor exists
+        const vendor = await User.findByPk(vendorId);
+        if (!vendor || vendor.type !== 'vendor') {
+            throw new Error('Vendor not found');
+        }
+
+        // Build where clause
+        const where = { vendorId };
+
+        // Add date filtering if provided
+        if (fromDate || toDate) {
+            where.createdAt = {};
+            
+            if (fromDate) {
+                const startDate = new Date(fromDate);
+                startDate.setHours(0, 0, 0, 0);
+                where.createdAt[Op.gte] = startDate;
+            }
+            
+            if (toDate) {
+                const endDate = new Date(toDate);
+                endDate.setHours(23, 59, 59, 999);
+                where.createdAt[Op.lte] = endDate;
+            }
+        }
+
+        // Get total revenue (sum of all orders in the period)
+        const revenueResult = await Order.findAll({
+            where,
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'totalRevenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'totalOrders']
+            ],
+            raw: true
+        });
+
+        const totalRevenue = parseFloat(revenueResult[0]?.totalRevenue || 0);
+        const totalOrders = parseInt(revenueResult[0]?.totalOrders || 0);
+
+        // Get revenue by payment status
+        const paidRevenueResult = await Order.findAll({
+            where: {
+                ...where,
+                paymentStatus: 'paid'
+            },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'paidRevenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'paidOrders']
+            ],
+            raw: true
+        });
+
+        const paidRevenue = parseFloat(paidRevenueResult[0]?.paidRevenue || 0);
+        const paidOrders = parseInt(paidRevenueResult[0]?.paidOrders || 0);
+
+        // Get revenue by order status (delivered orders)
+        const deliveredRevenueResult = await Order.findAll({
+            where: {
+                ...where,
+                status: 'delivered'
+            },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'deliveredRevenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'deliveredOrders']
+            ],
+            raw: true
+        });
+
+        const deliveredRevenue = parseFloat(deliveredRevenueResult[0]?.deliveredRevenue || 0);
+        const deliveredOrders = parseInt(deliveredRevenueResult[0]?.deliveredOrders || 0);
+
+        // Get pending revenue (orders not yet paid)
+        const pendingRevenueResult = await Order.findAll({
+            where: {
+                ...where,
+                paymentStatus: { [Op.in]: ['pending', 'remaining'] }
+            },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'pendingRevenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'pendingOrders']
+            ],
+            raw: true
+        });
+
+        const pendingRevenue = parseFloat(pendingRevenueResult[0]?.pendingRevenue || 0);
+        const pendingOrders = parseInt(pendingRevenueResult[0]?.pendingOrders || 0);
+
+        return {
+            period: {
+                from: fromDate ? new Date(fromDate).toISOString() : null,
+                to: toDate ? new Date(toDate).toISOString() : null
+            },
+            summary: {
+                totalRevenue,
+                totalOrders,
+                paidRevenue,
+                paidOrders,
+                deliveredRevenue,
+                deliveredOrders,
+                pendingRevenue,
+                pendingOrders
+            }
+        };
+    }
 }
 
 export default new VendorService();

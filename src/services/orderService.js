@@ -5,6 +5,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import Government from '../models/Government.js';
 import Cart from '../models/Cart.js';
 import walletService from './walletService.js';
 import cartService from './cartService.js';
@@ -222,7 +223,19 @@ class OrderService {
         {
           model: User,
           as: 'vendor',
-          attributes: ['id', 'name', 'email', 'phone']
+          attributes: { exclude: ['password', 'verificationCode', 'verificationCodeExpiry'] },
+          include: [
+            {
+              model: Government,
+              as: 'government',
+              attributes: ['id', 'name', 'code']
+            },
+            {
+              model: Category,
+              as: 'category',
+              attributes: ['id', 'name']
+            }
+          ]
         }
       ]
     });
@@ -251,8 +264,26 @@ class OrderService {
       }]
     });
 
+    // Transform vendor images if needed
+    const orderData = order.toJSON();
+    if (orderData.vendor) {
+      // Transform image URLs if they exist
+      if (orderData.vendor.logoImage && !orderData.vendor.logoImage.startsWith('http')) {
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        orderData.vendor.logoImage = orderData.vendor.logoImage.startsWith('/files/') 
+          ? `${baseUrl}${orderData.vendor.logoImage}`
+          : `${baseUrl}/files/${orderData.vendor.logoImage}`;
+      }
+      if (orderData.vendor.backgroundImage && !orderData.vendor.backgroundImage.startsWith('http')) {
+        const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+        orderData.vendor.backgroundImage = orderData.vendor.backgroundImage.startsWith('/files/') 
+          ? `${baseUrl}${orderData.vendor.backgroundImage}`
+          : `${baseUrl}/files/${orderData.vendor.backgroundImage}`;
+      }
+    }
+
     return {
-      ...order.toJSON(),
+      ...orderData,
       items: orderItems
     };
   }

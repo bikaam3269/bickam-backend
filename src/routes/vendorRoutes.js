@@ -5,7 +5,8 @@ import {
     getAllVendors,
     getCurrentVendorProfile,
     updateCurrentVendorProfile,
-    getVendorDashboard
+    getVendorDashboard,
+    getVendorRevenue
 } from '../controllers/vendorController.js';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -19,6 +20,7 @@ router.get('/', getAllVendors);
 // These must come BEFORE /:id routes to avoid "me" being interpreted as an ID
 // More specific routes must come first
 router.get('/me/dashboard', authenticate, getVendorDashboard);
+router.get('/me/revenue', authenticate, getVendorRevenue);
 router.get('/me', authenticate, getCurrentVendorProfile);
 
 router.put(

@@ -1515,6 +1515,221 @@
 					]
 				},
 				{
+					"name": "Get Vendor Revenue",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/vendors/me/revenue?from=2024-01-01&to=2024-12-31",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vendors",
+								"me",
+								"revenue"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "2024-01-01",
+									"description": "Start date (YYYY-MM-DD). Optional. If not provided, returns all revenue."
+								},
+								{
+									"key": "to",
+									"value": "2024-12-31",
+									"description": "End date (YYYY-MM-DD). Optional. If not provided, returns all revenue from start date."
+								}
+							]
+						},
+						"description": "Get vendor revenue with optional date filtering. **Vendor only** - Requires vendor authentication.\n\n**Query Parameters:**\n- `from` (optional): Start date in format YYYY-MM-DD. If not provided, returns all revenue.\n- `to` (optional): End date in format YYYY-MM-DD. If not provided, returns all revenue from start date.\n\n**Response includes:**\n- `period`: Object with `from` and `to` dates (ISO format)\n- `summary`: Revenue summary object containing:\n  - `totalRevenue`: Total revenue from all orders in the period\n  - `totalOrders`: Total number of orders in the period\n  - `paidRevenue`: Revenue from paid orders only\n  - `paidOrders`: Number of paid orders\n  - `deliveredRevenue`: Revenue from delivered orders only\n  - `deliveredOrders`: Number of delivered orders\n  - `pendingRevenue`: Revenue from pending/remaining payment orders\n  - `pendingOrders`: Number of pending payment orders\n\n**Example requests:**\n- Get all revenue: `GET /api/v1/vendors/me/revenue`\n- Get revenue for specific period: `GET /api/v1/vendors/me/revenue?from=2024-01-01&to=2024-12-31`\n- Get revenue from a date: `GET /api/v1/vendors/me/revenue?from=2024-01-01`\n- Get revenue up to a date: `GET /api/v1/vendors/me/revenue?to=2024-12-31`"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/revenue?from=2024-01-01&to=2024-12-31",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"revenue"
+									],
+									"query": [
+										{
+											"key": "from",
+											"value": "2024-01-01"
+										},
+										{
+											"key": "to",
+											"value": "2024-12-31"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vendor revenue retrieved successfully\",\n    \"data\": {\n        \"period\": {\n            \"from\": \"2024-01-01T00:00:00.000Z\",\n            \"to\": \"2024-12-31T23:59:59.999Z\"\n        },\n        \"summary\": {\n            \"totalRevenue\": 125000.50,\n            \"totalOrders\": 156,\n            \"paidRevenue\": 120000.00,\n            \"paidOrders\": 150,\n            \"deliveredRevenue\": 115000.00,\n            \"deliveredOrders\": 144,\n            \"pendingRevenue\": 5000.50,\n            \"pendingOrders\": 6\n        }\n    }\n}"
+						},
+						{
+							"name": "Error - Invalid Date Format",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/revenue?from=invalid-date",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"revenue"
+									],
+									"query": [
+										{
+											"key": "from",
+											"value": "invalid-date"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid from date format. Use YYYY-MM-DD\",\n    \"error\": null\n}"
+						},
+						{
+							"name": "Success - All Revenue (No Date Filter)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/revenue",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"revenue"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vendor revenue retrieved successfully\",\n    \"data\": {\n        \"period\": {\n            \"from\": null,\n            \"to\": null\n        },\n        \"summary\": {\n            \"totalRevenue\": 250000.75,\n            \"totalOrders\": 320,\n            \"paidRevenue\": 240000.00,\n            \"paidOrders\": 300,\n            \"deliveredRevenue\": 230000.00,\n            \"deliveredOrders\": 280,\n            \"pendingRevenue\": 10000.75,\n            \"pendingOrders\": 20\n        }\n    }\n}"
+						},
+						{
+							"name": "Error - From Date After To Date",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/revenue?from=2024-12-31&to=2024-01-01",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"revenue"
+									],
+									"query": [
+										{
+											"key": "from",
+											"value": "2024-12-31"
+										},
+										{
+											"key": "to",
+											"value": "2024-01-01"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"message\": \"From date must be before or equal to to date\",\n    \"error\": null\n}"
+						}
+					]
+				},
+				{
 					"name": "Update My Profile",
 					"request": {
 						"method": "PUT",
@@ -3213,7 +3428,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/orders/1",
+							"raw": "{{base_url}}/api/v1/orders/4",
 							"host": [
 								"{{base_url}}"
 							],
@@ -3221,11 +3436,85 @@
 								"api",
 								"v1",
 								"orders",
-								"1"
+								"4"
 							]
-						}
+						},
+						"description": "Get order details by ID. **Requires authentication**.\n\n**Response includes:**\n- Order details (id, userId, vendorId, status, total, shippingPrice, etc.)\n- `user`: Customer information (id, name, email, phone)\n- `vendor`: Complete vendor information including:\n  - Basic info (id, name, email, phone, type)\n  - `government`: Government object with id, name, code\n  - `category`: Category object with id, name\n  - `logoImage`: Full URL to vendor logo\n  - `backgroundImage`: Full URL to vendor background image\n  - All other vendor profile fields\n- `items`: Array of order items with product details including category and subcategory"
 					},
-					"response": []
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/orders/4",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"orders",
+										"4"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Order retrieved successfully\",\n    \"data\": {\n        \"id\": 4,\n        \"userId\": 5,\n        \"vendorId\": 10,\n        \"status\": \"pending\",\n        \"total\": \"250.00\",\n        \"fromCityId\": 1,\n        \"toCityId\": 2,\n        \"shippingPrice\": \"50.00\",\n        \"shippingAddress\": \"123 Main Street\",\n        \"paymentMethod\": \"wallet\",\n        \"paymentStatus\": \"paid\",\n        \"remainingAmount\": \"0.00\",\n        \"phone\": \"+201234567890\",\n        \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n        \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n        \"user\": {\n            \"id\": 5,\n            \"name\": \"أحمد محمد\",\n            \"email\": \"ahmed@example.com\",\n            \"phone\": \"+201234567890\"\n        },\n        \"vendor\": {\n            \"id\": 10,\n            \"name\": \"testVendor\",\n            \"email\": \"testVendor@gmail.com\",\n            \"phone\": \"+201111111111\",\n            \"type\": \"vendor\",\n            \"activity\": \"Electronics Store\",\n            \"description\": \"Best electronics store in town\",\n            \"logoImage\": \"http://localhost:3000/files/image-1234567890.png\",\n            \"backgroundImage\": \"http://localhost:3000/files/image-0987654321.png\",\n            \"whatsappNumber\": \"+201111111111\",\n            \"address\": \"123 Vendor Street\",\n            \"latitude\": \"30.0444\",\n            \"longitude\": \"31.2357\",\n            \"governmentId\": 1,\n            \"categoryId\": 1,\n            \"createdAt\": \"2025-01-01T00:00:00.000Z\",\n            \"updatedAt\": \"2025-01-15T00:00:00.000Z\",\n            \"government\": {\n                \"id\": 1,\n                \"name\": \"Cairo\",\n                \"code\": \"CAI\"\n            },\n            \"category\": {\n                \"id\": 1,\n                \"name\": \"Electronics\"\n            }\n        },\n        \"items\": [\n            {\n                \"id\": 1,\n                \"orderId\": 4,\n                \"productId\": 12,\n                \"quantity\": 2,\n                \"price\": \"100.00\",\n                \"subtotal\": \"200.00\",\n                \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n                \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n                \"product\": {\n                    \"id\": 12,\n                    \"name\": \"منتج تجريبي\",\n                    \"price\": \"100.00\",\n                    \"images\": [\n                        \"images-1764937651097-395437279.png\"\n                    ],\n                    \"category\": {\n                        \"id\": 1,\n                        \"name\": \"Electronics\"\n                    },\n                    \"subcategory\": {\n                        \"id\": 1,\n                        \"name\": \"Laptops\"\n                    }\n                }\n            }\n        ]\n    }\n}"
+						},
+						{
+							"name": "Error - Order Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/orders/999",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"orders",
+										"999"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Order not found\",\n    \"error\": null\n}"
+						}
+					]
 				},
 				{
 					"name": "Update Order Status",

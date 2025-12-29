@@ -148,3 +148,38 @@ export const getVendorDashboard = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Get vendor revenue with date filtering
+ * Query params: from (YYYY-MM-DD), to (YYYY-MM-DD)
+ */
+export const getVendorRevenue = async (req, res, next) => {
+    try {
+        const vendorId = req.user.id;
+        const { from, to } = req.query;
+
+        // Parse dates if provided
+        const fromDate = from ? new Date(from) : null;
+        const toDate = to ? new Date(to) : null;
+
+        // Validate dates
+        if (from && isNaN(fromDate.getTime())) {
+            return sendError(res, 'Invalid from date format. Use YYYY-MM-DD', 400);
+        }
+        if (to && isNaN(toDate.getTime())) {
+            return sendError(res, 'Invalid to date format. Use YYYY-MM-DD', 400);
+        }
+        if (fromDate && toDate && fromDate > toDate) {
+            return sendError(res, 'From date must be before or equal to to date', 400);
+        }
+
+        const revenue = await vendorService.getVendorRevenue(vendorId, fromDate, toDate);
+
+        return sendSuccess(res, revenue, 'Vendor revenue retrieved successfully');
+    } catch (error) {
+        if (error.message === 'Vendor not found') {
+            return sendError(res, error.message, 404);
+        }
+        next(error);
+    }
+};
