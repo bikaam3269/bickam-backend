@@ -4,7 +4,8 @@ import {
     getVendorProfile,
     getAllVendors,
     getCurrentVendorProfile,
-    updateCurrentVendorProfile
+    updateCurrentVendorProfile,
+    getVendorDashboard
 } from '../controllers/vendorController.js';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -16,6 +17,8 @@ router.get('/', getAllVendors);
 
 // 2. Protected Routes - Current Vendor (/me)
 // These must come BEFORE /:id routes to avoid "me" being interpreted as an ID
+// More specific routes must come first
+router.get('/me/dashboard', authenticate, getVendorDashboard);
 router.get('/me', authenticate, getCurrentVendorProfile);
 
 router.put(

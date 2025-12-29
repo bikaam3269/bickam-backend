@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
+import sequelize from '../config/sequelize.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
@@ -374,6 +375,250 @@ class VendorService {
                 page: parseInt(page),
                 limit: parseInt(limit),
                 totalPages: Math.ceil(count / limit)
+            }
+        };
+    }
+
+    /**
+     * Get vendor dashboard statistics
+     * @param {number} vendorId - The vendor ID
+     */
+    async getVendorDashboard(vendorId) {
+        // Verify vendor exists
+        const vendor = await User.findByPk(vendorId);
+        if (!vendor || vendor.type !== 'vendor') {
+            throw new Error('Vendor not found');
+        }
+
+        // Get today's date range
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Get current month date range
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        // Get total orders count
+        const totalOrders = await Order.count({
+            where: { vendorId }
+        });
+
+        // Get orders by status
+        const pendingOrders = await Order.count({
+            where: { vendorId, status: 'pending' }
+        });
+
+        const completedOrders = await Order.count({
+            where: { vendorId, status: 'delivered' }
+        });
+
+        // Get total revenue (sum of all orders)
+        const totalRevenueResult = await Order.findAll({
+            where: { vendorId },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'totalRevenue']
+            ],
+            raw: true
+        });
+        const totalRevenue = parseFloat(totalRevenueResult[0]?.totalRevenue || 0);
+
+        // Get today's revenue
+        const todayRevenueResult = await Order.findAll({
+            where: {
+                vendorId,
+                createdAt: {
+                    [Op.gte]: today,
+                    [Op.lt]: tomorrow
+                }
+            },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'todayRevenue']
+            ],
+            raw: true
+        });
+        const todayRevenue = parseFloat(todayRevenueResult[0]?.todayRevenue || 0);
+
+        // Get monthly revenue
+        const monthlyRevenueResult = await Order.findAll({
+            where: {
+                vendorId,
+                createdAt: {
+                    [Op.gte]: monthStart,
+                    [Op.lte]: monthEnd
+                }
+            },
+            attributes: [
+                [sequelize.fn('SUM', sequelize.col('total')), 'monthlyRevenue']
+            ],
+            raw: true
+        });
+        const monthlyRevenue = parseFloat(monthlyRevenueResult[0]?.monthlyRevenue || 0);
+
+        // Get products count
+        const totalProducts = await Product.count({
+            where: { vendorId }
+        });
+
+        // Get active products count
+        const activeProducts = await Product.count({
+            where: { vendorId, isActive: true }
+        });
+
+        // Get followers count
+        const totalFollowers = await followService.getFollowCount(vendorId);
+
+        // Get recent orders (last 5)
+        const recentOrders = await Order.findAll({
+            where: { vendorId },
+            include: [
+                {
+                    model: User,
+                    as: 'user',
+                    attributes: ['id', 'name', 'email', 'phone']
+                }
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: 5
+        });
+
+        // Format recent orders
+        const formattedRecentOrders = recentOrders.map(order => {
+            const orderData = order.toJSON ? order.toJSON() : order;
+            return {
+                id: orderData.id,
+                customer: orderData.user?.name || 'Unknown',
+                amount: parseFloat(orderData.total || 0),
+                status: orderData.status,
+                date: orderData.createdAt
+            };
+        });
+
+        // Get last 6 months revenue data for chart
+        const monthlyRevenueChart = [];
+        for (let i = 5; i >= 0; i--) {
+            const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const monthEndDate = new Date(today.getFullYear(), today.getMonth() - i + 1, 0, 23, 59, 59, 999);
+            
+            const monthRevenueResult = await Order.findAll({
+                where: {
+                    vendorId,
+                    createdAt: {
+                        [Op.gte]: monthDate,
+                        [Op.lte]: monthEndDate
+                    }
+                },
+                attributes: [
+                    [sequelize.fn('SUM', sequelize.col('total')), 'revenue']
+                ],
+                raw: true
+            });
+            
+            const monthOrdersCount = await Order.count({
+                where: {
+                    vendorId,
+                    createdAt: {
+                        [Op.gte]: monthDate,
+                        [Op.lte]: monthEndDate
+                    }
+                }
+            });
+
+            const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+            monthlyRevenueChart.push({
+                month: monthNames[monthDate.getMonth()],
+                year: monthDate.getFullYear(),
+                revenue: parseFloat(monthRevenueResult[0]?.revenue || 0),
+                orders: monthOrdersCount
+            });
+        }
+
+        // Get last 30 days revenue data for chart
+        const dailyRevenueChart = [];
+        for (let i = 29; i >= 0; i--) {
+            const dayDate = new Date(today);
+            dayDate.setDate(dayDate.getDate() - i);
+            dayDate.setHours(0, 0, 0, 0);
+            const dayEnd = new Date(dayDate);
+            dayEnd.setHours(23, 59, 59, 999);
+            
+            const dayRevenueResult = await Order.findAll({
+                where: {
+                    vendorId,
+                    createdAt: {
+                        [Op.gte]: dayDate,
+                        [Op.lte]: dayEnd
+                    }
+                },
+                attributes: [
+                    [sequelize.fn('SUM', sequelize.col('total')), 'revenue']
+                ],
+                raw: true
+            });
+            
+            const dayOrdersCount = await Order.count({
+                where: {
+                    vendorId,
+                    createdAt: {
+                        [Op.gte]: dayDate,
+                        [Op.lte]: dayEnd
+                    }
+                }
+            });
+
+            dailyRevenueChart.push({
+                date: dayDate.toISOString().split('T')[0],
+                day: dayDate.getDate(),
+                month: dayDate.getMonth() + 1,
+                revenue: parseFloat(dayRevenueResult[0]?.revenue || 0),
+                orders: dayOrdersCount
+            });
+        }
+
+        // Get orders by status for pie chart
+        const ordersByStatus = await Order.findAll({
+            where: { vendorId },
+            attributes: [
+                'status',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            group: ['status'],
+            raw: true
+        });
+
+        const statusChart = {
+            pending: 0,
+            confirmed: 0,
+            processing: 0,
+            shipped: 0,
+            delivered: 0,
+            cancelled: 0
+        };
+
+        ordersByStatus.forEach(item => {
+            if (statusChart.hasOwnProperty(item.status)) {
+                statusChart[item.status] = parseInt(item.count || 0);
+            }
+        });
+
+        return {
+            stats: {
+                totalOrders,
+                totalProducts,
+                activeProducts,
+                totalRevenue,
+                totalFollowers,
+                pendingOrders,
+                completedOrders,
+                todayRevenue,
+                monthlyRevenue
+            },
+            recentOrders: formattedRecentOrders,
+            charts: {
+                monthlyRevenue: monthlyRevenueChart,
+                dailyRevenue: dailyRevenueChart,
+                ordersByStatus: statusChart
             }
         };
     }

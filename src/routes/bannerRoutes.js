@@ -26,3 +26,5 @@ router.delete('/:id', deleteBanner);
 
 export default router;
 
+
+

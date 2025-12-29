@@ -77,3 +77,5 @@ createBannersTable()
     process.exit(1);
   });
 
+
+

@@ -1449,6 +1449,72 @@
 					"response": []
 				},
 				{
+					"name": "Get Vendor Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/vendors/me/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vendors",
+								"me",
+								"dashboard"
+							]
+						},
+						"description": "Get vendor dashboard statistics, charts data, and recent orders. **Vendor only** - Requires vendor authentication.\n\n**Response includes:**\n- `stats`: Statistics object containing:\n  - `totalOrders`: Total number of orders\n  - `totalProducts`: Total number of products\n  - `activeProducts`: Number of active products\n  - `totalRevenue`: Total revenue from all orders\n  - `totalFollowers`: Number of followers\n  - `pendingOrders`: Number of pending orders\n  - `completedOrders`: Number of completed orders\n  - `todayRevenue`: Revenue for today\n  - `monthlyRevenue`: Revenue for current month\n- `recentOrders`: Array of last 5 orders with customer info, amount, status, and date\n- `charts`: Charts data object containing:\n  - `monthlyRevenue`: Array of last 6 months with revenue and orders count (for monthly revenue chart)\n  - `dailyRevenue`: Array of last 30 days with revenue and orders count (for daily revenue chart)\n  - `ordersByStatus`: Object with count of orders by status (pending, confirmed, processing, shipped, delivered, cancelled) for pie chart\n\n**Authentication:** Required (Vendor only)"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/dashboard",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"dashboard"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vendor dashboard retrieved successfully\",\n    \"data\": {\n        \"stats\": {\n            \"totalOrders\": 156,\n            \"totalProducts\": 45,\n            \"activeProducts\": 42,\n            \"totalRevenue\": 125000,\n            \"totalFollowers\": 320,\n            \"pendingOrders\": 12,\n            \"completedOrders\": 144,\n            \"todayRevenue\": 3500,\n            \"monthlyRevenue\": 45000\n        },\n        \"recentOrders\": [\n            {\n                \"id\": 1,\n                \"customer\": \"أحمد محمد\",\n                \"amount\": 250,\n                \"status\": \"pending\",\n                \"date\": \"2024-01-15T10:30:00.000Z\"\n            },\n            {\n                \"id\": 2,\n                \"customer\": \"فاطمة علي\",\n                \"amount\": 180,\n                \"status\": \"confirmed\",\n                \"date\": \"2024-01-15T09:15:00.000Z\"\n            },\n            {\n                \"id\": 3,\n                \"customer\": \"محمد حسن\",\n                \"amount\": 320,\n                \"status\": \"delivered\",\n                \"date\": \"2024-01-14T14:20:00.000Z\"\n            }\n        ],\n        \"charts\": {\n            \"monthlyRevenue\": [\n                {\n                    \"month\": \"يوليو\",\n                    \"year\": 2024,\n                    \"revenue\": 12000,\n                    \"orders\": 45\n                },\n                {\n                    \"month\": \"أغسطس\",\n                    \"year\": 2024,\n                    \"revenue\": 15000,\n                    \"orders\": 52\n                },\n                {\n                    \"month\": \"سبتمبر\",\n                    \"year\": 2024,\n                    \"revenue\": 18000,\n                    \"orders\": 58\n                },\n                {\n                    \"month\": \"أكتوبر\",\n                    \"year\": 2024,\n                    \"revenue\": 20000,\n                    \"orders\": 62\n                },\n                {\n                    \"month\": \"نوفمبر\",\n                    \"year\": 2024,\n                    \"revenue\": 22000,\n                    \"orders\": 65\n                },\n                {\n                    \"month\": \"ديسمبر\",\n                    \"year\": 2024,\n                    \"revenue\": 25000,\n                    \"orders\": 70\n                }\n            ],\n            \"dailyRevenue\": [\n                {\n                    \"date\": \"2024-01-15\",\n                    \"day\": 15,\n                    \"month\": 1,\n                    \"revenue\": 250,\n                    \"orders\": 3\n                },\n                {\n                    \"date\": \"2024-01-14\",\n                    \"day\": 14,\n                    \"month\": 1,\n                    \"revenue\": 320,\n                    \"orders\": 4\n                },\n                {\n                    \"date\": \"2024-01-13\",\n                    \"day\": 13,\n                    \"month\": 1,\n                    \"revenue\": 180,\n                    \"orders\": 2\n                }\n            ],\n            \"ordersByStatus\": {\n                \"pending\": 12,\n                \"confirmed\": 8,\n                \"processing\": 5,\n                \"shipped\": 10,\n                \"delivered\": 144,\n                \"cancelled\": 2\n            }\n        }\n    }\n}"
+						}
+					]
+				},
+				{
 					"name": "Update My Profile",
 					"request": {
 						"method": "PUT",

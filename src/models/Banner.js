@@ -45,3 +45,5 @@ const Banner = sequelize.define('Banner', {
 
 export default Banner;
 
+
+

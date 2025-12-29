@@ -131,3 +131,20 @@ export const getAllVendors = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Get vendor dashboard statistics
+ */
+export const getVendorDashboard = async (req, res, next) => {
+    try {
+        const vendorId = req.user.id;
+        const dashboard = await vendorService.getVendorDashboard(vendorId);
+
+        return sendSuccess(res, dashboard, 'Vendor dashboard retrieved successfully');
+    } catch (error) {
+        if (error.message === 'Vendor not found') {
+            return sendError(res, error.message, 404);
+        }
+        next(error);
+    }
+};
