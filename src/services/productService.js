@@ -6,6 +6,8 @@ import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
 import Favorite from '../models/Favorite.js';
 import Cart from '../models/Cart.js';
+import DiscountProduct from '../models/DiscountProduct.js';
+import Discount from '../models/Discount.js';
 import notificationService from './notificationService.js';
 import favoriteService from './favoriteService.js';
 
@@ -117,6 +119,36 @@ class ProductService {
     // Get total count from findAndCountAll result
     const totalCount = products.count;
 
+    // Get active discounts for all products in batch
+    const productIds = products.rows.map(p => p.id);
+    const now = new Date();
+    const activeDiscountProducts = productIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage
+    const discountMap = new Map();
+    activeDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        discountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
     // Ensure images is always returned as an array, not a stringified array
     const formattedProducts = products.rows.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
@@ -134,6 +166,27 @@ class ProductService {
       } else {
         productData.images = [];
       }
+      
+      // Calculate prices with discount
+      const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+      let discountPercentage = 0;
+      
+      // Check discount map first (active discount), then product discount field
+      if (discountMap.has(productData.id)) {
+        discountPercentage = discountMap.get(productData.id);
+      } else if (productData.discount) {
+        discountPercentage = parseFloat(productData.discount || 0);
+      }
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.discount = discountPercentage;
+      
       // Add status based on isActive (simplified - you may want to add proper status field)
       productData.status = productData.isActive ? 'published' : 'pending';
       return productData;
@@ -219,8 +272,77 @@ class ProductService {
       productData.isFavorite = false;
     }
 
+    // Calculate prices with discount
+    const now = new Date();
+    const discountProduct = await DiscountProduct.findOne({
+      where: {
+        productId: id
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ]
+    });
+
+    const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+    let discountPercentage = 0;
+    
+    // Check active discount first, then product discount field
+    if (discountProduct && discountProduct.discount) {
+      discountPercentage = parseFloat(discountProduct.discount.discount || 0);
+    } else if (productData.discount) {
+      discountPercentage = parseFloat(productData.discount || 0);
+    }
+    
+    const originalPrice = price;
+    const finalPrice = discountPercentage > 0 
+      ? price * (1 - discountPercentage / 100)
+      : price;
+    
+    productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+    productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+    productData.discount = discountPercentage;
+
     // Get similar products
     const similarProducts = await this.getSimilarProducts(id, product.categoryId, product.subcategoryId, 8);
+
+    // Get active discounts for similar products
+    const similarProductIds = similarProducts.map(p => p.id);
+    const now = new Date();
+    const similarDiscountProducts = similarProductIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: similarProductIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage for similar products
+    const similarDiscountMap = new Map();
+    similarDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        similarDiscountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
 
     // Format similar products
     const formattedSimilarProducts = similarProducts.map(p => {
@@ -240,6 +362,26 @@ class ProductService {
       } else {
         pData.images = [];
       }
+      
+      // Calculate prices with discount for similar products
+      const price = pData.price && pData.isPrice ? parseFloat(pData.price) : 0;
+      let discountPercentage = 0;
+      
+      if (similarDiscountMap.has(pData.id)) {
+        discountPercentage = similarDiscountMap.get(pData.id);
+      } else if (pData.discount) {
+        discountPercentage = parseFloat(pData.discount || 0);
+      }
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      pData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      pData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      pData.discount = discountPercentage;
+      
       return pData;
     });
 
@@ -559,6 +701,36 @@ class ProductService {
       }
     }
 
+    // Get active discounts for all products in batch
+    const productIds = rows.map(p => p.id);
+    const now = new Date();
+    const activeDiscountProducts = productIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage
+    const discountMap = new Map();
+    activeDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        discountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
     // Add isFavorite and isCart to each product
     const productsWithFavorite = rows.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
@@ -579,6 +751,27 @@ class ProductService {
       } else {
         productData.images = [];
       }
+      
+      // Calculate prices with discount
+      const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+      let discountPercentage = 0;
+      
+      // Check discount map first (active discount), then product discount field
+      if (discountMap.has(productData.id)) {
+        discountPercentage = discountMap.get(productData.id);
+      } else if (productData.discount) {
+        discountPercentage = parseFloat(productData.discount || 0);
+      }
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.discount = discountPercentage;
+      
       return productData;
     });
 
@@ -666,6 +859,36 @@ class ProductService {
     console.log('Service: Found', count, 'total products');
     console.log('Service: Returned', rows.length, 'products for this page');
 
+    // Get active discounts for all products in batch
+    const productIds = rows.map(p => p.id);
+    const now = new Date();
+    const activeDiscountProducts = productIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage
+    const discountMap = new Map();
+    activeDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        discountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
     // Ensure images is always returned as an array, not a stringified array
     const products = rows.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
@@ -683,6 +906,27 @@ class ProductService {
       } else {
         productData.images = [];
       }
+      
+      // Calculate prices with discount
+      const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+      let discountPercentage = 0;
+      
+      // Check discount map first (active discount), then product discount field
+      if (discountMap.has(productData.id)) {
+        discountPercentage = discountMap.get(productData.id);
+      } else if (productData.discount) {
+        discountPercentage = parseFloat(productData.discount || 0);
+      }
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.discount = discountPercentage;
+      
       return productData;
     });
 
@@ -846,6 +1090,36 @@ class ProductService {
       }
     }
 
+    // Get active discounts for similar products
+    const productIds = similarProducts.map(p => p.id);
+    const now = new Date();
+    const similarDiscountProducts = productIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage
+    const similarDiscountMap = new Map();
+    similarDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        similarDiscountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
     // Format products with images, isFavorite, and isCart
     const formattedProducts = similarProducts.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
@@ -869,6 +1143,25 @@ class ProductService {
       // Add isFavorite and isCart
       productData.isFavorite = userId ? favoriteProductIds.has(product.id) : false;
       productData.isCart = userId ? cartProductIds.has(product.id) : false;
+
+      // Calculate prices with discount
+      const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+      let discountPercentage = 0;
+      
+      if (similarDiscountMap.has(productData.id)) {
+        discountPercentage = similarDiscountMap.get(productData.id);
+      } else if (productData.discount) {
+        discountPercentage = parseFloat(productData.discount || 0);
+      }
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.discount = discountPercentage;
 
       return productData;
     });
