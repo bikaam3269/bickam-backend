@@ -7,23 +7,41 @@ import { sendSuccess, sendError } from '../utils/responseHelper.js';
 export const createOrder = async (req, res, next) => {
   try {
     const marketerId = req.user.id;
-    const { toCityId, shippingAddress, phone, paymentMethod } = req.body;
+    const { toCityId, shippingAddress, phone, paymentMethod = 'wallet' } = req.body;
 
-    if (!phone) {
-      return sendError(res, 'Phone number is required', 400);
+    // Validate required fields
+    if (!toCityId) {
+      return sendError(res, 'To city ID (delivery city) is required', 400);
+    }
+
+    if (!shippingAddress) {
+      return sendError(res, 'Shipping address is required', 400);
+    }
+
+    // Get user phone if not provided in request
+    let orderPhone = phone;
+    if (!orderPhone) {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findByPk(marketerId);
+      if (!user || !user.phone) {
+        return sendError(res, 'Phone number is required. Please provide phone number or update your profile.', 400);
+      }
+      orderPhone = user.phone;
     }
 
     const orders = await marketingOrderService.createOrder(
       marketerId,
-      toCityId,
+      parseInt(toCityId),
       shippingAddress,
-      phone,
-      paymentMethod || 'wallet'
+      orderPhone,
+      paymentMethod
     );
 
-    return sendSuccess(res, orders, 'Marketing order created successfully', 201);
+    return sendSuccess(res, orders, 'Orders created successfully', 201);
   } catch (error) {
-    if (error.message.includes('not a marketer') || error.message.includes('empty') || error.message.includes('not found') || error.message.includes('not active') || error.message.includes('zero')) {
+    if (error.message === 'User is not a marketer' ||
+        error.message === 'Cart is empty' ||
+        error.message === 'Wallet balance is zero. Please add funds to your wallet or use cash payment.') {
       return sendError(res, error.message, 400);
     }
     next(error);
@@ -31,26 +49,20 @@ export const createOrder = async (req, res, next) => {
 };
 
 /**
- * Get all orders for authenticated marketer (or all orders for admin)
+ * Get all orders for authenticated marketer
  */
 export const getMarketerOrders = async (req, res, next) => {
   try {
-    // If admin, pass null to get all orders. Otherwise, use marketer ID
-    const marketerId = req.user.type === 'admin' ? null : req.user.id;
-    const filters = {
-      status: req.query.status,
-      paymentStatus: req.query.paymentStatus
-    };
+    const marketerId = req.user.id;
+    const { status, paymentStatus } = req.query;
 
-    // If admin, use getAllMarketingOrders. Otherwise, use getMarketerOrders
-    let orders;
-    if (req.user.type === 'admin') {
-      orders = await marketingOrderService.getAllMarketingOrders(filters);
-    } else {
-      orders = await marketingOrderService.getMarketerOrders(marketerId, filters);
-    }
-    
-    return sendSuccess(res, orders, 'Marketing orders retrieved successfully');
+    const filters = {};
+    if (status) filters.status = status;
+    if (paymentStatus) filters.paymentStatus = paymentStatus;
+
+    const orders = await marketingOrderService.getMarketerOrders(marketerId, filters);
+
+    return sendSuccess(res, orders, 'Orders retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -61,14 +73,16 @@ export const getMarketerOrders = async (req, res, next) => {
  */
 export const getAllMarketingOrders = async (req, res, next) => {
   try {
-    const filters = {
-      status: req.query.status,
-      paymentStatus: req.query.paymentStatus,
-      marketerId: req.query.marketerId
-    };
+    const { status, paymentStatus, marketerId } = req.query;
+
+    const filters = {};
+    if (status) filters.status = status;
+    if (paymentStatus) filters.paymentStatus = paymentStatus;
+    if (marketerId) filters.marketerId = parseInt(marketerId);
 
     const orders = await marketingOrderService.getAllMarketingOrders(filters);
-    return sendSuccess(res, orders, 'All marketing orders retrieved successfully');
+
+    return sendSuccess(res, orders, 'Orders retrieved successfully');
   } catch (error) {
     next(error);
   }
@@ -80,10 +94,11 @@ export const getAllMarketingOrders = async (req, res, next) => {
 export const getOrderById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const marketerId = req.user.type === 'admin' ? null : req.user.id;
+    const marketerId = req.user.type === 'marketing' ? req.user.id : null;
 
-    const order = await marketingOrderService.getOrderById(id, marketerId);
-    return sendSuccess(res, order, 'Marketing order retrieved successfully');
+    const order = await marketingOrderService.getOrderById(parseInt(id), marketerId);
+
+    return sendSuccess(res, order, 'Order retrieved successfully');
   } catch (error) {
     if (error.message === 'Order not found') {
       return sendError(res, error.message, 404);
@@ -109,7 +124,8 @@ export const updateOrderStatus = async (req, res, next) => {
       return sendError(res, 'Invalid status', 400);
     }
 
-    const order = await marketingOrderService.updateOrderStatus(id, status);
+    const order = await marketingOrderService.updateOrderStatus(parseInt(id), status);
+
     return sendSuccess(res, order, 'Order status updated successfully');
   } catch (error) {
     if (error.message === 'Order not found') {
@@ -119,3 +135,30 @@ export const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * Calculate order price for marketing cart
+ */
+export const calculateOrderPrice = async (req, res, next) => {
+  try {
+    const marketerId = req.user.id;
+    const { toCityId } = req.query;
+
+    if (!toCityId) {
+      return sendError(res, 'To city ID is required', 400);
+    }
+
+    const priceBreakdown = await marketingOrderService.calculateOrderPrice(
+      marketerId,
+      parseInt(toCityId)
+    );
+
+    return sendSuccess(res, priceBreakdown, 'Order price calculated successfully');
+  } catch (error) {
+    if (error.message === 'User is not a marketer' ||
+        error.message === 'Cart is empty' ||
+        error.message === 'To city ID is required') {
+      return sendError(res, error.message, 400);
+    }
+    next(error);
+  }
+};

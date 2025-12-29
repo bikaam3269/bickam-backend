@@ -131,24 +131,3 @@ export const getAllVendors = async (req, res, next) => {
         next(error);
     }
 };
-
-/**
- * Get vendor dashboard statistics
- * Returns stats, charts data, and recent orders
- */
-export const getVendorDashboardStats = async (req, res, next) => {
-    try {
-        const vendorId = req.user.id;
-
-        // Check if user is a vendor
-        if (req.user.type !== 'vendor') {
-            return sendError(res, 'Only vendors can access dashboard stats', 403);
-        }
-
-        const dashboardData = await vendorService.getVendorDashboardStats(vendorId);
-
-        return sendSuccess(res, dashboardData, 'Dashboard statistics retrieved successfully');
-    } catch (error) {
-        next(error);
-    }
-};

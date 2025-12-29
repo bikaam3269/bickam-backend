@@ -6,7 +6,6 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
-import Subcategory from '../models/Subcategory.js';
 
 class DiscountService {
   /**
@@ -19,7 +18,7 @@ class DiscountService {
     const { title, body, image, startDate, endDate, discount, products } = discountData;
 
     // Validate required fields
-    if (!title || !startDate || !endDate || discount === undefined || discount === null || discount === '') {
+    if (!title || !startDate || !endDate || discount === undefined || discount === null) {
       throw new Error('Title, start date, end date, and discount percentage are required');
     }
 
@@ -37,16 +36,8 @@ class DiscountService {
       throw new Error('Products array is required and must not be empty');
     }
 
-    // Validate discount percentage - convert to number if it's a string
-    let discountPercent;
-    if (typeof discount === 'string') {
-      discountPercent = parseFloat(discount);
-    } else if (typeof discount === 'number') {
-      discountPercent = discount;
-    } else {
-      discountPercent = parseFloat(discount);
-    }
-    
+    // Validate discount percentage
+    const discountPercent = parseFloat(discount);
     if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
       throw new Error('Discount must be a number between 0 and 100');
     }
@@ -186,73 +177,13 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            include: [
-              {
-                model: Category,
-                as: 'category',
-                attributes: ['id', 'name']
-              },
-              {
-                model: Subcategory,
-                as: 'subcategory',
-                attributes: ['id', 'name']
-              },
-              {
-                model: User,
-                as: 'vendor',
-                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
-              }
-            ]
+            attributes: ['id', 'name', 'price', 'images']
           }]
         }
       ]
     });
 
-    // Format products to ensure images is always an array and calculate discounted price
-    const formattedDiscount = discountWithRelations.toJSON ? discountWithRelations.toJSON() : discountWithRelations;
-    const discountPercentage = parseFloat(formattedDiscount.discount) || 0;
-    
-    if (formattedDiscount.products && Array.isArray(formattedDiscount.products)) {
-      formattedDiscount.products = formattedDiscount.products.map(discountProduct => {
-        if (discountProduct.product) {
-          const productData = discountProduct.product;
-          // Ensure images is always returned as an array, not a stringified array
-          if (productData.images) {
-            if (typeof productData.images === 'string') {
-              try {
-                productData.images = JSON.parse(productData.images);
-              } catch (e) {
-                productData.images = [];
-              }
-            }
-            if (!Array.isArray(productData.images)) {
-              productData.images = [];
-            }
-          } else {
-            productData.images = [];
-          }
-          
-          // Calculate discounted price based on discount percentage
-          const originalPrice = productData.price ? parseFloat(productData.price) : 0;
-          if (originalPrice > 0 && discountPercentage > 0) {
-            const discountAmount = (originalPrice * discountPercentage) / 100;
-            const discountedPrice = originalPrice - discountAmount;
-            productData.originalPrice = originalPrice;
-            productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
-            productData.finalPrice = productData.discountedPrice;
-            productData.discountPercentage = discountPercentage;
-          } else {
-            productData.originalPrice = originalPrice;
-            productData.discountedPrice = originalPrice;
-            productData.finalPrice = originalPrice;
-            productData.discountPercentage = 0;
-          }
-        }
-        return discountProduct;
-      });
-    }
-
-    return formattedDiscount;
+    return discountWithRelations;
   }
 
   /**
@@ -276,77 +207,14 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            include: [
-              {
-                model: Category,
-                as: 'category',
-                attributes: ['id', 'name']
-              },
-              {
-                model: Subcategory,
-                as: 'subcategory',
-                attributes: ['id', 'name']
-              },
-              {
-                model: User,
-                as: 'vendor',
-                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
-              }
-            ]
+            attributes: ['id', 'name', 'price', 'images']
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    // Format products to ensure images is always an array and calculate discounted price
-    const formattedDiscounts = discounts.map(discount => {
-      const discountData = discount.toJSON ? discount.toJSON() : discount;
-      const discountPercentage = parseFloat(discountData.discount) || 0;
-      
-      if (discountData.products && Array.isArray(discountData.products)) {
-        discountData.products = discountData.products.map(discountProduct => {
-          if (discountProduct.product) {
-            const productData = discountProduct.product;
-            // Ensure images is always returned as an array, not a stringified array
-            if (productData.images) {
-              if (typeof productData.images === 'string') {
-                try {
-                  productData.images = JSON.parse(productData.images);
-                } catch (e) {
-                  productData.images = [];
-                }
-              }
-              if (!Array.isArray(productData.images)) {
-                productData.images = [];
-              }
-            } else {
-              productData.images = [];
-            }
-            
-            // Calculate discounted price based on discount percentage
-            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
-            if (originalPrice > 0 && discountPercentage > 0) {
-              const discountAmount = (originalPrice * discountPercentage) / 100;
-              const discountedPrice = originalPrice - discountAmount;
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
-              productData.finalPrice = productData.discountedPrice;
-              productData.discountPercentage = discountPercentage;
-            } else {
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = originalPrice;
-              productData.finalPrice = originalPrice;
-              productData.discountPercentage = 0;
-            }
-          }
-          return discountProduct;
-        });
-      }
-      return discountData;
-    });
-
-    return formattedDiscounts;
+    return discounts;
   }
 
   /**
@@ -390,25 +258,14 @@ class DiscountService {
         include: [{
           model: Product,
           as: 'product',
+          attributes: ['id', 'name', 'price', 'images', 'categoryId'],
           where: Object.keys(productWhere).length > 0 ? productWhere : undefined,
           required: Object.keys(productWhere).length > 0,
-          include: [
-            {
-              model: Category,
-              as: 'category',
-              attributes: ['id', 'name']
-            },
-            {
-              model: Subcategory,
-              as: 'subcategory',
-              attributes: ['id', 'name']
-            },
-            {
-              model: User,
-              as: 'vendor',
-              attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
-            }
-          ]
+          include: [{
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          }]
         }]
       }
     ];
@@ -446,54 +303,7 @@ class DiscountService {
       });
     }
 
-    // Format products to ensure images is always an array and calculate discounted price
-    const formattedDiscounts = filteredDiscounts.map(discount => {
-      const discountData = discount.toJSON ? discount.toJSON() : discount;
-      const discountPercentage = parseFloat(discountData.discount) || 0;
-      
-      if (discountData.products && Array.isArray(discountData.products)) {
-        discountData.products = discountData.products.map(discountProduct => {
-          if (discountProduct.product) {
-            const productData = discountProduct.product;
-            // Ensure images is always returned as an array, not a stringified array
-            if (productData.images) {
-              if (typeof productData.images === 'string') {
-                try {
-                  productData.images = JSON.parse(productData.images);
-                } catch (e) {
-                  productData.images = [];
-                }
-              }
-              if (!Array.isArray(productData.images)) {
-                productData.images = [];
-              }
-            } else {
-              productData.images = [];
-            }
-            
-            // Calculate discounted price based on discount percentage
-            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
-            if (originalPrice > 0 && discountPercentage > 0) {
-              const discountAmount = (originalPrice * discountPercentage) / 100;
-              const discountedPrice = originalPrice - discountAmount;
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
-              productData.finalPrice = productData.discountedPrice;
-              productData.discountPercentage = discountPercentage;
-            } else {
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = originalPrice;
-              productData.finalPrice = originalPrice;
-              productData.discountPercentage = 0;
-            }
-          }
-          return discountProduct;
-        });
-      }
-      return discountData;
-    });
-
-    return formattedDiscounts;
+    return filteredDiscounts;
   }
 
   /**
@@ -524,77 +334,14 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            include: [
-              {
-                model: Category,
-                as: 'category',
-                attributes: ['id', 'name']
-              },
-              {
-                model: Subcategory,
-                as: 'subcategory',
-                attributes: ['id', 'name']
-              },
-              {
-                model: User,
-                as: 'vendor',
-                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
-              }
-            ]
+            attributes: ['id', 'name', 'price', 'images']
           }]
         }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    // Format products to ensure images is always an array and calculate discounted price
-    const formattedDiscounts = discounts.map(discount => {
-      const discountData = discount.toJSON ? discount.toJSON() : discount;
-      const discountPercentage = parseFloat(discountData.discount) || 0;
-      
-      if (discountData.products && Array.isArray(discountData.products)) {
-        discountData.products = discountData.products.map(discountProduct => {
-          if (discountProduct.product) {
-            const productData = discountProduct.product;
-            // Ensure images is always returned as an array, not a stringified array
-            if (productData.images) {
-              if (typeof productData.images === 'string') {
-                try {
-                  productData.images = JSON.parse(productData.images);
-                } catch (e) {
-                  productData.images = [];
-                }
-              }
-              if (!Array.isArray(productData.images)) {
-                productData.images = [];
-              }
-            } else {
-              productData.images = [];
-            }
-            
-            // Calculate discounted price based on discount percentage
-            const originalPrice = productData.price ? parseFloat(productData.price) : 0;
-            if (originalPrice > 0 && discountPercentage > 0) {
-              const discountAmount = (originalPrice * discountPercentage) / 100;
-              const discountedPrice = originalPrice - discountAmount;
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
-              productData.finalPrice = productData.discountedPrice;
-              productData.discountPercentage = discountPercentage;
-            } else {
-              productData.originalPrice = originalPrice;
-              productData.discountedPrice = originalPrice;
-              productData.finalPrice = originalPrice;
-              productData.discountPercentage = 0;
-            }
-          }
-          return discountProduct;
-        });
-      }
-      return discountData;
-    });
-
-    return formattedDiscounts;
+    return discounts;
   }
 
   /**
@@ -624,23 +371,7 @@ class DiscountService {
           include: [{
             model: Product,
             as: 'product',
-            include: [
-              {
-                model: Category,
-                as: 'category',
-                attributes: ['id', 'name']
-              },
-              {
-                model: Subcategory,
-                as: 'subcategory',
-                attributes: ['id', 'name']
-              },
-              {
-                model: User,
-                as: 'vendor',
-                attributes: ['id', 'name', 'email', 'type', 'logoImage', 'whatsappNumber']
-              }
-            ]
+            attributes: ['id', 'name', 'price', 'images']
           }]
         }
       ]
@@ -650,51 +381,7 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    // Format products to ensure images is always an array and calculate discounted price
-    const discountData = discount.toJSON ? discount.toJSON() : discount;
-    const discountPercentage = parseFloat(discountData.discount) || 0;
-    
-    if (discountData.products && Array.isArray(discountData.products)) {
-      discountData.products = discountData.products.map(discountProduct => {
-        if (discountProduct.product) {
-          const productData = discountProduct.product;
-          // Ensure images is always returned as an array, not a stringified array
-          if (productData.images) {
-            if (typeof productData.images === 'string') {
-              try {
-                productData.images = JSON.parse(productData.images);
-              } catch (e) {
-                productData.images = [];
-              }
-            }
-            if (!Array.isArray(productData.images)) {
-              productData.images = [];
-            }
-          } else {
-            productData.images = [];
-          }
-          
-          // Calculate discounted price based on discount percentage
-          const originalPrice = productData.price ? parseFloat(productData.price) : 0;
-          if (originalPrice > 0 && discountPercentage > 0) {
-            const discountAmount = (originalPrice * discountPercentage) / 100;
-            const discountedPrice = originalPrice - discountAmount;
-            productData.originalPrice = originalPrice;
-            productData.discountedPrice = parseFloat(discountedPrice.toFixed(2));
-            productData.finalPrice = productData.discountedPrice;
-            productData.discountPercentage = discountPercentage;
-          } else {
-            productData.originalPrice = originalPrice;
-            productData.discountedPrice = originalPrice;
-            productData.finalPrice = originalPrice;
-            productData.discountPercentage = 0;
-          }
-        }
-        return discountProduct;
-      });
-    }
-
-    return discountData;
+    return discount;
   }
 
   /**
@@ -713,7 +400,7 @@ class DiscountService {
       throw new Error('Discount not found');
     }
 
-    const { title, body, image, startDate, endDate, products, discount: discountValue } = updateData;
+    const { title, body, image, startDate, endDate, products } = updateData;
 
     // Validate date range if both dates are provided
     if (startDate && endDate) {
@@ -730,17 +417,8 @@ class DiscountService {
     if (image !== undefined) discount.image = image;
     if (startDate !== undefined) discount.startDate = new Date(startDate);
     if (endDate !== undefined) discount.endDate = new Date(endDate);
-    if (discountValue !== undefined && discountValue !== null && discountValue !== '') {
-      // Convert to number if it's a string
-      let discountPercent;
-      if (typeof discountValue === 'string') {
-        discountPercent = parseFloat(discountValue);
-      } else if (typeof discountValue === 'number') {
-        discountPercent = discountValue;
-      } else {
-        discountPercent = parseFloat(discountValue);
-      }
-      
+    if (discount !== undefined && discount !== null) {
+      const discountPercent = parseFloat(discount);
       if (isNaN(discountPercent) || discountPercent < 0 || discountPercent > 100) {
         throw new Error('Discount must be a number between 0 and 100');
       }

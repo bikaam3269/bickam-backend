@@ -2,48 +2,31 @@ import express from 'express';
 import {
   createOrder,
   getMarketerOrders,
+  getAllMarketingOrders,
   getOrderById,
-  updateOrderStatus
+  updateOrderStatus,
+  calculateOrderPrice
 } from '../controllers/marketingOrderController.js';
 import { authenticate, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(authenticate);
+// Calculate order price (marketer only) - must be before /:id
+router.get('/calculate-price', authenticate, calculateOrderPrice);
 
-// Create order and get marketer orders - only for marketers
-router.post('/', (req, res, next) => {
-  if (req.user.type !== 'marketing') {
-    return res.status(403).json({
-      success: false,
-      error: { message: 'Only marketers can create marketing orders' }
-    });
-  }
-  next();
-}, createOrder);
+// Get marketer orders (marketer only) - must be before /:id
+router.get('/marketer', authenticate, getMarketerOrders);
 
-router.get('/marketer', (req, res, next) => {
-  if (req.user.type !== 'marketing' && req.user.type !== 'admin') {
-    return res.status(403).json({
-      success: false,
-      error: { message: 'Only marketers and admins can view orders' }
-    });
-  }
-  next();
-}, getMarketerOrders);
+// Admin only routes - must be before /:id
+router.get('/', authenticate, authorize('admin'), getAllMarketingOrders);
 
-// Get order by ID - marketers can see their own, admins can see all
-router.get('/:id', getOrderById);
+// Create order from cart (marketer only)
+router.post('/', authenticate, createOrder);
 
-// Update order status - admin only
-router.put('/:id/status', authorize('admin'), updateOrderStatus);
+// Update order status (admin only) - must be before /:id
+router.put('/:id/status', authenticate, authorize('admin'), updateOrderStatus);
+
+// Get order by ID (marketer can get their own, admin can get any) - must be last
+router.get('/:id', authenticate, getOrderById);
 
 export default router;
-
-
-
-
-
-
-
