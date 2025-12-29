@@ -280,6 +280,11 @@ class OrderService {
           ? `${baseUrl}${orderData.vendor.backgroundImage}`
           : `${baseUrl}/files/${orderData.vendor.backgroundImage}`;
       }
+      
+      // Add whatsapp field (alias for whatsappNumber)
+      if (orderData.vendor.whatsappNumber) {
+        orderData.vendor.whatsapp = orderData.vendor.whatsappNumber;
+      }
     }
 
     return {

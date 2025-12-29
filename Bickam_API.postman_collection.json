@@ -3439,7 +3439,7 @@
 								"4"
 							]
 						},
-						"description": "Get order details by ID. **Requires authentication**.\n\n**Response includes:**\n- Order details (id, userId, vendorId, status, total, shippingPrice, etc.)\n- `user`: Customer information (id, name, email, phone)\n- `vendor`: Complete vendor information including:\n  - Basic info (id, name, email, phone, type)\n  - `government`: Government object with id, name, code\n  - `category`: Category object with id, name\n  - `logoImage`: Full URL to vendor logo\n  - `backgroundImage`: Full URL to vendor background image\n  - All other vendor profile fields\n- `items`: Array of order items with product details including category and subcategory"
+						"description": "Get order details by ID. **Requires authentication**.\n\n**Response includes:**\n- Order details (id, userId, vendorId, status, total, shippingPrice, etc.)\n- `user`: Customer information (id, name, email, phone)\n- `vendor`: Complete vendor information including:\n  - Basic info (id, name, email, phone, type)\n  - `government`: Government object with id, name, code\n  - `category`: Category object with id, name\n  - `logoImage`: Full URL to vendor logo\n  - `backgroundImage`: Full URL to vendor background image\n  - `whatsappNumber`: Vendor WhatsApp number\n  - `whatsapp`: Alias for whatsappNumber\n  - All other vendor profile fields\n- `items`: Array of order items with product details including category and subcategory"
 					},
 					"response": [
 						{
