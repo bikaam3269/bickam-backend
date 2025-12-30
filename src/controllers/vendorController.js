@@ -137,12 +137,19 @@ export const getAllVendors = async (req, res, next) => {
  */
 export const getVendorDashboard = async (req, res, next) => {
     try {
+        // Check if user is authenticated
+        if (!req.user) {
+            return sendError(res, 'User not authenticated', 401);
+        }
+        
         const vendorId = req.user.id;
+        console.log('Getting dashboard for vendor:', vendorId, 'Type:', req.user.type);
         const dashboard = await vendorService.getVendorDashboard(vendorId);
 
         return sendSuccess(res, dashboard, 'Vendor dashboard retrieved successfully');
     } catch (error) {
-        if (error.message === 'Vendor not found') {
+        console.error('Error in getVendorDashboard:', error.message);
+        if (error.message === 'User not found' || error.message.includes('not a vendor')) {
             return sendError(res, error.message, 404);
         }
         next(error);
@@ -155,8 +162,15 @@ export const getVendorDashboard = async (req, res, next) => {
  */
 export const getVendorRevenue = async (req, res, next) => {
     try {
+        // Check if user is authenticated
+        if (!req.user) {
+            return sendError(res, 'User not authenticated', 401);
+        }
+        
         const vendorId = req.user.id;
         const { from, to } = req.query;
+        
+        console.log('Getting revenue for vendor:', vendorId, 'Type:', req.user.type);
 
         // Parse dates if provided
         const fromDate = from ? new Date(from) : null;
@@ -177,7 +191,8 @@ export const getVendorRevenue = async (req, res, next) => {
 
         return sendSuccess(res, revenue, 'Vendor revenue retrieved successfully');
     } catch (error) {
-        if (error.message === 'Vendor not found') {
+        console.error('Error in getVendorRevenue:', error.message);
+        if (error.message === 'User not found' || error.message.includes('not a vendor')) {
             return sendError(res, error.message, 404);
         }
         next(error);

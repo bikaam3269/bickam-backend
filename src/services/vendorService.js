@@ -386,8 +386,11 @@ class VendorService {
     async getVendorDashboard(vendorId) {
         // Verify vendor exists
         const vendor = await User.findByPk(vendorId);
-        if (!vendor || vendor.type !== 'vendor') {
-            throw new Error('Vendor not found');
+        if (!vendor) {
+            throw new Error('User not found');
+        }
+        if (vendor.type !== 'vendor') {
+            throw new Error(`User is not a vendor (type: ${vendor.type})`);
         }
 
         // Get today's date range
@@ -633,8 +636,11 @@ class VendorService {
     async getVendorRevenue(vendorId, fromDate = null, toDate = null) {
         // Verify vendor exists
         const vendor = await User.findByPk(vendorId);
-        if (!vendor || vendor.type !== 'vendor') {
-            throw new Error('Vendor not found');
+        if (!vendor) {
+            throw new Error('User not found');
+        }
+        if (vendor.type !== 'vendor') {
+            throw new Error(`User is not a vendor (type: ${vendor.type})`);
         }
 
         // Build where clause

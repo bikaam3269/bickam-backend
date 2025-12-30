@@ -316,7 +316,6 @@ class ProductService {
 
     // Get active discounts for similar products
     const similarProductIds = similarProducts.map(p => p.id);
-    const now = new Date();
     const similarDiscountProducts = similarProductIds.length > 0 ? await DiscountProduct.findAll({
       where: {
         productId: { [Op.in]: similarProductIds }
