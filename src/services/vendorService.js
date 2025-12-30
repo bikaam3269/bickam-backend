@@ -13,75 +13,75 @@ import { config } from '../config/app.js';
 
 // Helper function to construct full image URL
 const getImageUrl = (filename) => {
-  if (!filename) return null;
-  // If already a full URL, return as is
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  // If starts with /files/, it's already a path, just add base URL
-  if (filename.startsWith('/files/')) {
+    if (!filename) return null;
+    // If already a full URL, return as is
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+        return filename;
+    }
+    // If starts with /files/, it's already a path, just add base URL
+    if (filename.startsWith('/files/')) {
+        const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+        return `${baseUrl}${filename}`;
+    }
+    // Otherwise, it's just a filename, construct full URL
     const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-    return `${baseUrl}${filename}`;
-  }
-  // Otherwise, it's just a filename, construct full URL
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
+    return `${baseUrl}/files/${filename}`;
 };
 
 // Helper function to transform vendor data with image URLs
 const transformVendorImages = (vendor) => {
-  if (!vendor) return vendor;
-  
-  const vendorData = vendor.toJSON ? vendor.toJSON() : vendor;
-  
-  if (vendorData.logoImage) {
-    vendorData.logoImage = getImageUrl(vendorData.logoImage);
-  }
-  
-  if (vendorData.backgroundImage) {
-    vendorData.backgroundImage = getImageUrl(vendorData.backgroundImage);
-  }
-  
-  return vendorData;
+    if (!vendor) return vendor;
+
+    const vendorData = vendor.toJSON ? vendor.toJSON() : vendor;
+
+    if (vendorData.logoImage) {
+        vendorData.logoImage = getImageUrl(vendorData.logoImage);
+    }
+
+    if (vendorData.backgroundImage) {
+        vendorData.backgroundImage = getImageUrl(vendorData.backgroundImage);
+    }
+
+    return vendorData;
 };
 
 // Helper function to get product images as array with full URLs
 const getProductImages = async (vendorId) => {
-  const products = await Product.findAll({
-    where: { vendorId: parseInt(vendorId) },
-    attributes: ['images']
-  });
-
-  const allImages = [];
-  products.forEach(product => {
-    const productData = product.toJSON ? product.toJSON() : product;
-    let images = productData.images || [];
-    
-    // Ensure images is an array
-    if (typeof images === 'string') {
-      try {
-        images = JSON.parse(images);
-      } catch (e) {
-        images = [];
-      }
-    }
-    
-    if (!Array.isArray(images)) {
-      images = [];
-    }
-    
-    // Convert each image to full URL and add to array
-    images.forEach(image => {
-      if (image) {
-        const fullUrl = getImageUrl(image);
-        if (fullUrl) {
-          allImages.push(fullUrl);
-        }
-      }
+    const products = await Product.findAll({
+        where: { vendorId: parseInt(vendorId) },
+        attributes: ['images']
     });
-  });
 
-  return allImages;
+    const allImages = [];
+    products.forEach(product => {
+        const productData = product.toJSON ? product.toJSON() : product;
+        let images = productData.images || [];
+
+        // Ensure images is an array
+        if (typeof images === 'string') {
+            try {
+                images = JSON.parse(images);
+            } catch (e) {
+                images = [];
+            }
+        }
+
+        if (!Array.isArray(images)) {
+            images = [];
+        }
+
+        // Convert each image to full URL and add to array
+        images.forEach(image => {
+            if (image) {
+                const fullUrl = getImageUrl(image);
+                if (fullUrl) {
+                    allImages.push(fullUrl);
+                }
+            }
+        });
+    });
+
+    return allImages;
 };
 
 class VendorService {
@@ -185,7 +185,7 @@ class VendorService {
 
         // Transform vendor data with image URLs
         const vendorData = transformVendorImages(updatedVendor);
-        
+
         // Set isOnline: true if vendor has no address, latitude, or longitude (online store)
         // Otherwise, isOnline: false (physical store)
         vendorData.isOnline = !(vendorData.address && vendorData.latitude && vendorData.longitude);
@@ -359,11 +359,11 @@ class VendorService {
                 // Set isOnline: false if vendor has no address, latitude, or longitude
                 // Otherwise, isOnline: true
                 vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
-                
+
                 // Get product images as array
                 const productImages = await getProductImages(vendor.id);
                 vendorData.productImages = productImages;
-                
+
                 return vendorData;
             })
         );
@@ -503,7 +503,7 @@ class VendorService {
         for (let i = 5; i >= 0; i--) {
             const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
             const monthEndDate = new Date(today.getFullYear(), today.getMonth() - i + 1, 0, 23, 59, 59, 999);
-            
+
             const monthRevenueResult = await Order.findAll({
                 where: {
                     vendorId,
@@ -517,7 +517,7 @@ class VendorService {
                 ],
                 raw: true
             });
-            
+
             const monthOrdersCount = await Order.count({
                 where: {
                     vendorId,
@@ -545,7 +545,7 @@ class VendorService {
             dayDate.setHours(0, 0, 0, 0);
             const dayEnd = new Date(dayDate);
             dayEnd.setHours(23, 59, 59, 999);
-            
+
             const dayRevenueResult = await Order.findAll({
                 where: {
                     vendorId,
@@ -559,7 +559,7 @@ class VendorService {
                 ],
                 raw: true
             });
-            
+
             const dayOrdersCount = await Order.count({
                 where: {
                     vendorId,
@@ -649,13 +649,13 @@ class VendorService {
         // Add date filtering if provided
         if (fromDate || toDate) {
             where.createdAt = {};
-            
+
             if (fromDate) {
                 const startDate = new Date(fromDate);
                 startDate.setHours(0, 0, 0, 0);
                 where.createdAt[Op.gte] = startDate;
             }
-            
+
             if (toDate) {
                 const endDate = new Date(toDate);
                 endDate.setHours(23, 59, 59, 999);
@@ -724,6 +724,55 @@ class VendorService {
         const pendingRevenue = parseFloat(pendingRevenueResult[0]?.pendingRevenue || 0);
         const pendingOrders = parseInt(pendingRevenueResult[0]?.pendingOrders || 0);
 
+        // Get daily breakdown
+        const dailyRevenueResult = await Order.findAll({
+            where,
+            attributes: [
+                [sequelize.fn('DATE', sequelize.col('created_at')), 'date'],
+                [sequelize.fn('SUM', sequelize.col('total')), 'dailyRevenue'],
+                [sequelize.fn('COUNT', sequelize.col('id')), 'dailyOrders']
+            ],
+            group: [sequelize.fn('DATE', sequelize.col('created_at'))],
+            order: [[sequelize.fn('DATE', sequelize.col('created_at')), 'ASC']],
+            raw: true
+        });
+
+        let dailyBreakdown = [];
+
+        // If date range is provided, fill in missing dates
+        if (fromDate && toDate) {
+            const startDate = new Date(fromDate);
+            const endDate = new Date(toDate);
+            const dateMap = new Map();
+
+            dailyRevenueResult.forEach(item => {
+                // Handle date string format from database (might be YYYY-MM-DD or full ISO)
+                const dateStr = typeof item.date === 'string' ? item.date.substring(0, 10) : new Date(item.date).toISOString().substring(0, 10);
+                dateMap.set(dateStr, {
+                    revenue: parseFloat(item.dailyRevenue || 0),
+                    orders: parseInt(item.dailyOrders || 0)
+                });
+            });
+
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().substring(0, 10);
+                const data = dateMap.get(dateStr) || { revenue: 0, orders: 0 };
+
+                dailyBreakdown.push({
+                    date: dateStr,
+                    revenue: data.revenue,
+                    orders: data.orders
+                });
+            }
+        } else {
+            // If no complete range, just return what we have
+            dailyBreakdown = dailyRevenueResult.map(item => ({
+                date: typeof item.date === 'string' ? item.date.substring(0, 10) : new Date(item.date).toISOString().substring(0, 10),
+                revenue: parseFloat(item.dailyRevenue || 0),
+                orders: parseInt(item.dailyOrders || 0)
+            }));
+        }
+
         return {
             period: {
                 from: fromDate ? new Date(fromDate).toISOString() : null,
@@ -738,7 +787,8 @@ class VendorService {
                 deliveredOrders,
                 pendingRevenue,
                 pendingOrders
-            }
+            },
+            dailyBreakdown
         };
     }
 }
