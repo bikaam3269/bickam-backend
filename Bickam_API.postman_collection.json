@@ -1730,6 +1730,162 @@
 					]
 				},
 				{
+					"name": "Get Vendor Followers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/vendors/me/followers?page=1&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"vendors",
+								"me",
+								"followers"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Number of followers per page (default: 20)"
+								}
+							]
+						},
+						"description": "Get list of users who follow the authenticated vendor. **Vendor only** - Requires vendor authentication.\n\n**Query Parameters:**\n- `page` (optional): Page number for pagination (default: 1)\n- `limit` (optional): Number of followers per page (default: 20, max: 100)\n\n**Response includes:**\n- `followers`: Array of follower objects containing:\n  - `id`: Follow record ID\n  - `followerId`: User ID of the follower\n  - `name`: Name of the follower\n  - `email`: Email of the follower\n  - `phone`: Phone number of the follower\n  - `type`: Type of user (user, vendor, admin, etc.)\n  - `profileImage`: URL to the follower's profile image\n  - `followedAt`: Timestamp when the follow occurred\n  - `userSince`: Timestamp when the follower registered\n- `pagination`: Pagination details\n  - `total`: Total number of followers\n  - `page`: Current page\n  - `limit`: Items per page\n  - `totalPages`: Total number of pages\n  - `hasNext`: Boolean indicating if there's a next page\n  - `hasPrevious`: Boolean indicating if there's a previous page\n\n**Example Response:**\n```json\n{\n    \"success\": true,\n    \"message\": \"Vendor followers retrieved successfully\",\n    \"data\": {\n        \"followers\": [\n            {\n                \"id\": 1,\n                \"followerId\": 123,\n                \"name\": \"John Doe\",\n                \"email\": \"john@example.com\",\n                \"phone\": \"+201234567890\",\n                \"type\": \"user\",\n                \"profileImage\": \"https://example.com/files/profile123.jpg\",\n                \"followedAt\": \"2024-01-15T10:30:00.000Z\",\n                \"userSince\": \"2023-06-01T08:00:00.000Z\"\n            }\n        ],\n        \"pagination\": {\n            \"total\": 150,\n            \"page\": 1,\n            \"limit\": 20,\n            \"totalPages\": 8,\n            \"hasNext\": true,\n            \"hasPrevious\": false\n        }\n    }\n}\n```"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{auth_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/followers?page=1&limit=20",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"followers"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Vendor followers retrieved successfully\",\n    \"data\": {\n        \"followers\": [\n            {\n                \"id\": 1,\n                \"followerId\": 123,\n                \"name\": \"أحمد محمد\",\n                \"email\": \"ahmed@example.com\",\n                \"phone\": \"+201234567890\",\n                \"type\": \"user\",\n                \"profileImage\": \"https://bickam-backend.onrender.com/files/profile-123.jpg\",\n                \"followedAt\": \"2024-01-15T10:30:00.000Z\",\n                \"userSince\": \"2023-06-01T08:00:00.000Z\"\n            },\n            {\n                \"id\": 2,\n                \"followerId\": 124,\n                \"name\": \"فاطمة علي\",\n                \"email\": \"fatma@example.com\",\n                \"phone\": \"+201098765432\",\n                \"type\": \"user\",\n                \"profileImage\": null,\n                \"followedAt\": \"2024-01-20T14:45:00.000Z\",\n                \"userSince\": \"2023-08-15T12:00:00.000Z\"\n            },\n            {\n                \"id\": 3,\n                \"followerId\": 125,\n                \"name\": \"محمود سامي\",\n                \"email\": \"mahmoud@example.com\",\n                \"phone\": \"+201555666777\",\n                \"type\": \"vendor\",\n                \"profileImage\": \"https://bickam-backend.onrender.com/files/profile-125.jpg\",\n                \"followedAt\": \"2024-02-01T09:15:00.000Z\",\n                \"userSince\": \"2023-09-20T16:30:00.000Z\"\n            }\n        ],\n        \"pagination\": {\n            \"total\": 150,\n            \"page\": 1,\n            \"limit\": 20,\n            \"totalPages\": 8,\n            \"hasNext\": true,\n            \"hasPrevious\": false\n        }\n    }\n}"
+						},
+						{
+							"name": "Error - Not a Vendor",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/followers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"followers"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"message\": \"User is not a vendor (type: user)\",\n    \"error\": null\n}"
+						},
+						{
+							"name": "Error - Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/vendors/me/followers",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"vendors",
+										"me",
+										"followers"
+									]
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": false,\n    \"error\": {\n        \"message\": \"No token provided\"\n    }\n}"
+						}
+					]
+				},
+				{
 					"name": "Update My Profile",
 					"request": {
 						"method": "PUT",

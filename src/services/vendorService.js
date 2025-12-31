@@ -7,6 +7,7 @@ import Category from '../models/Category.js';
 import Product from '../models/Product.js';
 import Subcategory from '../models/Subcategory.js';
 import Order from '../models/Order.js';
+import Follow from '../models/Follow.js';
 import followService from './followService.js';
 import favoriteService from './favoriteService.js';
 import { config } from '../config/app.js';
@@ -663,6 +664,8 @@ class VendorService {
             }
         }
 
+        console.log('Revenue query where clause:', JSON.stringify(where, null, 2));
+
         // Get total revenue (sum of all orders in the period)
         const revenueResult = await Order.findAll({
             where,
@@ -675,6 +678,8 @@ class VendorService {
 
         const totalRevenue = parseFloat(revenueResult[0]?.totalRevenue || 0);
         const totalOrders = parseInt(revenueResult[0]?.totalOrders || 0);
+
+        console.log('Total revenue result:', { totalRevenue, totalOrders });
 
         // Get revenue by payment status
         const paidRevenueResult = await Order.findAll({
@@ -737,46 +742,23 @@ class VendorService {
             raw: true
         });
 
-        let dailyBreakdown = [];
+        console.log('Daily revenue result:', dailyRevenueResult);
 
-        // If date range is provided, fill in missing dates
-        if (fromDate && toDate) {
-            const startDate = new Date(fromDate);
-            const endDate = new Date(toDate);
-            const dateMap = new Map();
-
-            dailyRevenueResult.forEach(item => {
-                // Handle date string format from database (might be YYYY-MM-DD or full ISO)
-                const dateStr = typeof item.date === 'string' ? item.date.substring(0, 10) : new Date(item.date).toISOString().substring(0, 10);
-                dateMap.set(dateStr, {
-                    revenue: parseFloat(item.dailyRevenue || 0),
-                    orders: parseInt(item.dailyOrders || 0)
-                });
-            });
-
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const dateStr = d.toISOString().substring(0, 10);
-                const data = dateMap.get(dateStr) || { revenue: 0, orders: 0 };
-
-                dailyBreakdown.push({
-                    date: dateStr,
-                    revenue: data.revenue,
-                    orders: data.orders
-                });
-            }
-        } else {
-            // If no complete range, just return what we have
-            dailyBreakdown = dailyRevenueResult.map(item => ({
-                date: typeof item.date === 'string' ? item.date.substring(0, 10) : new Date(item.date).toISOString().substring(0, 10),
-                revenue: parseFloat(item.dailyRevenue || 0),
-                orders: parseInt(item.dailyOrders || 0)
-            }));
-        }
+        // Only return days with actual orders
+        const dailyBreakdown = dailyRevenueResult.map(item => ({
+            date: typeof item.date === 'string' ? item.date.substring(0, 10) : new Date(item.date).toISOString().substring(0, 10),
+            revenue: parseFloat(item.dailyRevenue || 0),
+            orders: parseInt(item.dailyOrders || 0)
+        }));
 
         return {
             period: {
                 from: fromDate ? new Date(fromDate).toISOString() : null,
-                to: toDate ? new Date(toDate).toISOString() : null
+                to: toDate ? (() => {
+                    const endDate = new Date(toDate);
+                    endDate.setHours(23, 59, 59, 999);
+                    return endDate.toISOString();
+                })() : null
             },
             summary: {
                 totalRevenue,
@@ -789,6 +771,76 @@ class VendorService {
                 pendingOrders
             },
             dailyBreakdown
+        };
+    }
+
+    async getVendorFollowers(vendorId, page = 1, limit = 20) {
+        // Verify vendor exists
+        const vendor = await User.findByPk(vendorId);
+        if (!vendor) {
+            throw new Error('User not found');
+        }
+        if (vendor.type !== 'vendor') {
+            throw new Error(`User is not a vendor (type: ${vendor.type})`);
+        }
+
+        const offset = (page - 1) * limit;
+
+        // Get followers with user details
+        const { count, rows } = await Follow.findAndCountAll({
+            where: {
+                followingId: vendorId
+            },
+            include: [{
+                model: User,
+                as: 'follower',
+                attributes: [
+                    'id',
+                    'name',
+                    'email',
+                    'phone',
+                    'type',
+                    'logoImage',
+                    'createdAt'
+                ]
+            }],
+            limit,
+            offset,
+            order: [['createdAt', 'DESC']]
+        });
+
+        // Transform follower data with image URLs
+        const followers = rows.map(follow => {
+            const followerData = follow.follower.toJSON();
+            
+            // Add full URL for logo image (profile image for users/vendors)
+            if (followerData.logoImage) {
+                followerData.logoImage = getImageUrl(followerData.logoImage);
+            }
+            
+            return {
+                id: follow.id,
+                followerId: followerData.id,
+                name: followerData.name,
+                email: followerData.email,
+                phone: followerData.phone,
+                type: followerData.type,
+                profileImage: followerData.logoImage, // Use logoImage as profile image
+                followedAt: follow.createdAt,
+                userSince: followerData.createdAt
+            };
+        });
+
+        return {
+            followers,
+            pagination: {
+                total: count,
+                page,
+                limit,
+                totalPages: Math.ceil(count / limit),
+                hasNext: page * limit < count,
+                hasPrevious: page > 1
+            }
         };
     }
 }

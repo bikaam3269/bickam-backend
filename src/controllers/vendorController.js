@@ -160,6 +160,34 @@ export const getVendorDashboard = async (req, res, next) => {
  * Get vendor revenue with date filtering
  * Query params: from (YYYY-MM-DD), to (YYYY-MM-DD)
  */
+export const getVendorFollowers = async (req, res, next) => {
+    try {
+        // Check if user is authenticated
+        if (!req.user) {
+            return sendError(res, 'User not authenticated', 401);
+        }
+        
+        const vendorId = req.user.id;
+        const { page = 1, limit = 20 } = req.query;
+        
+        console.log('Getting followers for vendor:', vendorId, 'Type:', req.user.type);
+
+        const result = await vendorService.getVendorFollowers(
+            vendorId,
+            parseInt(page),
+            parseInt(limit)
+        );
+
+        return sendSuccess(res, result, 'Vendor followers retrieved successfully');
+    } catch (error) {
+        console.error('Error in getVendorFollowers:', error.message);
+        if (error.message === 'User not found' || error.message.includes('not a vendor')) {
+            return sendError(res, error.message, 404);
+        }
+        next(error);
+    }
+};
+
 export const getVendorRevenue = async (req, res, next) => {
     try {
         // Check if user is authenticated

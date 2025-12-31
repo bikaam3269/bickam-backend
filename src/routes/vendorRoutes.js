@@ -6,7 +6,8 @@ import {
     getCurrentVendorProfile,
     updateCurrentVendorProfile,
     getVendorDashboard,
-    getVendorRevenue
+    getVendorRevenue,
+    getVendorFollowers
 } from '../controllers/vendorController.js';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -21,6 +22,7 @@ router.get('/', getAllVendors);
 // More specific routes must come first
 router.get('/me/dashboard', authenticate, getVendorDashboard);
 router.get('/me/revenue', authenticate, getVendorRevenue);
+router.get('/me/followers', authenticate, getVendorFollowers);
 router.get('/me', authenticate, getCurrentVendorProfile);
 
 router.put(
