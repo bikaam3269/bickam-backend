@@ -18,7 +18,9 @@ export const getAllProducts = async (req, res, next) => {
       status: req.query.status // 'published', 'pending', 'rejected'
     };
 
-    const result = await productService.getAllProducts(filters);
+    // Pass userId if user is authenticated
+    const userId = req.user ? req.user.id : null;
+    const result = await productService.getAllProducts(filters, userId);
 
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {

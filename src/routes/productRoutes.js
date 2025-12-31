@@ -17,7 +17,7 @@ import { authenticate, optionalAuthenticate, authorize } from '../middleware/aut
 const router = express.Router();
 
 // Public routes
-router.get('/', getAllProducts);
+router.get('/', optionalAuthenticate, getAllProducts);
 router.get('/vendor/:vendorId', optionalAuthenticate, getProductsByVendor);
 router.get('/:id/similar', optionalAuthenticate, getSimilarProducts);
 router.get('/:id', optionalAuthenticate, getProductById);

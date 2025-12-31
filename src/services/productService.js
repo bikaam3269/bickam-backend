@@ -12,7 +12,7 @@ import notificationService from './notificationService.js';
 import favoriteService from './favoriteService.js';
 
 class ProductService {
-  async getAllProducts(filters = {}) {
+  async getAllProducts(filters = {}, userId = null) {
     const { 
       vendorId, 
       categoryId, 
@@ -149,6 +149,26 @@ class ProductService {
       }
     });
 
+    // Get favorites and cart items if user is authenticated
+    let favoriteProductIds = new Set();
+    let cartProductIds = new Set();
+    
+    if (userId) {
+      const [favorites, cartItems] = await Promise.all([
+        Favorite.findAll({
+          where: { userId },
+          attributes: ['productId']
+        }),
+        Cart.findAll({
+          where: { userId },
+          attributes: ['productId']
+        })
+      ]);
+      
+      favoriteProductIds = new Set(favorites.map(f => f.productId));
+      cartProductIds = new Set(cartItems.map(c => c.productId));
+    }
+
     // Ensure images is always returned as an array, not a stringified array
     const formattedProducts = products.rows.map(product => {
       const productData = product.toJSON ? product.toJSON() : product;
@@ -188,6 +208,10 @@ class ProductService {
       productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
       productData.discount = discountPercentage;
       productData.isDiscount = discountPercentage > 0;
+      
+      // Add favorite and cart status
+      productData.isFavorite = favoriteProductIds.has(productData.id);
+      productData.isCart = cartProductIds.has(productData.id);
       
       // Add status based on isActive (simplified - you may want to add proper status field)
       productData.status = productData.isActive ? 'published' : 'pending';
