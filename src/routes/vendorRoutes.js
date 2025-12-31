@@ -7,7 +7,9 @@ import {
     updateCurrentVendorProfile,
     getVendorDashboard,
     getVendorRevenue,
-    getVendorFollowers
+    getVendorFollowers,
+    debugVendorOrders,
+    debugVendorDiscounts
 } from '../controllers/vendorController.js';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -23,6 +25,8 @@ router.get('/', getAllVendors);
 router.get('/me/dashboard', authenticate, getVendorDashboard);
 router.get('/me/revenue', authenticate, getVendorRevenue);
 router.get('/me/followers', authenticate, getVendorFollowers);
+router.get('/me/debug-orders', authenticate, debugVendorOrders);
+router.get('/me/debug-discounts', authenticate, debugVendorDiscounts);
 router.get('/me', authenticate, getCurrentVendorProfile);
 
 router.put(

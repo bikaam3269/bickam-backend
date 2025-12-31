@@ -185,7 +185,9 @@ class ProductService {
       
       productData.originalPrice = parseFloat(originalPrice.toFixed(2));
       productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
       productData.discount = discountPercentage;
+      productData.isDiscount = discountPercentage > 0;
       
       // Add status based on isActive (simplified - you may want to add proper status field)
       productData.status = productData.isActive ? 'published' : 'pending';
@@ -309,7 +311,9 @@ class ProductService {
     
     productData.originalPrice = parseFloat(originalPrice.toFixed(2));
     productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+    productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
     productData.discount = discountPercentage;
+    productData.isDiscount = discountPercentage > 0;
 
     // Get similar products
     const similarProducts = await this.getSimilarProducts(id, product.categoryId, product.subcategoryId, 8);
@@ -769,7 +773,9 @@ class ProductService {
       
       productData.originalPrice = parseFloat(originalPrice.toFixed(2));
       productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
       productData.discount = discountPercentage;
+      productData.isDiscount = discountPercentage > 0;
       
       return productData;
     });
@@ -924,7 +930,9 @@ class ProductService {
       
       productData.originalPrice = parseFloat(originalPrice.toFixed(2));
       productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
       productData.discount = discountPercentage;
+      productData.isDiscount = discountPercentage > 0;
       
       return productData;
     });
@@ -1160,7 +1168,9 @@ class ProductService {
       
       productData.originalPrice = parseFloat(originalPrice.toFixed(2));
       productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
       productData.discount = discountPercentage;
+      productData.isDiscount = discountPercentage > 0;
 
       return productData;
     });

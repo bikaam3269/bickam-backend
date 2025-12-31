@@ -160,6 +160,136 @@ export const getVendorDashboard = async (req, res, next) => {
  * Get vendor revenue with date filtering
  * Query params: from (YYYY-MM-DD), to (YYYY-MM-DD)
  */
+// Temporary debug endpoint for discounts
+export const debugVendorDiscounts = async (req, res, next) => {
+    try {
+        const vendorId = req.user?.id || 10; // Default to vendor 10
+        const productId = req.query.productId || 12; // Default to product 12
+        
+        // Import models
+        const { Discount, DiscountProduct, Product } = await import('../models/index.js');
+        const { Op } = await import('sequelize');
+        
+        const now = new Date();
+        
+        // Get all active discounts for this vendor
+        const vendorDiscounts = await Discount.findAll({
+            where: {
+                vendorId,
+                isActive: true,
+                startDate: { [Op.lte]: now },
+                endDate: { [Op.gte]: now }
+            },
+            include: [{
+                model: DiscountProduct,
+                as: 'discountProducts',
+                where: { productId },
+                required: false
+            }],
+            raw: false
+        });
+        
+        // Get product details
+        const product = await Product.findByPk(productId, {
+            attributes: ['id', 'name', 'price', 'discount', 'vendorId']
+        });
+        
+        // Check if product is in any active discount
+        const activeDiscountProduct = await DiscountProduct.findOne({
+            where: { productId },
+            include: [{
+                model: Discount,
+                as: 'discount',
+                where: {
+                    isActive: true,
+                    startDate: { [Op.lte]: now },
+                    endDate: { [Op.gte]: now }
+                },
+                required: true
+            }]
+        });
+        
+        return sendSuccess(res, {
+            currentTime: now,
+            product: product ? product.toJSON() : null,
+            vendorDiscounts: vendorDiscounts.map(d => ({
+                id: d.id,
+                title: d.title,
+                discount: d.discount,
+                startDate: d.startDate,
+                endDate: d.endDate,
+                hasProduct: d.discountProducts?.some(dp => dp.productId === parseInt(productId))
+            })),
+            activeDiscountForProduct: activeDiscountProduct ? {
+                discountId: activeDiscountProduct.discount.id,
+                title: activeDiscountProduct.discount.title,
+                discountPercentage: activeDiscountProduct.discount.discount,
+                startDate: activeDiscountProduct.discount.startDate,
+                endDate: activeDiscountProduct.discount.endDate
+            } : null
+        }, 'Debug discount data retrieved');
+    } catch (error) {
+        console.error('Debug discount error:', error);
+        return sendError(res, error.message, 500);
+    }
+};
+
+// Temporary debug endpoint
+export const debugVendorOrders = async (req, res, next) => {
+    try {
+        const vendorId = req.user?.id || req.params.vendorId;
+        
+        // Import Order model
+        const { Order } = await import('../models/index.js');
+        const { Op } = await import('sequelize');
+        
+        // Get all orders for this vendor
+        const allOrders = await Order.findAll({
+            where: { vendorId },
+            attributes: ['id', 'total', 'createdAt', 'status', 'paymentStatus'],
+            order: [['createdAt', 'DESC']],
+            limit: 10,
+            raw: true
+        });
+        
+        // Get orders in 2024
+        const orders2024 = await Order.findAll({
+            where: {
+                vendorId,
+                createdAt: {
+                    [Op.gte]: new Date('2024-01-01'),
+                    [Op.lte]: new Date('2024-12-31T23:59:59')
+                }
+            },
+            attributes: ['id', 'total', 'createdAt'],
+            raw: true
+        });
+        
+        // Get total revenue for 2024
+        const revenue2024 = await Order.sum('total', {
+            where: {
+                vendorId,
+                createdAt: {
+                    [Op.gte]: new Date('2024-01-01'),
+                    [Op.lte]: new Date('2024-12-31T23:59:59')
+                }
+            }
+        });
+        
+        return sendSuccess(res, {
+            vendorId,
+            totalOrders: allOrders.length,
+            recentOrders: allOrders,
+            orders2024Count: orders2024.length,
+            orders2024: orders2024.slice(0, 5),
+            revenue2024: revenue2024 || 0
+        }, 'Debug data retrieved');
+    } catch (error) {
+        console.error('Debug error:', error);
+        return sendError(res, error.message, 500);
+    }
+};
+
 export const getVendorFollowers = async (req, res, next) => {
     try {
         // Check if user is authenticated

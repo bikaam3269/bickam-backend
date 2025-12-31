@@ -48,7 +48,9 @@ const applyDiscountToProducts = (discount) => {
             images,
             originalPrice: parseFloat(originalPrice.toFixed(2)),
             finalPrice: parseFloat(finalPrice.toFixed(2)),
+            priceAfterDiscount: parseFloat(finalPrice.toFixed(2)),
             discount: discountPercentage.toString(),
+            isDiscount: discountPercentage > 0,
             isFavorite: false, // Default to false, can be set if userId is available
             isCart: false // Default to false, can be set if userId is available
           }
