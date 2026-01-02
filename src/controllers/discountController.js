@@ -244,3 +244,32 @@ export const getDiscountsByVendorId = async (req, res, next) => {
   }
 };
 
+/**
+ * Get discount details for customers (public endpoint)
+ */
+export const getDiscountDetailsForCustomer = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user ? req.user.id : null; // Optional authentication for favorites/cart status
+    
+    const discount = await discountService.getDiscountById(id, null, userId);
+    
+    if (!discount) {
+      return sendError(res, 'Discount not found', 404);
+    }
+    
+    // Check if discount is active
+    const now = new Date();
+    const startDate = new Date(discount.startDate);
+    const endDate = new Date(discount.endDate);
+    
+    if (!discount.isActive || startDate > now || endDate < now) {
+      return sendError(res, 'Discount is not currently active', 404);
+    }
+    
+    return sendSuccess(res, discount, 'Discount retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+

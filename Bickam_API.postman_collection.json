@@ -6835,6 +6835,43 @@
 					"response": []
 				},
 				{
+					"name": "Get Discount Details (Customer)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional - For favorites/cart status",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/discounts/:id/details",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discounts",
+								":id",
+								"details"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "24",
+									"description": "Discount ID"
+								}
+							]
+						},
+						"description": "Get discount details for customers. **Public endpoint** with optional authentication.\n\n**Features:**\n- Returns full discount details including all products\n- Calculates prices after discount for each product\n- If authenticated, returns isFavorite and isCart status for products\n- Only returns active discounts (checks isActive and date range)\n\n**Parameters:**\n- `id`: Discount ID\n\n**Optional Header:**\n- `Authorization`: Bearer token (for favorites/cart status)\n\n**Response Example:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Discount retrieved successfully\",\n  \"data\": {\n    \"id\": 24,\n    \"vendorId\": 10,\n    \"title\": \"عرض الشتاء\",\n    \"body\": \"خصم على جميع المنتجات\",\n    \"image\": \"discount-image.png\",\n    \"startDate\": \"2025-01-01T00:00:00.000Z\",\n    \"endDate\": \"2025-01-31T23:59:59.000Z\",\n    \"discount\": \"20.00\",\n    \"isActive\": true,\n    \"vendor\": {\n      \"id\": 10,\n      \"name\": \"testVendor\",\n      \"email\": \"testVendor@gmail.com\"\n    },\n    \"products\": [\n      {\n        \"id\": 1,\n        \"discountId\": 24,\n        \"productId\": 12,\n        \"product\": {\n          \"id\": 12,\n          \"name\": \"منتج تجريبي\",\n          \"images\": [\"image1.png\", \"image2.png\"],\n          \"originalPrice\": 2000,\n          \"finalPrice\": 1600,\n          \"priceAfterDiscount\": 1600,\n          \"discount\": \"20\",\n          \"isDiscount\": true,\n          \"isFavorite\": false,\n          \"isCart\": false,\n          \"description\": \"وصف المنتج\",\n          \"categoryId\": 1,\n          \"subcategoryId\": 1,\n          \"vendor\": {\n            \"id\": 10,\n            \"name\": \"testVendor\"\n          },\n          \"category\": {\n            \"id\": 1,\n            \"name\": \"Electronics\"\n          },\n          \"subcategory\": {\n            \"id\": 1,\n            \"name\": \"Laptops\"\n          }\n        }\n      }\n    ]\n  }\n}\n```\n\n**Error Response (Discount not found or inactive):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Discount not found\"\n}\n```"
+					},
+					"response": []
+				},
+				{
 					"name": "Check Product in Discount",
 					"request": {
 						"method": "GET",

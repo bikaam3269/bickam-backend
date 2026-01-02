@@ -7,7 +7,8 @@ import {
   deleteDiscount,
   checkProductInDiscount,
   getAllActiveDiscounts,
-  getDiscountsByVendorId
+  getDiscountsByVendorId,
+  getDiscountDetailsForCustomer
 } from '../controllers/discountController.js';
 import { authenticate, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -18,6 +19,7 @@ const router = express.Router();
 router.get('/product/:productId', checkProductInDiscount);
 router.get('/all', getAllActiveDiscounts);
 router.get('/vendor/:vendorId', getDiscountsByVendorId);
+router.get('/:id/details', optionalAuthenticate, getDiscountDetailsForCustomer);
 
 // Vendor-only routes - require authentication and vendor authorization
 router.use(authenticate);

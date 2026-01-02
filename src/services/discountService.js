@@ -7,15 +7,40 @@ import User from '../models/User.js';
 import Government from '../models/Government.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import Favorite from '../models/Favorite.js';
+import Cart from '../models/Cart.js';
 
 /**
  * Helper function to apply discount prices to products in discount
  * @param {object} discount - Discount object with products
+ * @param {number|null} userId - User ID for checking favorites/cart (optional)
  * @returns {object} - Discount with products having calculated prices
  */
-const applyDiscountToProducts = (discount) => {
+const applyDiscountToProducts = async (discount, userId = null) => {
   const discountData = discount.toJSON ? discount.toJSON() : discount;
   const discountPercentage = parseFloat(discountData.discount || 0);
+  
+  // Get favorites and cart items if user is authenticated
+  let favoriteProductIds = new Set();
+  let cartProductIds = new Set();
+  
+  if (userId && discountData.products && discountData.products.length > 0) {
+    const productIds = discountData.products.map(dp => dp.product?.id || dp.productId);
+    
+    const [favorites, cartItems] = await Promise.all([
+      Favorite.findAll({
+        where: { userId, productId: { [Op.in]: productIds } },
+        attributes: ['productId']
+      }),
+      Cart.findAll({
+        where: { userId, productId: { [Op.in]: productIds } },
+        attributes: ['productId']
+      })
+    ]);
+    
+    favoriteProductIds = new Set(favorites.map(f => f.productId));
+    cartProductIds = new Set(cartItems.map(c => c.productId));
+  }
 
   if (discountData.products && Array.isArray(discountData.products)) {
     discountData.products = discountData.products.map(discountProduct => {
@@ -51,8 +76,8 @@ const applyDiscountToProducts = (discount) => {
             priceAfterDiscount: parseFloat(finalPrice.toFixed(2)),
             discount: discountPercentage.toString(),
             isDiscount: discountPercentage > 0,
-            isFavorite: false, // Default to false, can be set if userId is available
-            isCart: false // Default to false, can be set if userId is available
+            isFavorite: favoriteProductIds.has(product.id),
+            isCart: cartProductIds.has(product.id)
           }
         };
       }
@@ -251,7 +276,7 @@ class DiscountService {
       ]
     });
 
-    return applyDiscountToProducts(discountWithRelations);
+    return await applyDiscountToProducts(discountWithRelations, userId);
   }
 
   /**
@@ -295,7 +320,7 @@ class DiscountService {
     });
 
     // Apply discount to products
-    return discounts.map(discount => applyDiscountToProducts(discount));
+    return await Promise.all(discounts.map(discount => applyDiscountToProducts(discount)));
   }
 
   /**
@@ -392,7 +417,7 @@ class DiscountService {
     }
 
     // Apply discount to products
-    return filteredDiscounts.map(discount => applyDiscountToProducts(discount));
+    return await Promise.all(filteredDiscounts.map(discount => applyDiscountToProducts(discount)));
   }
 
   /**
@@ -443,7 +468,7 @@ class DiscountService {
     });
 
     // Apply discount to products
-    return discounts.map(discount => applyDiscountToProducts(discount));
+    return await Promise.all(discounts.map(discount => applyDiscountToProducts(discount)));
   }
 
   /**
@@ -452,7 +477,7 @@ class DiscountService {
    * @param {number} vendorId - Vendor ID (optional, for security)
    * @returns {Promise<object>}
    */
-  async getDiscountById(discountId, vendorId = null) {
+  async getDiscountById(discountId, vendorId = null, userId = null) {
     const where = { id: discountId };
     if (vendorId) {
       where.vendorId = vendorId;
@@ -496,7 +521,7 @@ class DiscountService {
     }
 
     // Apply discount to products
-    return applyDiscountToProducts(discount);
+    return await applyDiscountToProducts(discount, userId);
   }
 
   /**
