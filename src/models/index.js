@@ -30,6 +30,7 @@ import AppSettings from './AppSettings.js';
 import Discount from './Discount.js';
 import DiscountProduct from './DiscountProduct.js';
 import Banner from './Banner.js';
+import VendorRating from './VendorRating.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -179,6 +180,7 @@ const models = {
     Discount,
     DiscountProduct,
     Banner,
+    VendorRating,
     sequelize
 };
 

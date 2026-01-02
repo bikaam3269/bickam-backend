@@ -7375,6 +7375,250 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Ratings",
+			"item": [
+				{
+					"name": "Rate Vendor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"vendorId\": 10,\n  \"rating\": 5,\n  \"comment\": \"Great vendor, fast delivery!\",\n  \"orderId\": 123\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings"
+							]
+						},
+						"description": "Rate a vendor. **Requires authentication** - User must be logged in.\n\n**Body Parameters:**\n- `vendorId` (required): Vendor ID to rate\n- `rating` (required): Rating value from 1 to 5\n- `comment` (optional): Review comment text\n- `orderId` (optional): Related order ID if rating is for a specific order\n\n**Validation:**\n- Rating must be between 1 and 5\n- User cannot rate themselves\n- If orderId is provided, order must belong to the user and vendor\n- If user already rated this vendor, the rating will be updated (not create duplicate)\n\n**Success Response (201):**\n```json\n{\n  \"statusCode\": 201,\n  \"message\": \"Vendor rated successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 5,\n    \"vendorId\": 10,\n    \"rating\": 5,\n    \"comment\": \"Great vendor, fast delivery!\",\n    \"orderId\": 123,\n    \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n    \"updatedAt\": \"2025-01-15T10:30:00.000Z\"\n  }\n}\n```\n\n**Error Responses:**\n- `400`: Rating must be between 1 and 5 / You cannot rate yourself / Vendor ID and rating are required\n- `404`: Vendor not found / User is not a vendor / Order not found / Order does not belong to you"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vendor Ratings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional - For user-specific data",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings/vendor/:vendorId?page=1&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings",
+								"vendor",
+								":vendorId"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Items per page"
+								}
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "10",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Get all ratings for a vendor. **Public endpoint** with optional authentication.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 10)\n\n**Features:**\n- Returns paginated list of ratings\n- Includes user information for each rating\n- Calculates average rating and distribution\n- No authentication required (public endpoint)\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor ratings retrieved successfully\",\n  \"data\": {\n    \"ratings\": [\n      {\n        \"id\": 1,\n        \"userId\": 5,\n        \"vendorId\": 10,\n        \"rating\": 5,\n        \"comment\": \"Great vendor!\",\n        \"orderId\": 123,\n        \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n        \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n        \"user\": {\n          \"id\": 5,\n          \"name\": \"John Doe\",\n          \"email\": \"john@example.com\",\n          \"logoImage\": \"user-logo.png\",\n          \"phone\": \"01234567890\"\n        }\n      }\n    ],\n    \"pagination\": {\n      \"total\": 50,\n      \"page\": 1,\n      \"limit\": 10,\n      \"totalPages\": 5\n    },\n    \"summary\": {\n      \"averageRating\": 4.5,\n      \"totalRatings\": 50,\n      \"ratingDistribution\": {\n        \"5\": 30,\n        \"4\": 15,\n        \"3\": 3,\n        \"2\": 1,\n        \"1\": 1\n      }\n    }\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Rating for Vendor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings/vendor/:vendorId/my",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings",
+								"vendor",
+								":vendorId",
+								"my"
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "10",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Get current user's rating for a specific vendor. **Requires authentication**.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Use Cases:**\n- Check if user has already rated a vendor\n- Display user's existing rating before allowing update\n- Show rating status in vendor profile\n\n**Success Response (200) - Rating Found:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Rating retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 5,\n    \"vendorId\": 10,\n    \"rating\": 5,\n    \"comment\": \"Great vendor!\",\n    \"orderId\": 123,\n    \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n    \"updatedAt\": \"2025-01-15T10:30:00.000Z\",\n    \"user\": {\n      \"id\": 5,\n      \"name\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"logoImage\": \"user-logo.png\"\n    },\n    \"vendor\": {\n      \"id\": 10,\n      \"name\": \"Vendor Name\",\n      \"email\": \"vendor@example.com\"\n    }\n  }\n}\n```\n\n**Success Response (200) - No Rating Found:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"No rating found for this vendor\",\n  \"data\": null\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated comment\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings/vendor/:vendorId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings",
+								"vendor",
+								":vendorId"
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "10",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Update user's rating for a vendor. **Requires authentication**.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Body Parameters:**\n- `rating` (required): New rating value from 1 to 5\n- `comment` (optional): Updated comment text (pass null to remove comment)\n\n**Note:**\n- User must have already rated this vendor (use POST /ratings to create new rating)\n- Only the authenticated user can update their own rating\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Rating updated successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"userId\": 5,\n    \"vendorId\": 10,\n    \"rating\": 4,\n    \"comment\": \"Updated comment\",\n    \"orderId\": 123,\n    \"createdAt\": \"2025-01-15T10:30:00.000Z\",\n    \"updatedAt\": \"2025-01-15T11:00:00.000Z\"\n  }\n}\n```\n\n**Error Responses:**\n- `400`: Rating is required / Rating must be between 1 and 5\n- `404`: Rating not found"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Rating",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings/vendor/:vendorId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings",
+								"vendor",
+								":vendorId"
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "10",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Delete user's rating for a vendor. **Requires authentication**.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Note:**\n- Only the authenticated user can delete their own rating\n- This action cannot be undone\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Rating deleted successfully\",\n  \"data\": {\n    \"message\": \"Rating deleted successfully\"\n  }\n}\n```\n\n**Error Response (404):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Rating not found\"\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Vendor Rating Summary",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/ratings/vendor/:vendorId/summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"ratings",
+								"vendor",
+								":vendorId",
+								"summary"
+							],
+							"variable": [
+								{
+									"key": "vendorId",
+									"value": "10",
+									"description": "Vendor ID"
+								}
+							]
+						},
+						"description": "Get vendor rating summary (for vendor dashboard). **Public endpoint** - No authentication required.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Use Cases:**\n- Display rating summary on vendor profile\n- Show in vendor dashboard\n- Display in vendor cards/lists\n\n**Features:**\n- Average rating calculation\n- Total ratings count\n- Rating distribution (5, 4, 3, 2, 1 stars)\n- Total comments count\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor rating summary retrieved successfully\",\n  \"data\": {\n    \"averageRating\": 4.5,\n    \"totalRatings\": 50,\n    \"ratingDistribution\": {\n      \"5\": 30,\n      \"4\": 15,\n      \"3\": 3,\n      \"2\": 1,\n      \"1\": 1\n    },\n    \"totalComments\": 45\n  }\n}\n```\n\n**Response if no ratings exist:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor rating summary retrieved successfully\",\n  \"data\": {\n    \"averageRating\": 0,\n    \"totalRatings\": 0,\n    \"ratingDistribution\": {\n      \"5\": 0,\n      \"4\": 0,\n      \"3\": 0,\n      \"2\": 0,\n      \"1\": 0\n    },\n    \"totalComments\": 0\n  }\n}\n```"
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [
