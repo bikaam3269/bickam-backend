@@ -10,6 +10,7 @@ import Order from '../models/Order.js';
 import Follow from '../models/Follow.js';
 import followService from './followService.js';
 import favoriteService from './favoriteService.js';
+import ratingService from './ratingService.js';
 import { config } from '../config/app.js';
 
 // Helper function to construct full image URL
@@ -264,8 +265,11 @@ class VendorService {
         });
         const subcategories = Array.from(subcategoriesMap.values());
 
-        // Calculate rating from orders
-        // Rating based on completed orders vs total orders
+        // Get rating from vendor_ratings table
+        const ratingSummary = await ratingService.getVendorRatingSummary(parseInt(vendorId));
+        const rating = ratingSummary.averageRating;
+
+        // Get total orders count
         const totalOrders = await Order.count({
             where: { vendorId: parseInt(vendorId) }
         });
@@ -276,15 +280,6 @@ class VendorService {
                 status: 'delivered'
             }
         });
-
-        // Calculate rating (0-5 scale based on completion rate)
-        // If no orders, rating is 0
-        let rating = 0;
-        if (totalOrders > 0) {
-            const completionRate = completedOrders / totalOrders;
-            // Convert to 0-5 scale (completion rate * 5)
-            rating = parseFloat((completionRate * 5).toFixed(2));
-        }
 
         // Transform vendor data with image URLs
         const vendorData = transformVendorImages(vendor);
@@ -352,7 +347,7 @@ class VendorService {
             order: [['createdAt', 'DESC']]
         });
 
-        // Get product images for all vendors
+        // Get product images and ratings for all vendors
         const vendorsWithStatus = await Promise.all(
             rows.map(async (vendor) => {
                 // Transform vendor data with image URLs
@@ -364,6 +359,11 @@ class VendorService {
                 // Get product images as array
                 const productImages = await getProductImages(vendor.id);
                 vendorData.productImages = productImages;
+
+                // Get rating from vendor_ratings table
+                const ratingSummary = await ratingService.getVendorRatingSummary(vendor.id);
+                vendorData.rating = ratingSummary.averageRating;
+                vendorData.totalRatings = ratingSummary.totalRatings;
 
                 return vendorData;
             })

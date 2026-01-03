@@ -1286,7 +1286,7 @@
 								}
 							]
 						},
-						"description": "Retrieve a paginated list of all vendors. Response includes 'isOnline' field (true if lat/long are missing)."
+						"description": "Retrieve a paginated list of all vendors.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 10)\n- `search` (optional): Search term to filter vendors by name, activity, or description\n- `categoryId` (optional): Filter by category ID\n- `governmentId` (optional): Filter by government ID\n\n**Response Fields:**\n- `isOnline`: boolean (true if vendor has address, latitude, and longitude - physical store, false otherwise - online store)\n- `rating`: number (average rating from vendor_ratings table, 0 if no ratings)\n- `totalRatings`: number (total count of ratings for this vendor)\n- `productImages`: array of product image URLs\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendors retrieved successfully\",\n  \"data\": {\n    \"vendors\": [\n      {\n        \"id\": 10,\n        \"name\": \"Vendor Name\",\n        \"email\": \"vendor@example.com\",\n        \"rating\": 4.5,\n        \"totalRatings\": 20,\n        \"isOnline\": false,\n        \"productImages\": [\"http://...\"],\n        ...\n      }\n    ],\n    \"pagination\": {\n      \"total\": 50,\n      \"page\": 1,\n      \"limit\": 10,\n      \"totalPages\": 5\n    }\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -1315,7 +1315,7 @@
 								"1"
 							]
 						},
-						"description": "Get vendor profile by ID. If Authorization header is provided, response includes:\n- isFollowing: boolean (true if current user follows this vendor)\n- hasFavoriteProducts: boolean (true if current user has favorite products from this vendor)"
+						"description": "Get vendor profile by ID.\n\n**Parameters:**\n- `id`: Vendor ID\n\n**Authentication:**\n- Optional: Include Authorization header to get user-specific data\n\n**Response Fields (with authentication):**\n- `isFollowing`: boolean (true if current user follows this vendor)\n- `hasFavoriteProducts`: boolean (true if current user has favorite products from this vendor)\n\n**Response Fields (always included):**\n- `rating`: number (average rating from vendor_ratings table, 0 if no ratings)\n- `totalOrders`: number (total count of orders for this vendor)\n- `completedOrders`: number (count of delivered orders)\n- `followersCount`: number (total followers count)\n- `subcategories`: array of subcategories from vendor products\n- `productImages`: array of product image URLs\n- `isOnline`: boolean (true if vendor has address, latitude, and longitude - physical store, false otherwise - online store)\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor profile retrieved successfully\",\n  \"data\": {\n    \"id\": 10,\n    \"name\": \"Vendor Name\",\n    \"email\": \"vendor@example.com\",\n    \"rating\": 4.5,\n    \"totalOrders\": 50,\n    \"completedOrders\": 45,\n    \"followersCount\": 100,\n    \"isFollowing\": false,\n    \"hasFavoriteProducts\": false,\n    \"isOnline\": false,\n    \"subcategories\": [...],\n    \"productImages\": [\"http://...\"],\n    ...\n  }\n}\n```"
 					},
 					"response": []
 				},
