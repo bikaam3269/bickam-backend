@@ -187,6 +187,38 @@ class ProductService {
         productData.images = [];
       }
       
+      // Ensure sizes is always returned as an array
+      if (productData.sizes) {
+        if (typeof productData.sizes === 'string') {
+          try {
+            productData.sizes = JSON.parse(productData.sizes);
+          } catch (e) {
+            productData.sizes = [];
+          }
+        }
+        if (!Array.isArray(productData.sizes)) {
+          productData.sizes = [];
+        }
+      } else {
+        productData.sizes = [];
+      }
+      
+      // Ensure colors is always returned as an array
+      if (productData.colors) {
+        if (typeof productData.colors === 'string') {
+          try {
+            productData.colors = JSON.parse(productData.colors);
+          } catch (e) {
+            productData.colors = [];
+          }
+        }
+        if (!Array.isArray(productData.colors)) {
+          productData.colors = [];
+        }
+      } else {
+        productData.colors = [];
+      }
+      
       // Calculate prices with discount
       const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
       let discountPercentage = 0;
@@ -270,6 +302,38 @@ class ProductService {
       }
     } else {
       productData.images = [];
+    }
+
+    // Ensure sizes is always returned as an array
+    if (productData.sizes) {
+      if (typeof productData.sizes === 'string') {
+        try {
+          productData.sizes = JSON.parse(productData.sizes);
+        } catch (e) {
+          productData.sizes = [];
+        }
+      }
+      if (!Array.isArray(productData.sizes)) {
+        productData.sizes = [];
+      }
+    } else {
+      productData.sizes = [];
+    }
+
+    // Ensure colors is always returned as an array
+    if (productData.colors) {
+      if (typeof productData.colors === 'string') {
+        try {
+          productData.colors = JSON.parse(productData.colors);
+        } catch (e) {
+          productData.colors = [];
+        }
+      }
+      if (!Array.isArray(productData.colors)) {
+        productData.colors = [];
+      }
+    } else {
+      productData.colors = [];
     }
 
     // Check if product is in cart
@@ -469,7 +533,7 @@ class ProductService {
   }
 
   async createProduct(data) {
-    const { name, images, price, isPrice, description, categoryId, subcategoryId, discount, quantity, isActive } = data;
+    const { name, images, price, isPrice, description, categoryId, subcategoryId, discount, quantity, isActive, sizes, colors } = data;
 
     if (!name) {
       throw new Error('Product name is required');
@@ -486,6 +550,16 @@ class ProductService {
     // Validate images array
     if (images && !Array.isArray(images)) {
       throw new Error('Images must be an array of URLs');
+    }
+
+    // Validate sizes array
+    if (sizes !== undefined && !Array.isArray(sizes)) {
+      throw new Error('Sizes must be an array');
+    }
+
+    // Validate colors array
+    if (colors !== undefined && !Array.isArray(colors)) {
+      throw new Error('Colors must be an array');
     }
 
     // Validate discount
@@ -509,7 +583,9 @@ class ProductService {
       subcategoryId,
       discount: discount || 0,
       quantity: quantity !== undefined ? parseInt(quantity) : 0,
-      isActive: isActive !== undefined ? (isActive === true || isActive === 'true' || isActive === 1 || isActive === '1') : true
+      isActive: isActive !== undefined ? (isActive === true || isActive === 'true' || isActive === 1 || isActive === '1') : true,
+      sizes: sizes || [],
+      colors: colors || []
     };
 
     const product = await Product.create(productData);
@@ -564,6 +640,20 @@ class ProductService {
     if (data.images !== undefined) {
       if (!Array.isArray(data.images)) {
         throw new Error('Images must be an array of URLs');
+      }
+    }
+
+    // Validate sizes if provided
+    if (data.sizes !== undefined) {
+      if (!Array.isArray(data.sizes)) {
+        throw new Error('Sizes must be an array');
+      }
+    }
+
+    // Validate colors if provided
+    if (data.colors !== undefined) {
+      if (!Array.isArray(data.colors)) {
+        throw new Error('Colors must be an array');
       }
     }
 

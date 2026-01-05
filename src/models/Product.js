@@ -116,41 +116,72 @@ const Product = sequelize.define('Product', {
     field: 'is_active',
     comment: 'Whether the product is active/available'
   },
-  originalPrice: {
-    type: DataTypes.VIRTUAL,
+  sizes: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
     get() {
-      const price = this.getDataValue('price');
-      return price ? parseFloat(price) : null;
-    }
-  },
-  finalPrice: {
-    type: DataTypes.VIRTUAL,
-    get() {
-      const price = this.getDataValue('price');
-      const discount = this.getDataValue('discount');
-
-      if (!price) return null;
-
-      const priceNum = parseFloat(price);
-      const discountNum = parseFloat(discount) || 0;
-
-      if (discountNum > 0) {
-        const discountAmount = (priceNum * discountNum) / 100;
-        return parseFloat((priceNum - discountAmount).toFixed(2));
+      const rawValue = this.getDataValue('sizes');
+      // If it's already an array, return it
+      if (Array.isArray(rawValue)) {
+        return rawValue;
       }
-
-      return priceNum;
-    }
+      // If it's a string, try to parse it
+      if (typeof rawValue === 'string') {
+        try {
+          const parsed = JSON.parse(rawValue);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+      // If it's null or undefined, return empty array
+      return [];
+    },
+    validate: {
+      isArray(value) {
+        if (value && !Array.isArray(value)) {
+          throw new Error('Sizes must be an array');
+        }
+      }
+    },
+    comment: 'Available sizes for the product (e.g., ["S", "M", "L", "XL"])'
+  },
+  colors: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
+    get() {
+      const rawValue = this.getDataValue('colors');
+      // If it's already an array, return it
+      if (Array.isArray(rawValue)) {
+        return rawValue;
+      }
+      // If it's a string, try to parse it
+      if (typeof rawValue === 'string') {
+        try {
+          const parsed = JSON.parse(rawValue);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          return [];
+        }
+      }
+      // If it's null or undefined, return empty array
+      return [];
+    },
+    validate: {
+      isArray(value) {
+        if (value && !Array.isArray(value)) {
+          throw new Error('Colors must be an array');
+        }
+      }
+    },
+    comment: 'Available colors for the product (e.g., ["Red", "Blue", "Green"] or ["#FF0000", "#0000FF"])'
   }
 }, {
   tableName: 'products',
   timestamps: true,
-  underscored: true,
-  defaultScope: {
-    attributes: {
-      include: ['originalPrice', 'finalPrice']
-    }
-  }
+  underscored: true
 });
 
 // Define associations

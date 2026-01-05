@@ -2083,7 +2083,7 @@
 								}
 							]
 						},
-						"description": "Get all products with pagination and filters.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government (governate) ID - filters products by vendor's government\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search by name or description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n- `minQuantity` (optional): Minimum quantity in stock\n- `status` (optional): Filter by status (published, pending, rejected)\n\n**Authentication:** Not required (public endpoint)\n\n**Response:**\nReturns products array and pagination object."
+						"description": "Get all products with pagination and filters.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `governmentId` (optional): Filter by government (governate) ID - filters products by vendor's government\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n- `subcategoryId` (optional): Filter by subcategory ID\n- `search` (optional): Search by name or description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `isActive` (optional): Filter by active status (true/false)\n- `minQuantity` (optional): Minimum quantity in stock\n- `status` (optional): Filter by status (published, pending, rejected)\n\n**Authentication:** Not required (public endpoint)\n\n**Response Fields:**\nEach product includes:\n- `sizes`: array of available sizes (e.g., [\"S\", \"M\", \"L\", \"XL\"]) - optional\n- `colors`: array of available colors (e.g., [\"Red\", \"Blue\"] or [\"#FF0000\", \"#0000FF\"]) - optional\n- `originalPrice`, `finalPrice`, `priceAfterDiscount`, `isDiscount`: discount-related fields\n- `isFavorite`, `isCart`: user-specific fields (if authenticated)\n\n**Response:**\nReturns products array and pagination object."
 					},
 					"response": [
 						{
@@ -2131,7 +2131,15 @@
 					"name": "Get Product By ID",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional: Include token to get isFavorite and isCart status",
+								"disabled": true
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/v1/products/1",
 							"host": [
@@ -2143,7 +2151,8 @@
 								"products",
 								"1"
 							]
-						}
+						},
+						"description": "Get product details by ID.\n\n**Parameters:**\n- `id`: Product ID\n\n**Authentication:**\n- Optional: Include Authorization header to get `isFavorite` and `isCart` status\n\n**Response Fields:**\n- `sizes`: array of available sizes (e.g., [\"S\", \"M\", \"L\", \"XL\"]) - optional, defaults to []\n- `colors`: array of available colors (e.g., [\"Red\", \"Blue\"] or [\"#FF0000\", \"#0000FF\"]) - optional, defaults to []\n- `originalPrice`, `finalPrice`, `priceAfterDiscount`, `isDiscount`: discount-related fields\n- `isFavorite`, `isCart`: user-specific fields (if authenticated)\n- `similarProducts`: array of similar products\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Product retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"T-Shirt\",\n    \"sizes\": [\"S\", \"M\", \"L\", \"XL\"],\n    \"colors\": [\"Red\", \"Blue\", \"Green\"],\n    \"price\": \"29.99\",\n    \"originalPrice\": 29.99,\n    \"finalPrice\": 26.99,\n    \"priceAfterDiscount\": 26.99,\n    \"isDiscount\": true,\n    \"isFavorite\": false,\n    \"isCart\": false,\n    ...\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -2364,6 +2373,20 @@
 									"value": "true",
 									"description": "Whether the product is active (default: true)",
 									"type": "text"
+								},
+								{
+									"key": "sizes",
+									"value": "[\"S\", \"M\", \"L\", \"XL\"]",
+									"description": "Available sizes as JSON array (e.g., [\"S\", \"M\", \"L\", \"XL\"])",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "colors",
+									"value": "[\"Red\", \"Blue\", \"Green\"]",
+									"description": "Available colors as JSON array (e.g., [\"Red\", \"Blue\"] or [\"#FF0000\", \"#0000FF\"])",
+									"type": "text",
+									"disabled": true
 								}
 							]
 						},
@@ -2377,7 +2400,8 @@
 								"v1",
 								"products"
 							]
-						}
+						},
+						"description": "Create a new product. **Requires authentication** - Only vendors can create products.\n\n**Body Parameters (form-data):**\n- `name` (required): Product name\n- `images` (optional): Product images (multiple files allowed)\n- `price` (optional): Product price\n- `isPrice` (optional): Whether product has a price (true/false, default: false)\n- `description` (optional): Product description\n- `categoryId` (required): Category ID\n- `subcategoryId` (required): Subcategory ID\n- `discount` (optional): Discount percentage (0-100, default: 0)\n- `quantity` (optional): Product quantity in stock (default: 0)\n- `isActive` (optional): Whether the product is active (true/false, default: true)\n- `sizes` (optional): Available sizes as JSON array string (e.g., `[\"S\", \"M\", \"L\", \"XL\"]`)\n- `colors` (optional): Available colors as JSON array string (e.g., `[\"Red\", \"Blue\"]` or `[\"#FF0000\", \"#0000FF\"]`)\n\n**Note:**\n- `sizes` and `colors` should be sent as JSON string arrays\n- If not provided, they default to empty arrays `[]`\n- Vendor ID is automatically set from authenticated user\n\n**Success Response (201):**\n```json\n{\n  \"statusCode\": 201,\n  \"message\": \"Product created successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"T-Shirt\",\n    \"sizes\": [\"S\", \"M\", \"L\", \"XL\"],\n    \"colors\": [\"Red\", \"Blue\"],\n    ...\n  }\n}\n```"
 					},
 					"response": []
 				},
@@ -2442,6 +2466,20 @@
 									"description": "Whether the product is active (true/false)",
 									"type": "text",
 									"disabled": true
+								},
+								{
+									"key": "sizes",
+									"value": "[\"M\", \"L\"]",
+									"description": "Available sizes as JSON array (e.g., [\"S\", \"M\", \"L\", \"XL\"])",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "colors",
+									"value": "[\"Blue\", \"Red\"]",
+									"description": "Available colors as JSON array (e.g., [\"Red\", \"Blue\"] or [\"#FF0000\", \"#0000FF\"])",
+									"type": "text",
+									"disabled": true
 								}
 							]
 						},
@@ -2456,7 +2494,8 @@
 								"products",
 								"1"
 							]
-						}
+						},
+						"description": "Update an existing product. **Requires authentication** - Only product owner (vendor) or admin can update.\n\n**Parameters:**\n- `id`: Product ID\n\n**Body Parameters (form-data):**\n- `name` (optional): Product name\n- `price` (optional): Product price\n- `isPrice` (optional): Whether product has a price (true/false)\n- `description` (optional): Product description\n- `categoryId` (optional): Category ID\n- `subcategoryId` (optional): Subcategory ID\n- `discount` (optional): Discount percentage (0-100)\n- `quantity` (optional): Product quantity in stock\n- `isActive` (optional): Whether the product is active (true/false)\n- `existingImages` (optional): Array of existing image filenames to keep\n- `images` (optional): New images to upload (will replace or merge with existingImages)\n- `sizes` (optional): Available sizes as JSON array string (e.g., `[\"S\", \"M\", \"L\", \"XL\"]`)\n- `colors` (optional): Available colors as JSON array string (e.g., `[\"Red\", \"Blue\"]` or `[\"#FF0000\", \"#0000FF\"]`)\n\n**Note:**\n- `sizes` and `colors` should be sent as JSON string arrays\n- If not provided, existing values are preserved\n- Only the vendor who owns the product or admin can update\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Product updated successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Updated T-Shirt\",\n    \"sizes\": [\"M\", \"L\"],\n    \"colors\": [\"Blue\", \"Red\"],\n    ...\n  }\n}\n```"
 					},
 					"response": []
 				},

@@ -82,3 +82,4 @@ VendorRating.belongsTo(User, {
 export default VendorRating;
 
 
+

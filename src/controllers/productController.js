@@ -61,6 +61,34 @@ export const createProduct = async (req, res, next) => {
     if (req.files && req.files.length > 0) {
       productData.images = req.files.map(f => f.filename);
     }
+    // Parse sizes if provided as JSON string
+    if (productData.sizes !== undefined) {
+      if (typeof productData.sizes === 'string') {
+        try {
+          productData.sizes = JSON.parse(productData.sizes);
+        } catch (e) {
+          // If parsing fails, treat as single value and convert to array
+          productData.sizes = productData.sizes ? [productData.sizes] : [];
+        }
+      }
+      if (!Array.isArray(productData.sizes)) {
+        productData.sizes = [];
+      }
+    }
+    // Parse colors if provided as JSON string
+    if (productData.colors !== undefined) {
+      if (typeof productData.colors === 'string') {
+        try {
+          productData.colors = JSON.parse(productData.colors);
+        } catch (e) {
+          // If parsing fails, treat as single value and convert to array
+          productData.colors = productData.colors ? [productData.colors] : [];
+        }
+      }
+      if (!Array.isArray(productData.colors)) {
+        productData.colors = [];
+      }
+    }
     const product = await productService.createProduct(productData);
 
     return sendSuccess(res, product, 'Product created successfully', 201);
@@ -126,6 +154,34 @@ export const updateProduct = async (req, res, next) => {
     }
     if (productData.isActive !== undefined) {
       productData.isActive = productData.isActive === 'true' || productData.isActive === true || productData.isActive === '1' || productData.isActive === 1;
+    }
+    // Parse sizes if provided as JSON string
+    if (productData.sizes !== undefined) {
+      if (typeof productData.sizes === 'string') {
+        try {
+          productData.sizes = JSON.parse(productData.sizes);
+        } catch (e) {
+          // If parsing fails, treat as single value and convert to array
+          productData.sizes = productData.sizes ? [productData.sizes] : [];
+        }
+      }
+      if (!Array.isArray(productData.sizes)) {
+        productData.sizes = [];
+      }
+    }
+    // Parse colors if provided as JSON string
+    if (productData.colors !== undefined) {
+      if (typeof productData.colors === 'string') {
+        try {
+          productData.colors = JSON.parse(productData.colors);
+        } catch (e) {
+          // If parsing fails, treat as single value and convert to array
+          productData.colors = productData.colors ? [productData.colors] : [];
+        }
+      }
+      if (!Array.isArray(productData.colors)) {
+        productData.colors = [];
+      }
     }
     // Allow vendor to set vendorId if they're updating their own product or if product has no owner
     if (req.user.type === 'vendor' && productData.vendorId === undefined) {
