@@ -291,9 +291,12 @@ class OrderService {
       }
     }
 
+    // Convert orderItems to JSON to ensure all fields are included
+    const itemsData = orderItems.map(item => item.toJSON ? item.toJSON() : item);
+
     return {
       ...orderData,
-      items: orderItems
+      items: itemsData
     };
   }
 

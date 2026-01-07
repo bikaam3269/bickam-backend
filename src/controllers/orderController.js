@@ -40,10 +40,12 @@ export const createOrder = async (req, res, next) => {
       return sendError(res, 'Cart is empty', 400);
     }
 
-    // Convert cart items to order format
+    // Convert cart items to order format (include size and color)
     const orderItems = cartItems.map(item => ({
-      productId: item.productId,
-      quantity: item.quantity
+      productId: item.productId || item.product_id,
+      quantity: item.quantity,
+      size: item.size || null,
+      color: item.color || null
     }));
 
     // fromCityId will be automatically taken from each vendor's cityId
