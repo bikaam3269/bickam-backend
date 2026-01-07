@@ -2766,7 +2766,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"productId\": 1,\n  \"quantity\": 2\n}"
+							"raw": "{\n  \"productId\": 1,\n  \"quantity\": 2,\n  \"size\": \"L\",\n  \"color\": \"Red\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"description": {
+							"content": "Add product to cart with optional size and color selection.\n\n**Body Parameters:**\n- `productId` (required): Product ID\n- `quantity` (optional): Quantity to add (default: 1)\n- `size` (optional): Selected size (e.g., \"S\", \"M\", \"L\", \"XL\"). Must match one of the available sizes in the product if provided.\n- `color` (optional): Selected color (e.g., \"Red\", \"Blue\" or \"#FF0000\", \"#0000FF\"). Must match one of the available colors in the product if provided.\n\n**Note:**\n- If size or color are provided, they will be validated against the product's available sizes and colors.\n- Same product with same size and color combination will update quantity instead of creating duplicate.\n- If size or color are not provided (null), they will be treated as \"no selection\".\n\n**Example without size/color:**\n```json\n{\n  \"productId\": 1,\n  \"quantity\": 2\n}\n```\n\n**Example with size and color:**\n```json\n{\n  \"productId\": 1,\n  \"quantity\": 2,\n  \"size\": \"L\",\n  \"color\": \"Red\"\n}\n```\n\n**Example with size only:**\n```json\n{\n  \"productId\": 1,\n  \"quantity\": 1,\n  \"size\": \"M\"\n}\n```",
+							"type": "text/markdown"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/cart",

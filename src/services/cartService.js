@@ -3,6 +3,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import { Op } from 'sequelize';
 
 
 
@@ -37,7 +38,7 @@ class CartService {
     return cartItems;
   }
 
-  async addToCart(userId, productId, quantity = 1) {
+  async addToCart(userId, productId, quantity = 1, size = null, color = null) {
     // Check if product exists
     const product = await Product.findByPk(productId);
     if (!product) {
@@ -46,6 +47,19 @@ class CartService {
 
     if (!product.vendorId) {
       throw new Error('Product has no vendor');
+    }
+
+    // Validate size and color if provided
+    if (size !== null && product.sizes && product.sizes.length > 0) {
+      if (!product.sizes.includes(size)) {
+        throw new Error(`Invalid size. Available sizes: ${product.sizes.join(', ')}`);
+      }
+    }
+
+    if (color !== null && product.colors && product.colors.length > 0) {
+      if (!product.colors.includes(color)) {
+        throw new Error(`Invalid color. Available colors: ${product.colors.join(', ')}`);
+      }
     }
 
     // Get all cart items to check vendor
@@ -73,13 +87,32 @@ class CartService {
       }
     }
 
-    // Check if item already in cart
+    // Build where condition for existing cart item (handle null values properly)
+    const whereCondition = {
+      userId,
+      productId
+    };
+
+    // For MySQL/Sequelize, we need to handle null values explicitly using Op.is or Op.eq
+    if (size !== null && size !== undefined && size !== '') {
+      whereCondition.size = size;
+    } else {
+      whereCondition.size = { [Op.is]: null };
+    }
+
+    if (color !== null && color !== undefined && color !== '') {
+      whereCondition.color = color;
+    } else {
+      whereCondition.color = { [Op.is]: null };
+    }
+
+    // Check if item already in cart with same size and color
     const existingCartItem = await Cart.findOne({
-      where: { userId, productId }
+      where: whereCondition
     });
 
     if (existingCartItem) {
-      // Update quantityp
+      // Update quantity
       existingCartItem.quantity += quantity;
       await existingCartItem.save();
       return existingCartItem;
@@ -89,7 +122,9 @@ class CartService {
     const cartItem = await Cart.create({
       userId,
       productId,
-      quantity
+      quantity,
+      size: size || null,
+      color: color || null
     });
 
     return cartItem;

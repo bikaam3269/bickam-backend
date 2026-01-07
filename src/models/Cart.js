@@ -34,6 +34,16 @@ const Cart = sequelize.define('Cart', {
     validate: {
       min: 1
     }
+  },
+  size: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Selected size for the product (optional)'
+  },
+  color: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Selected color for the product (optional)'
   }
 }, {
   tableName: 'carts',
@@ -42,7 +52,8 @@ const Cart = sequelize.define('Cart', {
   indexes: [
     {
       unique: true,
-      fields: ['user_id', 'product_id']
+      fields: ['user_id', 'product_id', 'size', 'color'],
+      name: 'unique_user_product_size_color'
     }
   ]
 });

@@ -19,20 +19,28 @@ export const getCart = async (req, res, next) => {
 export const addToCart = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { productId, quantity } = req.body;
+    const { productId, quantity, size, color } = req.body;
 
     if (!productId) {
       return sendError(res, 'Product ID is required', 400);
     }
 
-    const cartItem = await cartService.addToCart(userId, productId, quantity || 1);
+    const cartItem = await cartService.addToCart(
+      userId, 
+      productId, 
+      quantity || 1, 
+      size || null, 
+      color || null
+    );
 
     return sendSuccess(res, cartItem, 'Item added to cart successfully', 201);
   } catch (error) {
     if (error.message === 'Product not found' || 
         error.message === 'Product has no vendor' ||
         error.message === 'Cart contains product with no vendor' ||
-        error.message.includes('Cannot add product from different vendor')) {
+        error.message.includes('Cannot add product from different vendor') ||
+        error.message.includes('Invalid size') ||
+        error.message.includes('Invalid color')) {
       return sendError(res, error.message, 400);
     }
     next(error);
