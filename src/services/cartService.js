@@ -3,6 +3,8 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
+import DiscountProduct from '../models/DiscountProduct.js';
+import Discount from '../models/Discount.js';
 import { Op } from 'sequelize';
 
 
@@ -35,7 +37,70 @@ class CartService {
       order: [['createdAt', 'DESC']]
     });
 
-    return cartItems;
+    // Calculate finalPrice, originalPrice, priceAfterDiscount for each cart item
+    const now = new Date();
+    const productIds = cartItems.map(item => item.productId);
+    
+    // Get active discounts for all products in cart
+    const discountProducts = productIds.length > 0 ? await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    }) : [];
+
+    // Create a map of productId -> discount percentage
+    const discountMap = new Map();
+    discountProducts.forEach(dp => {
+      if (dp.discount) {
+        discountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
+    // Format cart items with price calculations
+    const formattedCartItems = cartItems.map(item => {
+      const cartItemData = item.toJSON ? item.toJSON() : item;
+      const product = cartItemData.product;
+
+      if (product) {
+        const price = product.price && product.isPrice ? parseFloat(product.price) : 0;
+        let discountPercentage = 0;
+        
+        // Check active discount first, then product discount field
+        if (discountMap.has(product.id)) {
+          discountPercentage = discountMap.get(product.id);
+        } else if (product.discount) {
+          discountPercentage = parseFloat(product.discount || 0);
+        }
+        
+        const originalPrice = price;
+        const finalPrice = discountPercentage > 0 
+          ? price * (1 - discountPercentage / 100)
+          : price;
+        
+        // Add price fields to product
+        product.originalPrice = parseFloat(originalPrice.toFixed(2));
+        product.finalPrice = parseFloat(finalPrice.toFixed(2));
+        product.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
+        product.isDiscount = discountPercentage > 0;
+      }
+
+      return cartItemData;
+    });
+
+    return formattedCartItems;
   }
 
   async addToCart(userId, productId, quantity = 1, size = null, color = null) {
