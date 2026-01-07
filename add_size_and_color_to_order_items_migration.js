@@ -34,15 +34,15 @@ async function runMigration() {
       SELECT COLUMN_NAME 
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME = 'carts' 
+      AND TABLE_NAME = 'order_items' 
       AND COLUMN_NAME = 'size'
     `, [dbConfig.database]);
 
     if (sizeColumns.length === 0) {
-      console.log('📦 Adding size column...');
+      console.log('📦 Adding size column to order_items...');
       await connection.query(`
-        ALTER TABLE \`carts\` 
-        ADD COLUMN \`size\` VARCHAR(255) NULL COMMENT 'Selected size for the product (optional)' AFTER \`quantity\`
+        ALTER TABLE \`order_items\` 
+        ADD COLUMN \`size\` VARCHAR(255) NULL COMMENT 'Selected size for the product (optional)' AFTER \`subtotal\`
       `);
       console.log('✅ size column added successfully');
     } else {
@@ -54,55 +54,19 @@ async function runMigration() {
       SELECT COLUMN_NAME 
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME = 'carts' 
+      AND TABLE_NAME = 'order_items' 
       AND COLUMN_NAME = 'color'
     `, [dbConfig.database]);
 
     if (colorColumns.length === 0) {
-      console.log('📦 Adding color column...');
+      console.log('📦 Adding color column to order_items...');
       await connection.query(`
-        ALTER TABLE \`carts\` 
+        ALTER TABLE \`order_items\` 
         ADD COLUMN \`color\` VARCHAR(255) NULL COMMENT 'Selected color for the product (optional)' AFTER \`size\`
       `);
       console.log('✅ color column added successfully');
     } else {
       console.log('ℹ️  color column already exists');
-    }
-
-    // Check and update unique index
-    console.log('🔄 Checking unique index...');
-    
-    // Check if new unique index exists
-    const [newIndexes] = await connection.query(`
-      SELECT INDEX_NAME, COLUMN_NAME
-      FROM INFORMATION_SCHEMA.STATISTICS
-      WHERE TABLE_SCHEMA = ?
-      AND TABLE_NAME = 'carts'
-      AND INDEX_NAME = 'unique_user_product_size_color'
-    `, [dbConfig.database]);
-
-    if (newIndexes.length === 0) {
-      console.log('📦 Creating new unique index with size and color...');
-      
-      // Try to create the new index, but handle case where old index might exist
-      try {
-        await connection.query(`
-          ALTER TABLE \`carts\` 
-          ADD UNIQUE INDEX \`unique_user_product_size_color\` (\`user_id\`, \`product_id\`, \`size\`, \`color\`)
-        `);
-        console.log('✅ New unique index created successfully');
-      } catch (error) {
-        if (error.code === 'ER_DUP_KEYNAME') {
-          console.log('⚠️  Index already exists, skipping...');
-        } else if (error.code === 'ER_DUP_ENTRY') {
-          console.log('⚠️  Cannot create unique index due to duplicate entries. Old index may still be in use.');
-          console.log('⚠️  Consider cleaning up duplicate cart entries before running this migration.');
-        } else {
-          throw error;
-        }
-      }
-    } else {
-      console.log('ℹ️  Unique index already exists');
     }
 
     console.log('\n✨ Migration completed successfully!');

@@ -64,7 +64,9 @@ class OrderService {
         productId: product.id,
         quantity: cartItem.quantity,
         price: discountedPrice,
-        subtotal
+        subtotal,
+        size: cartItem.size || null,
+        color: cartItem.color || null
       });
 
       totalAmount += subtotal;
@@ -177,7 +179,9 @@ class OrderService {
           productId: item.productId,
           quantity: item.quantity,
           price: item.price,
-          subtotal: item.subtotal
+          subtotal: item.subtotal,
+          size: item.size || null,
+          color: item.color || null
         });
       }
 

@@ -47,6 +47,16 @@ const OrderItem = sequelize.define('OrderItem', {
     validate: {
       min: 0
     }
+  },
+  size: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Selected size for the product (optional)'
+  },
+  color: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Selected color for the product (optional)'
   }
 }, {
   tableName: 'order_items',
