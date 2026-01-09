@@ -37,7 +37,14 @@ class AppSettingsService {
    * @returns {Promise<object>} Created settings
    */
   async createSettings(data) {
-    const { name, description, value, isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment } = data;
+    const { 
+      name, description, value, 
+      isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment,
+      isBannersActive, isProductsActive, isCategoryActive,
+      isVendorsActive, isMarketplaceActive,
+      bannersOrder, productsOrder, categoryOrder,
+      livestreamOrder, vendorsOrder, marketplaceOrder
+    } = data;
 
     if (!name) {
       throw new Error('Name is required');
@@ -55,7 +62,18 @@ class AppSettingsService {
       value: value || null,
       isLiveStreamEnabled: isLiveStreamEnabled !== undefined ? isLiveStreamEnabled : true,
       isLoginEnabled: isLoginEnabled !== undefined ? isLoginEnabled : true,
-      isUnderDevelopment: isUnderDevelopment !== undefined ? isUnderDevelopment : false
+      isUnderDevelopment: isUnderDevelopment !== undefined ? isUnderDevelopment : false,
+      isBannersActive: isBannersActive !== undefined ? isBannersActive : true,
+      isProductsActive: isProductsActive !== undefined ? isProductsActive : true,
+      isCategoryActive: isCategoryActive !== undefined ? isCategoryActive : true,
+      isVendorsActive: isVendorsActive !== undefined ? isVendorsActive : true,
+      isMarketplaceActive: isMarketplaceActive !== undefined ? isMarketplaceActive : true,
+      bannersOrder: bannersOrder !== undefined ? bannersOrder : 1,
+      productsOrder: productsOrder !== undefined ? productsOrder : 2,
+      categoryOrder: categoryOrder !== undefined ? categoryOrder : 3,
+      livestreamOrder: livestreamOrder !== undefined ? livestreamOrder : 4,
+      vendorsOrder: vendorsOrder !== undefined ? vendorsOrder : 5,
+      marketplaceOrder: marketplaceOrder !== undefined ? marketplaceOrder : 6
     });
   }
 
@@ -71,7 +89,14 @@ class AppSettingsService {
       throw new Error('App settings not found');
     }
 
-    const { name, description, value, isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment } = data;
+    const { 
+      name, description, value, 
+      isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment,
+      isBannersActive, isProductsActive, isCategoryActive,
+      isVendorsActive, isMarketplaceActive,
+      bannersOrder, productsOrder, categoryOrder,
+      livestreamOrder, vendorsOrder, marketplaceOrder
+    } = data;
 
     // If name is being updated, check if it already exists
     if (name && name !== settings.name) {
@@ -88,6 +113,17 @@ class AppSettingsService {
     if (isLiveStreamEnabled !== undefined) settings.isLiveStreamEnabled = isLiveStreamEnabled;
     if (isLoginEnabled !== undefined) settings.isLoginEnabled = isLoginEnabled;
     if (isUnderDevelopment !== undefined) settings.isUnderDevelopment = isUnderDevelopment;
+    if (isBannersActive !== undefined) settings.isBannersActive = isBannersActive;
+    if (isProductsActive !== undefined) settings.isProductsActive = isProductsActive;
+    if (isCategoryActive !== undefined) settings.isCategoryActive = isCategoryActive;
+    if (isVendorsActive !== undefined) settings.isVendorsActive = isVendorsActive;
+    if (isMarketplaceActive !== undefined) settings.isMarketplaceActive = isMarketplaceActive;
+    if (bannersOrder !== undefined) settings.bannersOrder = bannersOrder;
+    if (productsOrder !== undefined) settings.productsOrder = productsOrder;
+    if (categoryOrder !== undefined) settings.categoryOrder = categoryOrder;
+    if (livestreamOrder !== undefined) settings.livestreamOrder = livestreamOrder;
+    if (vendorsOrder !== undefined) settings.vendorsOrder = vendorsOrder;
+    if (marketplaceOrder !== undefined) settings.marketplaceOrder = marketplaceOrder;
 
     await settings.save();
     return settings;

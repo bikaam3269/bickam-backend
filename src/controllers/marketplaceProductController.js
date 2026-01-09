@@ -43,6 +43,7 @@ export const getAllMarketplaceProducts = async (req, res, next) => {
       search: req.query.search,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
+      governmentId: req.query.governorateId ? parseInt(req.query.governorateId, 10) : undefined,
       page: req.query.page || 1,
       limit: req.query.limit || 50
     };
@@ -267,6 +268,7 @@ export const getAllMarketplaceProductsAdmin = async (req, res, next) => {
       search: req.query.search,
       minPrice: req.query.minPrice ? parseFloat(req.query.minPrice) : undefined,
       maxPrice: req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined,
+      governmentId: req.query.governorateId ? parseInt(req.query.governorateId, 10) : undefined,
       page: req.query.page || 1,
       limit: req.query.limit || 50
     };

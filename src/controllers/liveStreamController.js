@@ -128,9 +128,13 @@ export const getLiveStream = async (req, res, next) => {
 export const getActiveLiveStreams = async (req, res, next) => {
   try {
     const userId = req.user ? req.user.id : null;
-    const liveStreams = await liveStreamService.getActiveLiveStreams(userId);
+    const governorateId = req.query.governorateId ? parseInt(req.query.governorateId, 10) : null;
+    const liveStreams = await liveStreamService.getActiveLiveStreams(userId, governorateId);
     return sendSuccess(res, liveStreams, 'Active live streams retrieved successfully');
   } catch (error) {
+    if (error.message.includes('Invalid') || error.message.includes('must be')) {
+      return sendError(res, error.message, 400);
+    }
     next(error);
   }
 };

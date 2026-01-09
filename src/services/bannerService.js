@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import Banner from '../models/Banner.js';
 import { getImagePath } from '../utils/imageHelper.js';
 
@@ -15,8 +16,30 @@ const transformBanner = (banner) => {
 };
 
 class BannerService {
-  async getAllBanners(includeInactive = false) {
+  async getAllBanners(includeInactive = false, filters = {}) {
     const where = includeInactive ? {} : { isActive: true };
+    
+    // Add optional filters
+    if (filters.vendorId) {
+      // Filter by vendorId - action field might contain vendor ID
+      // Check if action equals vendorId or contains vendorId
+      where[Op.or] = [
+        { action: filters.vendorId.toString() },
+        { action: { [Op.like]: `%${filters.vendorId}%` } }
+      ];
+    }
+    
+    if (filters.governorateId) {
+      // Filter by governorateId - if Banner model has governmentId field
+      // Note: This will only work if Banner model has governmentId field
+      // If not, you may need to add it via migration or use a join
+      where.governmentId = filters.governorateId;
+    }
+    
+    if (filters.action) {
+      // Filter by exact action match
+      where.action = filters.action;
+    }
     
     const banners = await Banner.findAll({
       where,

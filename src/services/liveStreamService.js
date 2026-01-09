@@ -254,20 +254,30 @@ class LiveStreamService {
   /**
    * Get all active live streams
    * @param {number} userId - Optional user ID for checking like status and generating subscriber token
+   * @param {number} governorateId - Optional governorate ID to filter by vendor's governorate
    * @returns {Promise<Array>} Array of active live streams
    */
-  async getActiveLiveStreams(userId = null) {
+  async getActiveLiveStreams(userId = null, governorateId = null) {
+    // Build vendor include with optional governorate filter
+    const vendorInclude = {
+      model: User,
+      as: 'vendor',
+      attributes: ['id', 'name', 'email', 'type', 'logoImage'],
+      required: governorateId !== null && governorateId !== undefined // Make vendor required if filtering by governorate
+    };
+
+    // Filter by governorate through vendor
+    if (governorateId !== null && governorateId !== undefined) {
+      vendorInclude.where = {
+        governmentId: governorateId
+      };
+    }
+
     const liveStreams = await withQueryTimeout(() => LiveStream.findAll({
       where: {
         status: 'live'
       },
-      include: [
-        {
-          model: User,
-          as: 'vendor',
-          attributes: ['id', 'name', 'email', 'type', 'logoImage']
-        }
-      ],
+      include: [vendorInclude],
       order: [['startedAt', 'DESC']]
     }), 20000);
     
@@ -299,7 +309,7 @@ class LiveStreamService {
           data.userLiked = false;
         }
 
-        // Generate subscriber token for authenticated user
+        // Generate token for authenticated user
         if (userId) {
           try {
             // Normalize userId
@@ -310,33 +320,64 @@ class LiveStreamService {
               numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
             }
 
-            if (!isNaN(numericUserId) && numericUserId > 0) {
-              // Generate subscriber token for this user
-              const subscriberToken = agoraService.generateToken(
+            // Validate userId
+            if (isNaN(numericUserId) || numericUserId <= 0) {
+              console.error('❌ Invalid userId in getActiveLiveStreams:', {
+                liveStreamId: liveStream.id,
+                originalUserId: userId,
+                numericUserId,
+                type: typeof userId
+              });
+              // Skip token generation for invalid userId
+            } else {
+              // Determine role: if user is the vendor, use publisher role, otherwise subscriber
+              const isVendor = numericUserId === liveStream.vendorId;
+              const role = isVendor ? 'publisher' : 'subscriber';
+              
+              console.log('🔄 Generating token in getActiveLiveStreams:', {
+                liveStreamId: liveStream.id,
+                userId: numericUserId,
+                vendorId: liveStream.vendorId,
+                role,
+                channelName: liveStream.channelName
+              });
+
+              // Generate token for this user
+              const userToken = agoraService.generateToken(
                 liveStream.channelName,
                 numericUserId,
-                'subscriber',
+                role,
                 86400, // 24 hours
                 false // numeric UID
               );
 
+              // Validate token was generated
+              if (!userToken || userToken.length === 0) {
+                throw new Error('Token generation returned empty token');
+              }
+
               // Add token info to response
-              data.token = subscriberToken;
+              data.token = userToken;
               data.uid = numericUserId;
               data.uidType = 'number';
+              data.role = role;
               data.appId = agoraService.getAppId();
               
-              console.log('✅ Generated subscriber token for user in getActiveLiveStreams:', {
+              console.log('✅ Generated token for user in getActiveLiveStreams:', {
                 liveStreamId: liveStream.id,
                 userId: numericUserId,
-                channelName: liveStream.channelName
+                role,
+                channelName: liveStream.channelName,
+                tokenLength: userToken.length,
+                tokenValid: userToken.startsWith('006')
               });
             }
           } catch (error) {
-            console.error('❌ Failed to generate subscriber token for user in getActiveLiveStreams:', {
+            console.error('❌ Failed to generate token for user in getActiveLiveStreams:', {
               liveStreamId: liveStream.id,
               userId,
-              error: error.message
+              error: error.message,
+              errorStack: error.stack
             });
             // Don't fail the request, just skip token generation
           }
@@ -529,10 +570,21 @@ class LiveStreamService {
         throw new Error('Token generation returned empty token');
       }
       
+      // Validate token format
+      if (!token.startsWith('006')) {
+        throw new Error(`Invalid token format: token does not start with '006'. Token starts with: ${token.substring(0, 10)}`);
+      }
+      
+      if (token.length < 100) {
+        throw new Error(`Invalid token length: ${token.length}. Expected at least 100 characters.`);
+      }
+      
       console.log('✅ Token generated successfully:', {
         tokenLength: token.length,
         tokenStartsWith: token.substring(0, 10),
-        tokenPreview: token.substring(0, 30) + '...'
+        tokenPreview: token.substring(0, 30) + '...',
+        tokenEndsWith: '...' + token.substring(token.length - 20),
+        isValidFormat: token.startsWith('006')
       });
     } catch (error) {
       console.error('❌ Failed to generate Agora token:', {

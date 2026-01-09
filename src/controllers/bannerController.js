@@ -4,10 +4,28 @@ import { sendSuccess, sendError } from '../utils/responseHelper.js';
 export const getAllBanners = async (req, res, next) => {
   try {
     const includeInactive = req.query.includeInactive === 'true';
-    const banners = await bannerService.getAllBanners(includeInactive);
+    
+    // Optional filters
+    const filters = {
+      vendorId: req.query.vendorId ? parseInt(req.query.vendorId, 10) : null,
+      governorateId: req.query.governorateId ? parseInt(req.query.governorateId, 10) : null,
+      action: req.query.action || null
+    };
+
+    // Remove null filters
+    Object.keys(filters).forEach(key => {
+      if (filters[key] === null) {
+        delete filters[key];
+      }
+    });
+
+    const banners = await bannerService.getAllBanners(includeInactive, filters);
 
     return sendSuccess(res, banners, 'Banners retrieved successfully');
   } catch (error) {
+    if (error.message.includes('Invalid') || error.message.includes('must be')) {
+      return sendError(res, error.message, 400);
+    }
     next(error);
   }
 };

@@ -86,6 +86,7 @@ class MarketplaceProductService {
       search,
       minPrice,
       maxPrice,
+      governmentId,
       page = 1,
       limit = 50
     } = filters;
@@ -137,17 +138,26 @@ class MarketplaceProductService {
       }
     }
 
+    // Build user include with optional governorate filter
+    const userInclude = {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'name', 'email', 'phone'],
+      required: governmentId !== undefined && governmentId !== null // Make user required if filtering by governorate
+    };
+
+    // Filter by governorate through user
+    if (governmentId !== undefined && governmentId !== null) {
+      userInclude.where = {
+        governmentId: governmentId
+      };
+    }
+
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const { count, rows } = await MarketplaceProduct.findAndCountAll({
       where,
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email', 'phone']
-        }
-      ],
+      include: [userInclude],
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset

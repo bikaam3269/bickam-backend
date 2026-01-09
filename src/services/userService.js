@@ -1,48 +1,125 @@
 import { Op } from 'sequelize';
+import sequelize from '../config/sequelize.js';
 import User from '../models/User.js';
 import Government from '../models/Government.js';
 import City from '../models/City.js';
+import Order from '../models/Order.js';
+import Follow from '../models/Follow.js';
+import Wallet from '../models/Wallet.js';
 import bcrypt from 'bcrypt';
 
 class UserService {
   async getAllUsers(filters = {}) {
-    const { type, search, governmentId } = filters;
+    const { 
+      type, 
+      search, 
+      governmentId, 
+      status,
+      page = 1, 
+      limit = 20 
+    } = filters;
+
     const where = {};
+    const offset = (page - 1) * limit;
 
     if (type) {
       where.type = type;
     }
 
-    if (governmentId) {
-      where.governmentId = governmentId;
+    if (governmentId && governmentId !== 'all') {
+      where.governmentId = parseInt(governmentId);
+    }
+
+    if (status && status !== 'all') {
+      // Assuming status is based on isVerified or a similar field
+      if (status === 'active') {
+        where.isVerified = true;
+      } else if (status === 'blocked') {
+        where.isVerified = false;
+      }
     }
 
     if (search) {
       where[Op.or] = [
         { name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } }
+        { email: { [Op.like]: `%${search}%` } },
+        { phone: { [Op.like]: `%${search}%` } }
       ];
     }
 
-    const users = await User.findAll({
+    const { count, rows: users } = await User.findAndCountAll({
       where,
       include: [
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'code'],
+          required: false
         },
         {
           model: City,
           as: 'city',
-          attributes: ['id', 'name']
+          attributes: ['id', 'name'],
+          required: false
         }
       ],
-      attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']]
+      attributes: { 
+        exclude: ['password'],
+        include: [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) 
+              FROM orders 
+              WHERE orders.user_id = User.id
+            )`),
+            'ordersCount'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) 
+              FROM follows 
+              WHERE follows.following_id = User.id
+            )`),
+            'followersCount'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COALESCE(SUM(balance), 0) 
+              FROM wallets 
+              WHERE wallets.user_id = User.id
+            )`),
+            'walletBalance'
+          ]
+        ]
+      },
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      subQuery: false
     });
 
-    return users;
+    // Format users with statistics
+    const formattedUsers = users.map(user => {
+      const userJson = user.toJSON();
+      return {
+        ...userJson,
+        orders: parseInt(userJson.ordersCount) || 0,
+        followers: parseInt(userJson.followersCount) || 0,
+        wallet: parseFloat(userJson.walletBalance) || 0,
+        status: userJson.isVerified ? 'active' : 'blocked'
+      };
+    });
+
+    return {
+      users: formattedUsers,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / limit),
+        hasMore: offset + users.length < count
+      }
+    };
   }
 
   async getUserById(id) {
@@ -181,6 +258,103 @@ class UserService {
 
     await user.destroy();
     return true;
+  }
+
+  async getAllUsersForExport(filters = {}) {
+    const { type, search, governmentId, status } = filters;
+    const where = {};
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (governmentId && governmentId !== 'all') {
+      where.governmentId = parseInt(governmentId);
+    }
+
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        where.isVerified = true;
+      } else if (status === 'blocked') {
+        where.isVerified = false;
+      }
+    }
+
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { phone: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const users = await User.findAll({
+      where,
+      include: [
+        {
+          model: Government,
+          as: 'government',
+          attributes: ['id', 'name', 'code'],
+          required: false
+        },
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ],
+      attributes: { 
+        exclude: ['password'],
+        include: [
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) 
+              FROM orders 
+              WHERE orders.user_id = User.id
+            )`),
+            'ordersCount'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COUNT(*) 
+              FROM follows 
+              WHERE follows.following_id = User.id
+            )`),
+            'followersCount'
+          ],
+          [
+            sequelize.literal(`(
+              SELECT COALESCE(SUM(balance), 0) 
+              FROM wallets 
+              WHERE wallets.user_id = User.id
+            )`),
+            'walletBalance'
+          ]
+        ]
+      },
+      order: [['createdAt', 'DESC']],
+      subQuery: false
+    });
+
+    // Format users with statistics
+    return users.map(user => {
+      const userJson = user.toJSON();
+      return {
+        id: userJson.id,
+        name: userJson.name || '',
+        email: userJson.email || '',
+        phone: userJson.phone || '',
+        type: userJson.type || '',
+        government: userJson.government?.name || '',
+        city: userJson.city?.name || '',
+        wallet: parseFloat(userJson.walletBalance) || 0,
+        orders: parseInt(userJson.ordersCount) || 0,
+        followers: parseInt(userJson.followersCount) || 0,
+        status: userJson.isVerified ? 'نشط' : 'محظور',
+        createdAt: userJson.createdAt ? new Date(userJson.createdAt).toLocaleDateString('ar-EG') : ''
+      };
+    });
   }
 }
 
