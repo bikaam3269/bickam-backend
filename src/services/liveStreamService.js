@@ -7,24 +7,7 @@ import agoraService from './agoraService.js';
 import notificationService from './notificationService.js';
 import Follow from '../models/Follow.js';
 import { withQueryTimeout } from '../utils/timeoutHelper.js';
-import { config } from '../config/app.js';
-
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-  if (!filename) return null;
-  // If already a full URL, return as is
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  // If starts with /files/, it's already a path, just add base URL
-  if (filename.startsWith('/files/')) {
-    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-    return `${baseUrl}${filename}`;
-  }
-  // Otherwise, it's just a filename, add base URL and /files/ prefix
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
-};
+import { getImagePath } from '../utils/imageHelper.js';
 
 class LiveStreamService {
   /**
@@ -216,9 +199,9 @@ class LiveStreamService {
 
     const liveStreamData = liveStream.toJSON ? liveStream.toJSON() : liveStream;
     
-    // Convert image to full URL
+    // Convert image to path
     if (liveStreamData.image) {
-      liveStreamData.image = getImageUrl(liveStreamData.image);
+      liveStreamData.image = getImagePath(liveStreamData.image);
     }
 
     // Get likes count
@@ -264,9 +247,9 @@ class LiveStreamService {
       liveStreams.map(async (liveStream) => {
         const data = liveStream.toJSON ? liveStream.toJSON() : liveStream;
         
-        // Convert image to full URL
+        // Convert image to path
         if (data.image) {
-          data.image = getImageUrl(data.image);
+          data.image = getImagePath(data.image);
         }
         
         // Get likes count
@@ -312,9 +295,9 @@ class LiveStreamService {
 
     return liveStreams.map(ls => {
       const data = ls.toJSON ? ls.toJSON() : ls;
-      // Convert image to full URL
+      // Convert image to path
       if (data.image) {
-        data.image = getImageUrl(data.image);
+        data.image = getImagePath(data.image);
       }
       return data;
     });
@@ -387,13 +370,16 @@ class LiveStreamService {
 
     return true;
   }
-
   /**
    * Get Agora token for joining live stream
+   * 
+   * CRITICAL: Token UID must EXACTLY match joinChannel UID (type + value)
+   * This function always uses the provided userId as numeric UID to ensure consistency.
+   * 
    * @param {number} liveStreamId - Live stream ID
-   * @param {number} userId - User ID
+   * @param {number} userId - User ID (must be > 0)
    * @param {string} role - 'publisher' or 'subscriber' (default: 'subscriber')
-   * @returns {Promise<object>} Token information
+   * @returns {Promise<object>} Token information with matching UID
    */
   async getLiveStreamToken(liveStreamId, userId, role = 'subscriber') {
     const liveStream = await LiveStream.findByPk(liveStreamId);
@@ -410,116 +396,57 @@ class LiveStreamService {
       throw new Error('Only the vendor can be a publisher');
     }
 
-    // Ensure userId is valid
+    // Validate and normalize userId to numeric UID
     const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
     if (isNaN(numericUserId) || numericUserId <= 0) {
-      throw new Error('Invalid user ID');
+      throw new Error(`Invalid user ID: ${userId}. Must be a positive number.`);
     }
 
-    // Generate token
-    // IMPORTANT: Use UID = 0 (like Agora UI) to avoid token validation issues
-    // UID = 0 allows any UID to join, which matches Agora UI behavior
+    // Generate token with EXACT numeric UID that Flutter will use
+    // This ensures token UID matches joinChannel UID exactly
     let token;
-    let uidToUse = 0; // Use 0 by default (like Agora UI) - allows any UID to join
-    let useStringUid = false;
-    let tokenGenerationAttempts = [];
-    
     try {
-      // Use UID = 0 first (like Agora UI does) - this is the most compatible approach
       token = agoraService.generateToken(
         liveStream.channelName,
-        0, // UID = 0 allows any UID to join (like Agora UI)
+        numericUserId, // Use the exact numeric UID that Flutter will use
         role,
-        86400, // 24 hours
-        false // use numeric UID
+        86400, // 24 hours expiration
+        false // Always use numeric UID (not string)
       );
-      tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: true });
-      console.log('✅ Token generated with UID = 0 (allows any UID to join, like Agora UI)');
     } catch (error) {
-      tokenGenerationAttempts.push({ method: 'uidZero', uid: 0, success: false, error: error.message });
-      console.warn('⚠️ UID = 0 token generation failed, trying numeric UID:', error.message);
-      
-      try {
-        // Fallback to actual numeric UID
-        token = agoraService.generateToken(
-          liveStream.channelName,
-          numericUserId,
-          role,
-          86400, // 24 hours
-          false // use numeric UID
-        );
-        uidToUse = numericUserId;
-        tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: true });
-        console.log('✅ Token generated with numeric UID:', numericUserId);
-      } catch (error2) {
-        tokenGenerationAttempts.push({ method: 'numericUid', uid: numericUserId, success: false, error: error2.message });
-        console.warn('⚠️ Numeric UID token generation failed, trying string UID:', error2.message);
-        
-        // Last resort: try with string UID
-        useStringUid = true;
-        uidToUse = String(numericUserId);
-        token = agoraService.generateToken(
-          liveStream.channelName,
-          uidToUse,
-          role,
-          86400, // 24 hours
-          true // use string UID
-        );
-        tokenGenerationAttempts.push({ method: 'stringUid', uid: uidToUse, success: true });
-        console.log('✅ Token generated with string UID:', uidToUse);
-      }
+      console.error('❌ Failed to generate Agora token:', {
+        liveStreamId,
+        userId: numericUserId,
+        role,
+        channelName: liveStream.channelName,
+        error: error.message
+      });
+      throw new Error(`Failed to generate token: ${error.message}`);
     }
 
-    // Validate token after generation
-    const tokenValidation = agoraService.validateTokenComprehensive(token, {
-      channelName: liveStream.channelName,
-      uid: uidToUse,
-      role
-    });
-
     // Log token generation for debugging
-    console.log('🔑 Agora Token Generated Successfully:', {
+    console.log('🔑 Agora Token Generated:', {
       liveStreamId,
       userId: numericUserId,
-      uidUsed: uidToUse,
-      uidType: useStringUid ? 'string' : 'number',
+      uid: numericUserId, // Token UID matches userId exactly
+      uidType: 'number',
       role,
       channelName: liveStream.channelName,
       appId: agoraService.getAppId(),
       tokenLength: token ? token.length : 0,
-      tokenPreview: token ? token.substring(0, 50) + '...' : 'null',
-      attempts: tokenGenerationAttempts,
-      validation: {
-        isValid: tokenValidation.isValid,
-        errors: tokenValidation.errors,
-        warnings: tokenValidation.warnings
-      },
-      note: uidToUse === 0 ? 'Token allows any UID to join (like Agora UI)' : 'Token requires specific UID'
+      note: 'Token UID matches joinChannel UID exactly'
     });
 
-    // If token validation failed, log warning but still return token (let Agora SDK validate it)
-    if (!tokenValidation.isValid) {
-      console.warn('⚠️ Token validation failed, but returning token anyway. Agora SDK will validate it on join:', {
-        errors: tokenValidation.errors,
-        warnings: tokenValidation.warnings
-      });
-    }
-
+    // Return token with the EXACT UID that must be used in joinChannel
     return {
       token,
       channelName: liveStream.channelName,
-      uid: useStringUid ? uidToUse : numericUserId, // Return the actual UID used
-      uidType: useStringUid ? 'string' : 'number', // Indicate UID type
+      uid: numericUserId, // CRITICAL: This UID must be used in Flutter joinChannel
+      uidType: 'number', // Always numeric
       role,
-      appId: agoraService.getAppId(), // Add App ID to response
-      validation: {
-        isValid: tokenValidation.isValid,
-        errors: tokenValidation.errors,
-        warnings: tokenValidation.warnings
-      }
+      appId: agoraService.getAppId()
     };
   }
-
   /**
    * Update viewer count for a live stream
    * @param {number} liveStreamId - Live stream ID

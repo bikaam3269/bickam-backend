@@ -5,32 +5,7 @@ import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
 import Government from '../models/Government.js';
 import City from '../models/City.js';
-import { config } from '../config/app.js';
-
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-  if (!filename) return null;
-  // If already a full URL, return as is
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  // If starts with /files/, it's already a path, just add base URL
-  if (filename.startsWith('/files/')) {
-    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-    return `${baseUrl}${filename}`;
-  }
-  // Otherwise, it's just a filename, add base URL and /files/ prefix
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
-};
-
-// Helper function to convert array of image filenames to full URLs
-const convertImagesToUrls = (images) => {
-  if (!images || !Array.isArray(images)) {
-    return [];
-  }
-  return images.map(img => getImageUrl(img)).filter(url => url !== null);
-};
+import { convertFilesToPaths } from '../utils/imageHelper.js';
 
 class MarketingProductService {
   async getAllMarketingProducts(filters = {}) {
@@ -133,8 +108,8 @@ class MarketingProductService {
         productData.images = [];
       }
       
-      // Convert image filenames to full URLs
-      productData.images = convertImagesToUrls(productData.images);
+      // Convert image filenames to paths
+      productData.images = convertFilesToPaths(productData.images);
       
       return productData;
     });

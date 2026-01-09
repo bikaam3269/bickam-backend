@@ -10,32 +10,7 @@ import DiscountProduct from '../models/DiscountProduct.js';
 import Discount from '../models/Discount.js';
 import notificationService from './notificationService.js';
 import favoriteService from './favoriteService.js';
-import { config } from '../config/app.js';
-
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-  if (!filename) return null;
-  // If already a full URL, return as is
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    return filename;
-  }
-  // If starts with /files/, it's already a path, just add base URL
-  if (filename.startsWith('/files/')) {
-    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-    return `${baseUrl}${filename}`;
-  }
-  // Otherwise, it's just a filename, add base URL and /files/ prefix
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
-};
-
-// Helper function to convert array of image filenames to full URLs
-const convertImagesToUrls = (images) => {
-  if (!images || !Array.isArray(images)) {
-    return [];
-  }
-  return images.map(img => getImageUrl(img)).filter(url => url !== null);
-};
+import { convertFilesToPaths } from '../utils/imageHelper.js';
 
 class ProductService {
   async getAllProducts(filters = {}, userId = null) {
@@ -213,8 +188,8 @@ class ProductService {
         productData.images = [];
       }
       
-      // Convert image filenames to full URLs
-      productData.images = convertImagesToUrls(productData.images);
+      // Convert image filenames to paths
+      productData.images = convertFilesToPaths(productData.images);
       
       // Ensure sizes is always returned as an array
       if (productData.sizes) {
@@ -904,8 +879,8 @@ class ProductService {
         productData.images = [];
       }
       
-      // Convert image filenames to full URLs
-      productData.images = convertImagesToUrls(productData.images);
+      // Convert image filenames to paths
+      productData.images = convertFilesToPaths(productData.images);
       
       // Calculate prices with discount
       const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
@@ -1064,8 +1039,8 @@ class ProductService {
         productData.images = [];
       }
       
-      // Convert image filenames to full URLs
-      productData.images = convertImagesToUrls(productData.images);
+      // Convert image filenames to paths
+      productData.images = convertFilesToPaths(productData.images);
       
       // Calculate prices with discount
       const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
@@ -1302,8 +1277,8 @@ class ProductService {
         productData.images = [];
       }
 
-      // Convert image filenames to full URLs
-      productData.images = convertImagesToUrls(productData.images);
+      // Convert image filenames to paths
+      productData.images = convertFilesToPaths(productData.images);
 
       // Add isFavorite and isCart
       productData.isFavorite = userId ? favoriteProductIds.has(product.id) : false;

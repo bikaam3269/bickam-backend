@@ -1,12 +1,5 @@
 import Banner from '../models/Banner.js';
-import { config } from '../config/app.js';
-
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-  if (!filename) return null;
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
-};
+import { getImagePath } from '../utils/imageHelper.js';
 
 // Helper function to transform banner data
 const transformBanner = (banner) => {
@@ -15,7 +8,7 @@ const transformBanner = (banner) => {
   const bannerData = banner.toJSON ? banner.toJSON() : banner;
   
   if (bannerData.image) {
-    bannerData.image = getImageUrl(bannerData.image);
+    bannerData.image = getImagePath(bannerData.image);
   }
   
   return bannerData;

@@ -323,11 +323,158 @@ class DashboardService {
         paid: paidRevenue,
         pending: pendingRevenue,
         currency: 'EGP'
+      },
+      charts: {
+        monthlyRevenue: await this.getMonthlyRevenue(orderWhereClause),
+        monthlyOrders: await this.getMonthlyOrders(orderWhereClause),
+        monthlyUsers: await this.getMonthlyUsers(userWhere),
+        ordersByStatus: {
+          pending: pendingOrders,
+          confirmed: confirmedOrders,
+          processing: processingOrders,
+          shipped: shippedOrders,
+          delivered: deliveredOrders,
+          cancelled: cancelledOrders
+        }
       }
     };
     } catch (error) {
       console.error('Error in getDashboardStats:', error);
       throw error;
+    }
+  }
+
+  async getMonthlyRevenue(orderWhere) {
+    try {
+      const orderWhereClause = Object.keys(orderWhere).length > 0 ? orderWhere : {};
+      let whereCondition = '';
+      
+      if (Object.keys(orderWhereClause).length > 0 && orderWhereClause.vendorId && orderWhereClause.vendorId[Op.in]) {
+        const vendorIds = orderWhereClause.vendorId[Op.in];
+        if (vendorIds.length > 0) {
+          whereCondition = `WHERE vendor_id IN (${vendorIds.join(',')})`;
+        }
+      }
+
+      const [results] = await sequelize.query(`
+        SELECT 
+          DATE_FORMAT(created_at, '%Y-%m') as month,
+          COALESCE(SUM(total), 0) as revenue
+        FROM orders
+        ${whereCondition}
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC
+        LIMIT 12
+      `);
+
+      // Get last 12 months
+      const months = [];
+      const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = monthNames[date.getMonth()];
+        
+        const result = results.find(r => r.month === monthKey);
+        months.push({
+          month: monthName,
+          revenue: parseFloat(result?.revenue || 0) || 0
+        });
+      }
+
+      return months;
+    } catch (error) {
+      console.error('Error getting monthly revenue:', error);
+      return [];
+    }
+  }
+
+  async getMonthlyOrders(orderWhere) {
+    try {
+      const orderWhereClause = Object.keys(orderWhere).length > 0 ? orderWhere : {};
+      let whereCondition = '';
+      
+      if (Object.keys(orderWhereClause).length > 0 && orderWhereClause.vendorId && orderWhereClause.vendorId[Op.in]) {
+        const vendorIds = orderWhereClause.vendorId[Op.in];
+        if (vendorIds.length > 0) {
+          whereCondition = `WHERE vendor_id IN (${vendorIds.join(',')})`;
+        }
+      }
+
+      const [results] = await sequelize.query(`
+        SELECT 
+          DATE_FORMAT(created_at, '%Y-%m') as month,
+          COUNT(*) as count
+        FROM orders
+        ${whereCondition}
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC
+        LIMIT 12
+      `);
+
+      const months = [];
+      const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = monthNames[date.getMonth()];
+        
+        const result = results.find(r => r.month === monthKey);
+        months.push({
+          month: monthName,
+          orders: parseInt(result?.count || 0) || 0
+        });
+      }
+
+      return months;
+    } catch (error) {
+      console.error('Error getting monthly orders:', error);
+      return [];
+    }
+  }
+
+  async getMonthlyUsers(userWhere) {
+    try {
+      const userWhereClause = Object.keys(userWhere).length > 0 ? userWhere : {};
+      const whereCondition = Object.keys(userWhereClause).length > 0 
+        ? `WHERE type != 'admin' ${userWhereClause.governmentId ? `AND government_id = ${userWhereClause.governmentId}` : ''}` 
+        : `WHERE type != 'admin'`;
+
+      const [results] = await sequelize.query(`
+        SELECT 
+          DATE_FORMAT(created_at, '%Y-%m') as month,
+          COUNT(*) as count
+        FROM users
+        ${whereCondition}
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month DESC
+        LIMIT 12
+      `);
+
+      const months = [];
+      const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      
+      for (let i = 11; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = monthNames[date.getMonth()];
+        
+        const result = results.find(r => r.month === monthKey);
+        months.push({
+          month: monthName,
+          users: parseInt(result?.count || 0) || 0
+        });
+      }
+
+      return months;
+    } catch (error) {
+      console.error('Error getting monthly users:', error);
+      return [];
     }
   }
 

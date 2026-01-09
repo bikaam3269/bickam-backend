@@ -13,22 +13,7 @@ import favoriteService from './favoriteService.js';
 import ratingService from './ratingService.js';
 import { config } from '../config/app.js';
 
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-    if (!filename) return null;
-    // If already a full URL, return as is
-    if (filename.startsWith('http://') || filename.startsWith('https://')) {
-        return filename;
-    }
-    // If starts with /files/, it's already a path, just add base URL
-    if (filename.startsWith('/files/')) {
-        const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-        return `${baseUrl}${filename}`;
-    }
-    // Otherwise, it's just a filename, construct full URL
-    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-    return `${baseUrl}/files/${filename}`;
-};
+import { getImagePath, convertFilesToPaths } from '../utils/imageHelper.js';
 
 // Helper function to transform vendor data with image URLs
 const transformVendorImages = (vendor) => {
@@ -37,11 +22,11 @@ const transformVendorImages = (vendor) => {
     const vendorData = vendor.toJSON ? vendor.toJSON() : vendor;
 
     if (vendorData.logoImage) {
-        vendorData.logoImage = getImageUrl(vendorData.logoImage);
+        vendorData.logoImage = getImagePath(vendorData.logoImage);
     }
 
     if (vendorData.backgroundImage) {
-        vendorData.backgroundImage = getImageUrl(vendorData.backgroundImage);
+        vendorData.backgroundImage = getImagePath(vendorData.backgroundImage);
     }
 
     return vendorData;
@@ -75,7 +60,7 @@ const getProductImages = async (vendorId) => {
         // Convert each image to full URL and add to array
         images.forEach(image => {
             if (image) {
-                const fullUrl = getImageUrl(image);
+                const fullUrl = getImagePath(image);
                 if (fullUrl) {
                     allImages.push(fullUrl);
                 }
@@ -815,7 +800,7 @@ class VendorService {
             
             // Add full URL for logo image (profile image for users/vendors)
             if (followerData.logoImage) {
-                followerData.logoImage = getImageUrl(followerData.logoImage);
+                followerData.logoImage = getImagePath(followerData.logoImage);
             }
             
             return {

@@ -1,13 +1,6 @@
 import Category from '../models/Category.js';
 import Subcategory from '../models/Subcategory.js';
-import { config } from '../config/app.js';
-
-// Helper function to construct full image URL
-const getImageUrl = (filename) => {
-  if (!filename) return null;
-  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
-  return `${baseUrl}/files/${filename}`;
-};
+import { getImagePath } from '../utils/imageHelper.js';
 
 // Helper function to transform category data
 const transformCategory = (category) => {
@@ -16,7 +9,7 @@ const transformCategory = (category) => {
   const categoryData = category.toJSON ? category.toJSON() : category;
   
   if (categoryData.image) {
-    categoryData.image = getImageUrl(categoryData.image);
+    categoryData.image = getImagePath(categoryData.image);
   }
   
   return categoryData;
