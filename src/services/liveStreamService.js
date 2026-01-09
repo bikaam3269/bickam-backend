@@ -32,6 +32,18 @@ class LiveStreamService {
       throw new Error('User is not a vendor');
     }
 
+    // Check if vendor already has an active live stream
+    const activeLiveStream = await withQueryTimeout(() => LiveStream.findOne({
+      where: {
+        vendorId,
+        status: 'live'
+      }
+    }), 10000);
+
+    if (activeLiveStream) {
+      throw new Error('Vendor already has an active live stream. Please end the current live stream before creating a new one.');
+    }
+
     // Generate unique channel name
     const channelName = `channel_${vendorId}_${Date.now()}`;
 
@@ -55,7 +67,6 @@ class LiveStreamService {
       liveStream.startedAt = new Date();
       liveStream.status = 'live';
       await liveStream.save();
-
       // Automatically join vendor as viewer (publisher is also counted as viewer)
       try {
         await LiveStreamViewer.create({
@@ -103,6 +114,19 @@ class LiveStreamService {
 
     if (liveStream.status === 'ended') {
       throw new Error('Cannot start an ended live stream');
+    }
+
+    // Check if vendor already has another active live stream
+    const activeLiveStream = await withQueryTimeout(() => LiveStream.findOne({
+      where: {
+        vendorId,
+        status: 'live',
+        id: { [Op.ne]: liveStreamId } // Exclude current live stream
+      }
+    }), 10000);
+
+    if (activeLiveStream) {
+      throw new Error('Vendor already has an active live stream. Please end the current live stream before starting a new one.');
     }
 
     // Generate new token
@@ -392,13 +416,40 @@ class LiveStreamService {
     }
 
     // Only vendor can be publisher
-    if (role === 'publisher' && liveStream.vendorId !== userId) {
+    // Normalize both IDs for comparison
+    const normalizedVendorId = typeof liveStream.vendorId === 'string' ? parseInt(liveStream.vendorId, 10) : liveStream.vendorId;
+    const normalizedUserId = typeof userId === 'string' ? parseInt(userId, 10) : (userId && typeof userId === 'object' && userId.id !== undefined ? (typeof userId.id === 'string' ? parseInt(userId.id, 10) : userId.id) : userId);
+    
+    if (role === 'publisher' && normalizedVendorId !== normalizedUserId) {
       throw new Error('Only the vendor can be a publisher');
     }
 
     // Validate and normalize userId to numeric UID
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    // Handle Sequelize instance (req.user.id might be a Sequelize model instance)
+    if (!userId && userId !== 0) {
+      console.error('❌ User ID is missing:', { userId, type: typeof userId });
+      throw new Error('User ID is required');
+    }
+    
+    let numericUserId;
+    if (userId && typeof userId === 'object' && userId.id !== undefined) {
+      // If userId is a Sequelize instance, extract the id property
+      numericUserId = typeof userId.id === 'string' ? parseInt(userId.id, 10) : userId.id;
+    } else {
+      numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    }
+    
+    // Log for debugging
+    console.log('🔍 getLiveStreamToken - User ID validation:', {
+      originalUserId: userId,
+      numericUserId,
+      userIdType: typeof userId,
+      isNaN: isNaN(numericUserId),
+      isPositive: numericUserId > 0
+    });
+    
     if (isNaN(numericUserId) || numericUserId <= 0) {
+      console.error('❌ Invalid user ID:', { userId, numericUserId, type: typeof userId });
       throw new Error(`Invalid user ID: ${userId}. Must be a positive number.`);
     }
 
