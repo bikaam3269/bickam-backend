@@ -199,12 +199,36 @@ export const getLiveStreamToken = async (req, res, next) => {
       return sendError(res, 'Role must be either "publisher" or "subscriber"', 400);
     }
 
+    // Log user info for debugging
+    console.log('📋 getLiveStreamToken - Request info:', {
+      liveStreamId,
+      userId: req.user?.id,
+      userType: req.user?.type,
+      role,
+      userIdType: typeof req.user?.id
+    });
+
     // Authentication is handled by authenticate middleware in routes
+    if (!req.user || !req.user.id) {
+      return sendError(res, 'User authentication required', 401);
+    }
+
     const tokenData = await liveStreamService.getLiveStreamToken(
       liveStreamId,
       req.user.id,
       role
     );
+    
+    // Log response for debugging
+    console.log('✅ Token response:', {
+      hasToken: !!tokenData.token,
+      tokenLength: tokenData.token?.length,
+      uid: tokenData.uid,
+      channelName: tokenData.channelName,
+      appId: tokenData.appId,
+      role: tokenData.role
+    });
+    
     return sendSuccess(res, tokenData, 'Token generated successfully');
   } catch (error) {
     if (error.message === 'Invalid live stream ID') {

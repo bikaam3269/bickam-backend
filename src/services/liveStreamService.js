@@ -223,6 +223,10 @@ class LiveStreamService {
 
     const liveStreamData = liveStream.toJSON ? liveStream.toJSON() : liveStream;
     
+    // Remove agoraToken from response - everyone must get fresh token via /token endpoint
+    // Stored token might be expired, and users need subscriber tokens, not publisher tokens
+    delete liveStreamData.agoraToken;
+    
     // Convert image to path
     if (liveStreamData.image) {
       liveStreamData.image = getImagePath(liveStreamData.image);
@@ -249,7 +253,7 @@ class LiveStreamService {
 
   /**
    * Get all active live streams
-   * @param {number} userId - Optional user ID for checking like status
+   * @param {number} userId - Optional user ID for checking like status and generating subscriber token
    * @returns {Promise<Array>} Array of active live streams
    */
   async getActiveLiveStreams(userId = null) {
@@ -271,6 +275,9 @@ class LiveStreamService {
       liveStreams.map(async (liveStream) => {
         const data = liveStream.toJSON ? liveStream.toJSON() : liveStream;
         
+        // Remove stored agoraToken (publisher token) - not needed
+        delete data.agoraToken;
+        
         // Convert image to path
         if (data.image) {
           data.image = getImagePath(data.image);
@@ -290,6 +297,49 @@ class LiveStreamService {
           data.userLiked = !!userLike;
         } else {
           data.userLiked = false;
+        }
+
+        // Generate subscriber token for authenticated user
+        if (userId) {
+          try {
+            // Normalize userId
+            let numericUserId;
+            if (userId && typeof userId === 'object' && userId.id !== undefined) {
+              numericUserId = typeof userId.id === 'string' ? parseInt(userId.id, 10) : userId.id;
+            } else {
+              numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+            }
+
+            if (!isNaN(numericUserId) && numericUserId > 0) {
+              // Generate subscriber token for this user
+              const subscriberToken = agoraService.generateToken(
+                liveStream.channelName,
+                numericUserId,
+                'subscriber',
+                86400, // 24 hours
+                false // numeric UID
+              );
+
+              // Add token info to response
+              data.token = subscriberToken;
+              data.uid = numericUserId;
+              data.uidType = 'number';
+              data.appId = agoraService.getAppId();
+              
+              console.log('✅ Generated subscriber token for user in getActiveLiveStreams:', {
+                liveStreamId: liveStream.id,
+                userId: numericUserId,
+                channelName: liveStream.channelName
+              });
+            }
+          } catch (error) {
+            console.error('❌ Failed to generate subscriber token for user in getActiveLiveStreams:', {
+              liveStreamId: liveStream.id,
+              userId,
+              error: error.message
+            });
+            // Don't fail the request, just skip token generation
+          }
         }
 
         return data;
@@ -319,6 +369,8 @@ class LiveStreamService {
 
     return liveStreams.map(ls => {
       const data = ls.toJSON ? ls.toJSON() : ls;
+      // Remove agoraToken - vendors should get fresh token via /token endpoint
+      delete data.agoraToken;
       // Convert image to path
       if (data.image) {
         data.image = getImagePath(data.image);
@@ -457,6 +509,14 @@ class LiveStreamService {
     // This ensures token UID matches joinChannel UID exactly
     let token;
     try {
+      console.log('🔄 Generating Agora token:', {
+        channelName: liveStream.channelName,
+        uid: numericUserId,
+        role,
+        appId: agoraService.getAppId(),
+        isConfigured: agoraService.isConfigured()
+      });
+      
       token = agoraService.generateToken(
         liveStream.channelName,
         numericUserId, // Use the exact numeric UID that Flutter will use
@@ -464,19 +524,30 @@ class LiveStreamService {
         86400, // 24 hours expiration
         false // Always use numeric UID (not string)
       );
+      
+      if (!token || token.length === 0) {
+        throw new Error('Token generation returned empty token');
+      }
+      
+      console.log('✅ Token generated successfully:', {
+        tokenLength: token.length,
+        tokenStartsWith: token.substring(0, 10),
+        tokenPreview: token.substring(0, 30) + '...'
+      });
     } catch (error) {
       console.error('❌ Failed to generate Agora token:', {
         liveStreamId,
         userId: numericUserId,
         role,
         channelName: liveStream.channelName,
-        error: error.message
+        error: error.message,
+        errorStack: error.stack
       });
       throw new Error(`Failed to generate token: ${error.message}`);
     }
 
     // Log token generation for debugging
-    console.log('🔑 Agora Token Generated:', {
+    console.log('🔑 Agora Token Generated Successfully:', {
       liveStreamId,
       userId: numericUserId,
       uid: numericUserId, // Token UID matches userId exactly
@@ -485,7 +556,8 @@ class LiveStreamService {
       channelName: liveStream.channelName,
       appId: agoraService.getAppId(),
       tokenLength: token ? token.length : 0,
-      note: 'Token UID matches joinChannel UID exactly'
+      tokenValid: token && token.length > 0 && token.startsWith('006'),
+      note: 'Token UID matches joinChannel UID exactly - Flutter MUST use this exact UID'
     });
 
     // Return token with the EXACT UID that must be used in joinChannel
