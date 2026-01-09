@@ -26,6 +26,7 @@ import affiliateRoutes from './affiliateRoutes.js';
 import discountRoutes from './discountRoutes.js';
 import bannerRoutes from './bannerRoutes.js';
 import ratingRoutes from './ratingRoutes.js';
+import dashboardRoutes from './dashboardRoutes.js';
 import { config } from '../config/app.js';
 
 const router = express.Router();
@@ -67,6 +68,7 @@ router.use('/affiliates', affiliateRoutes);
 router.use('/discounts', discountRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/ratings', ratingRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 export default router;
 

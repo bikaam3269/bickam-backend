@@ -4,6 +4,42 @@ import User from '../models/User.js';
 import fs from 'fs';
 import path from 'path';
 import notificationService from './notificationService.js';
+import { config } from '../config/app.js';
+
+// Helper function to construct full file URL
+const getFileUrl = (filename) => {
+  if (!filename) return null;
+  // If already a full URL, return as is
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  // If starts with /files/, it's already a path, just add base URL
+  if (filename.startsWith('/files/')) {
+    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+    return `${baseUrl}${filename}`;
+  }
+  // Otherwise, it's just a filename, add base URL and /files/ prefix
+  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+  return `${baseUrl}/files/${filename}`;
+};
+
+// Helper function to convert array of file filenames to full URLs
+const convertFilesToUrls = (files) => {
+  if (!files || !Array.isArray(files)) {
+    return [];
+  }
+  return files.map(file => getFileUrl(file)).filter(url => url !== null);
+};
+
+// Helper function to transform product data with file URLs
+const transformProductData = (product) => {
+  if (!product) return product;
+  const productData = product.toJSON ? product.toJSON() : product;
+  if (productData.files) {
+    productData.files = convertFilesToUrls(productData.files);
+  }
+  return productData;
+};
 
 class MarketplaceProductService {
   /**
@@ -62,7 +98,7 @@ class MarketplaceProductService {
       throw new Error('Marketplace product not found');
     }
 
-    return product;
+    return transformProductData(product);
   }
 
   /**
@@ -143,7 +179,7 @@ class MarketplaceProductService {
     });
 
     return {
-      products: rows,
+      products: rows.map(transformProductData),
       pagination: {
         total: count,
         page: parseInt(page),
@@ -177,7 +213,7 @@ class MarketplaceProductService {
     });
 
     return {
-      products: rows,
+      products: rows.map(transformProductData),
       pagination: {
         total: count,
         page: parseInt(page),
@@ -456,7 +492,7 @@ class MarketplaceProductService {
       console.log('[getUserProducts] No products found. Checking raw query result...');
     }
 
-    return products;
+    return products.map(transformProductData);
   }
 }
 

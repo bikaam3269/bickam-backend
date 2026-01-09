@@ -7,6 +7,24 @@ import agoraService from './agoraService.js';
 import notificationService from './notificationService.js';
 import Follow from '../models/Follow.js';
 import { withQueryTimeout } from '../utils/timeoutHelper.js';
+import { config } from '../config/app.js';
+
+// Helper function to construct full image URL
+const getImageUrl = (filename) => {
+  if (!filename) return null;
+  // If already a full URL, return as is
+  if (filename.startsWith('http://') || filename.startsWith('https://')) {
+    return filename;
+  }
+  // If starts with /files/, it's already a path, just add base URL
+  if (filename.startsWith('/files/')) {
+    const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+    return `${baseUrl}${filename}`;
+  }
+  // Otherwise, it's just a filename, add base URL and /files/ prefix
+  const baseUrl = process.env.BASE_URL || `http://localhost:${config.port}`;
+  return `${baseUrl}/files/${filename}`;
+};
 
 class LiveStreamService {
   /**
@@ -197,6 +215,11 @@ class LiveStreamService {
     }
 
     const liveStreamData = liveStream.toJSON ? liveStream.toJSON() : liveStream;
+    
+    // Convert image to full URL
+    if (liveStreamData.image) {
+      liveStreamData.image = getImageUrl(liveStreamData.image);
+    }
 
     // Get likes count
     const likesCount = await LiveStreamLike.count({
@@ -241,6 +264,11 @@ class LiveStreamService {
       liveStreams.map(async (liveStream) => {
         const data = liveStream.toJSON ? liveStream.toJSON() : liveStream;
         
+        // Convert image to full URL
+        if (data.image) {
+          data.image = getImageUrl(data.image);
+        }
+        
         // Get likes count
         const likesCount = await LiveStreamLike.count({
           where: { liveStreamId: liveStream.id }
@@ -282,7 +310,14 @@ class LiveStreamService {
       order: [['createdAt', 'DESC']]
     });
 
-    return liveStreams.map(ls => ls.toJSON ? ls.toJSON() : ls);
+    return liveStreams.map(ls => {
+      const data = ls.toJSON ? ls.toJSON() : ls;
+      // Convert image to full URL
+      if (data.image) {
+        data.image = getImageUrl(data.image);
+      }
+      return data;
+    });
   }
 
   /**
