@@ -13,13 +13,13 @@ import { authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// All routes require authentication and admin authorization
-router.use(authenticate);
-router.use(authorize('admin'));
-
-// Get main settings (single app settings - creates if not exists)
+// Public routes - Get main settings (available for all users)
 router.get('/', getMainSettings);
 router.get('/main', getMainSettings);
+
+// Admin only routes - require authentication and admin authorization
+router.use(authenticate);
+router.use(authorize('admin'));
 
 // Get setting by ID
 router.get('/:id', getSettingById);
