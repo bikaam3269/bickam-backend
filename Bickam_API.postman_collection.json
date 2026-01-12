@@ -7778,13 +7778,7 @@
 					"name": "Get Main Settings",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{auth_token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/app-settings",
 							"host": [
@@ -7796,7 +7790,7 @@
 								"app-settings"
 							]
 						},
-						"description": "Get main app settings. If settings don't exist, they will be created automatically with default values. **Admin only** - Requires admin authentication.\n\n**Authentication:** Required (Admin only)\n\n**Response:** Main app settings object with all configuration fields.\n\n**Example Response:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Main app settings retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"app_main\",\n    \"description\": \"Main App Settings\",\n    \"value\": null,\n    \"isLiveStreamEnabled\": true,\n    \"isLoginEnabled\": true,\n    \"isUnderDevelopment\": false,\n    \"isBannersActive\": true,\n    \"isProductsActive\": true,\n    \"isCategoryActive\": true,\n    \"isVendorsActive\": true,\n    \"isMarketplaceActive\": true,\n    \"bannersOrder\": 1,\n    \"productsOrder\": 2,\n    \"categoryOrder\": 3,\n    \"livestreamOrder\": 4,\n    \"vendorsOrder\": 5,\n    \"marketplaceOrder\": 6\n  }\n}\n```"
+						"description": "Get main app settings. If settings don't exist, they will be created automatically with default values. **Public endpoint** - No authentication required.\n\n**Authentication:** Not required (Public endpoint)\n\n**Response:** Main app settings object with all configuration fields.\n\n**Example Response:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Main app settings retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"app_main\",\n    \"description\": \"Main App Settings\",\n    \"value\": null,\n    \"isLiveStreamEnabled\": true,\n    \"isLoginEnabled\": true,\n    \"isUnderDevelopment\": false,\n    \"isBannersActive\": true,\n    \"isProductsActive\": true,\n    \"isCategoryActive\": true,\n    \"isVendorsActive\": true,\n    \"isMarketplaceActive\": true,\n    \"bannersOrder\": 1,\n    \"productsOrder\": 2,\n    \"categoryOrder\": 3,\n    \"livestreamOrder\": 4,\n    \"vendorsOrder\": 5,\n    \"marketplaceOrder\": 6\n  }\n}\n```"
 					},
 					"response": []
 				},

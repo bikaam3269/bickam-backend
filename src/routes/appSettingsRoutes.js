@@ -14,14 +14,15 @@ import { authorize } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 // Public routes - Get main settings (available for all users)
-router.get('/', getMainSettings);
+// Must be defined before /:id to avoid route conflicts
 router.get('/main', getMainSettings);
+router.get('/', getMainSettings);
 
 // Admin only routes - require authentication and admin authorization
 router.use(authenticate);
 router.use(authorize('admin'));
 
-// Get setting by ID
+// Get setting by ID (admin only)
 router.get('/:id', getSettingById);
 
 // Create settings
