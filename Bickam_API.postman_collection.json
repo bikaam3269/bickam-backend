@@ -3931,6 +3931,41 @@
 			"name": "Marketing Orders",
 			"item": [
 				{
+					"name": "Calculate Marketing Order Price",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders/calculate-price?toCityId=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders",
+								"calculate-price"
+							],
+							"query": [
+								{
+									"key": "toCityId",
+									"value": "2",
+									"description": "Destination city ID (delivery location) - required",
+									"disabled": false
+								}
+							]
+						},
+						"description": "Calculate marketing order price for cart items.\n\n**Query Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n\n**Process:**\n1. Gets all items from marketer's marketing cart\n2. Groups items by marketing product location (cityId)\n3. Calculates products total for each location\n4. Calculates shipping price for each location\n5. Returns price breakdown\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Price breakdown with:\n- `productsTotal`: Total price of all products\n- `totalShippingPrice`: Total shipping price for all locations\n- `grandTotal`: productsTotal + totalShippingPrice\n- `locationsBreakdown`: Array of breakdown per location with products subtotal and shipping price"
+					},
+					"response": []
+				},
+				{
 					"name": "Create Marketing Order",
 					"request": {
 						"method": "POST",
@@ -3965,7 +4000,7 @@
 								"marketing-orders"
 							]
 						},
-						"description": "Create a new marketing order from marketing cart items.\n\n**Note:** Cart items are automatically taken from the marketer's marketing cart. No need to send cartItems in the request.\n\n**Body Parameters:**\n- `toCityId` (optional): Destination city ID (delivery location)\n- `shippingAddress` (optional): Full shipping address text\n- `phone` (required): Contact phone number for the order\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Process:**\n1. Gets all items from marketer's marketing cart\n2. Groups items by marketing product location (cityId)\n3. Creates separate order for each location\n4. Calculates shipping price for each location\n5. Processes payment based on payment method\n6. Clears all cart items after order creation\n7. Sends notifications\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Array of created orders (one per location)."
+						"description": "Create a new marketing order from marketing cart items.\n\n**Note:** Cart items are automatically taken from the marketer's marketing cart. No need to send cartItems in the request.\n\n**Body Parameters:**\n- `toCityId` (required): Destination city ID (delivery location)\n- `shippingAddress` (required): Full shipping address text\n- `phone` (optional): Contact phone number for the order (if not provided, uses user's phone from profile)\n- `paymentMethod` (optional): Payment method - 'wallet', 'cash', or 'card' (default: 'wallet')\n\n**Process:**\n1. Gets all items from marketer's marketing cart\n2. Groups items by marketing product location (cityId)\n3. Creates separate order for each location\n4. Calculates shipping price for each location\n5. Processes payment based on payment method\n6. Clears all cart items after order creation\n7. Sends notifications\n\n**Authentication:** Required (Marketer only)\n\n**Response:** Array of created orders (one per location)."
 					},
 					"response": []
 				},
@@ -4075,6 +4110,52 @@
 							]
 						},
 						"description": "Update marketing order status.\n\n**Path Parameters:**\n- `id`: Order ID\n\n**Body Parameters:**\n- `status` (required): New status - 'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'\n\n**Authentication:** Required (Admin only)\n\n**Note:** Sends notification to marketer when status is updated."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Marketing Orders (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketing-orders?status=pending&paymentStatus=paid&marketerId=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketing-orders"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by order status: pending, confirmed, processing, shipped, delivered, cancelled",
+									"disabled": true
+								},
+								{
+									"key": "paymentStatus",
+									"value": "paid",
+									"description": "Filter by payment status: pending, paid, failed, refunded, remaining",
+									"disabled": true
+								},
+								{
+									"key": "marketerId",
+									"value": "",
+									"description": "Filter by marketer ID (optional)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all marketing orders. **Admin only**.\n\n**Query Parameters:**\n- `status` (optional): Filter by order status\n- `paymentStatus` (optional): Filter by payment status\n- `marketerId` (optional): Filter by marketer ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Array of all marketing orders with items and details."
 					},
 					"response": []
 				}
@@ -5169,18 +5250,26 @@
 										"disabled": true
 									}
 								],
-								"url": {
-									"raw": "{{base_url}}/api/v1/live-streams",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"v1",
-										"live-streams"
-									]
-								},
-								"description": "Get all currently active (live) streams.\n\n**Authentication:** Optional - If authenticated, returns whether user liked each stream.\n\n**Response:** Array of active live streams with vendor info, viewer count, and likes count."
+							"url": {
+								"raw": "{{base_url}}/api/v1/live-streams?governorateId=",
+								"host": [
+									"{{base_url}}"
+								],
+								"path": [
+									"api",
+									"v1",
+									"live-streams"
+								],
+								"query": [
+									{
+										"key": "governorateId",
+										"value": "",
+										"description": "Filter by governorate ID (optional)",
+										"disabled": true
+									}
+								]
+							},
+							"description": "Get all currently active (live) streams.\n\n**Query Parameters:**\n- `governorateId` (optional): Filter streams by vendor's governorate ID\n\n**Authentication:** Optional - If authenticated, returns whether user liked each stream.\n\n**Response:** Array of active live streams with vendor info, viewer count, and likes count."
 							},
 							"response": []
 						},
@@ -5737,7 +5826,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{base_url}}/api/v1/marketplace-products?page=1&limit=50&search=&minPrice=&maxPrice=",
+									"raw": "{{base_url}}/api/v1/marketplace-products?page=1&limit=50&search=&minPrice=&maxPrice=&governorateId=",
 									"host": [
 										"{{base_url}}"
 									],
@@ -5771,10 +5860,16 @@
 											"key": "maxPrice",
 											"value": "",
 											"description": "Maximum price"
+										},
+										{
+											"key": "governorateId",
+											"value": "",
+											"description": "Filter by governorate ID (optional)",
+											"disabled": true
 										}
 									]
 								},
-								"description": "Get all approved marketplace products (public endpoint).\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `search` (optional): Search term for name/description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n\n**Authentication:** Not required\n\n**Response:** List of approved products with pagination."
+								"description": "Get all approved marketplace products (public endpoint).\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Items per page (default: 50)\n- `search` (optional): Search term for name/description\n- `minPrice` (optional): Minimum price filter\n- `maxPrice` (optional): Maximum price filter\n- `governorateId` (optional): Filter products by user's governorate ID\n\n**Authentication:** Not required\n\n**Response:** List of approved products with pagination."
 							},
 							"response": []
 						},
@@ -7683,7 +7778,13 @@
 					"name": "Get Main Settings",
 					"request": {
 						"method": "GET",
-						"header": [],
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
 						"url": {
 							"raw": "{{base_url}}/api/v1/app-settings",
 							"host": [
@@ -7695,7 +7796,7 @@
 								"app-settings"
 							]
 						},
-						"description": "Get main app settings. If settings don't exist, they will be created automatically with default values. **Public endpoint** - No authentication required.\n\n**Authentication:** Not required (Public endpoint)\n\n**Response:** Main app settings object with all configuration fields.\n\n**Example Response:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Main app settings retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"app_main\",\n    \"description\": \"Main App Settings\",\n    \"value\": null,\n    \"isLiveStreamEnabled\": true,\n    \"isLoginEnabled\": true,\n    \"isUnderDevelopment\": false,\n    \"isBannersActive\": true,\n    \"isProductsActive\": true,\n    \"isCategoryActive\": true,\n    \"isVendorsActive\": true,\n    \"isMarketplaceActive\": true,\n    \"bannersOrder\": 1,\n    \"productsOrder\": 2,\n    \"categoryOrder\": 3,\n    \"livestreamOrder\": 4,\n    \"vendorsOrder\": 5,\n    \"marketplaceOrder\": 6\n  }\n}\n```"
+						"description": "Get main app settings. If settings don't exist, they will be created automatically with default values. **Admin only** - Requires admin authentication.\n\n**Authentication:** Required (Admin only)\n\n**Response:** Main app settings object with all configuration fields.\n\n**Example Response:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Main app settings retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"app_main\",\n    \"description\": \"Main App Settings\",\n    \"value\": null,\n    \"isLiveStreamEnabled\": true,\n    \"isLoginEnabled\": true,\n    \"isUnderDevelopment\": false,\n    \"isBannersActive\": true,\n    \"isProductsActive\": true,\n    \"isCategoryActive\": true,\n    \"isVendorsActive\": true,\n    \"isMarketplaceActive\": true,\n    \"bannersOrder\": 1,\n    \"productsOrder\": 2,\n    \"categoryOrder\": 3,\n    \"livestreamOrder\": 4,\n    \"vendorsOrder\": 5,\n    \"marketplaceOrder\": 6\n  }\n}\n```"
 					},
 					"response": []
 				},
