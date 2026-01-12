@@ -125,5 +125,17 @@ export const deleteBanner = async (req, res, next) => {
   }
 };
 
+export const getAdvertisementBanners = async (req, res, next) => {
+  try {
+    const includeInactive = req.query.includeInactive === 'true';
+    
+    const banners = await bannerService.getAdvertisementBanners(includeInactive);
+
+    return sendSuccess(res, banners, 'Advertisement banners retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 

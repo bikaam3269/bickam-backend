@@ -139,6 +139,21 @@ class BannerService {
     await banner.destroy();
     return { message: 'Banner deleted successfully' };
   }
+
+  async getAdvertisementBanners(includeInactive = false) {
+    const where = { actionType: 'advertisement' };
+    
+    if (!includeInactive) {
+      where.isActive = true;
+    }
+    
+    const banners = await Banner.findAll({
+      where,
+      order: [['order', 'ASC'], ['createdAt', 'DESC']]
+    });
+
+    return banners.map(transformBanner);
+  }
 }
 
 export default new BannerService();

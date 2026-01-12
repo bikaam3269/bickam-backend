@@ -7182,6 +7182,35 @@
 			"name": "Banners",
 			"item": [
 				{
+					"name": "Get Advertisement Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/banners/advertisements?includeInactive=false",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"banners",
+								"advertisements"
+							],
+							"query": [
+								{
+									"key": "includeInactive",
+									"value": "false",
+									"description": "Include inactive banners (optional, default: false)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all advertisement banners (image only, no action). **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `includeInactive` (optional): Set to 'true' to include inactive banners (default: false)\n\n**Response:** Array of advertisement banners with image URLs and order. These banners have `actionType: 'advertisement'` and no action value.\n\n**Example Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"image\": \"/files/banner1.jpg\",\n    \"text\": null,\n    \"actionType\": \"advertisement\",\n    \"action\": null,\n    \"isActive\": true,\n    \"order\": 1\n  }\n]\n```"
+					},
+					"response": []
+				},
+				{
 					"name": "Get All Banners",
 					"request": {
 						"method": "GET",
@@ -7205,7 +7234,7 @@
 								}
 							]
 						},
-						"description": "Get all banners. **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `includeInactive` (optional): Set to 'true' to include inactive banners (default: false)\n\n**Response:** Array of banners with image URLs, text, action (vendor ID), and order."
+						"description": "Get all banners. **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `includeInactive` (optional): Set to 'true' to include inactive banners (default: false)\n- `actionType` (optional): Filter by action type (vendor, product, link, advertisement)\n- `vendorId` (optional): Filter by vendor ID (when actionType is vendor)\n- `productId` (optional): Filter by product ID (when actionType is product)\n\n**Response:** Array of banners with image URLs, text, actionType, action, and order."
 					},
 					"response": []
 				},
@@ -7642,6 +7671,215 @@
 							]
 						},
 						"description": "Get vendor rating summary (for vendor dashboard). **Public endpoint** - No authentication required.\n\n**Parameters:**\n- `vendorId`: Vendor ID\n\n**Use Cases:**\n- Display rating summary on vendor profile\n- Show in vendor dashboard\n- Display in vendor cards/lists\n\n**Features:**\n- Average rating calculation\n- Total ratings count\n- Rating distribution (5, 4, 3, 2, 1 stars)\n- Total comments count\n\n**Success Response (200):**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor rating summary retrieved successfully\",\n  \"data\": {\n    \"averageRating\": 4.5,\n    \"totalRatings\": 50,\n    \"ratingDistribution\": {\n      \"5\": 30,\n      \"4\": 15,\n      \"3\": 3,\n      \"2\": 1,\n      \"1\": 1\n    },\n    \"totalComments\": 45\n  }\n}\n```\n\n**Response if no ratings exist:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Vendor rating summary retrieved successfully\",\n  \"data\": {\n    \"averageRating\": 0,\n    \"totalRatings\": 0,\n    \"ratingDistribution\": {\n      \"5\": 0,\n      \"4\": 0,\n      \"3\": 0,\n      \"2\": 0,\n      \"1\": 0\n    },\n    \"totalComments\": 0\n  }\n}\n```"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "App Settings",
+			"item": [
+				{
+					"name": "Get Main Settings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings"
+							]
+						},
+						"description": "Get main app settings. If settings don't exist, they will be created automatically with default values. **Admin only** - Requires admin authentication.\n\n**Authentication:** Required (Admin only)\n\n**Response:** Main app settings object with all configuration fields.\n\n**Example Response:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Main app settings retrieved successfully\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"app_main\",\n    \"description\": \"Main App Settings\",\n    \"value\": null,\n    \"isLiveStreamEnabled\": true,\n    \"isLoginEnabled\": true,\n    \"isUnderDevelopment\": false,\n    \"isBannersActive\": true,\n    \"isProductsActive\": true,\n    \"isCategoryActive\": true,\n    \"isVendorsActive\": true,\n    \"isMarketplaceActive\": true,\n    \"bannersOrder\": 1,\n    \"productsOrder\": 2,\n    \"categoryOrder\": 3,\n    \"livestreamOrder\": 4,\n    \"vendorsOrder\": 5,\n    \"marketplaceOrder\": 6\n  }\n}\n```"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Setting By ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Setting ID or name"
+								}
+							]
+						},
+						"description": "Get app settings by ID or name. **Admin only** - Requires admin authentication.\n\n**Parameters:**\n- `id`: Setting ID or name\n\n**Authentication:** Required (Admin only)\n\n**Response:** App settings object."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Settings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"custom_settings\",\n  \"description\": \"Custom App Settings\",\n  \"value\": \"{}\",\n  \"isLiveStreamEnabled\": true,\n  \"isLoginEnabled\": true,\n  \"isUnderDevelopment\": false,\n  \"isBannersActive\": true,\n  \"isProductsActive\": true,\n  \"isCategoryActive\": true,\n  \"isVendorsActive\": true,\n  \"isMarketplaceActive\": true,\n  \"bannersOrder\": 1,\n  \"productsOrder\": 2,\n  \"categoryOrder\": 3,\n  \"livestreamOrder\": 4,\n  \"vendorsOrder\": 5,\n  \"marketplaceOrder\": 6\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings"
+							]
+						},
+						"description": "Create new app settings. **Admin only** - Requires admin authentication.\n\n**Body Parameters:**\n- `name` (required): Unique setting name\n- `description` (optional): Setting description\n- `value` (optional): JSON value as string\n- `isLiveStreamEnabled` (optional): Enable live stream (default: true)\n- `isLoginEnabled` (optional): Enable login (default: true)\n- `isUnderDevelopment` (optional): App under development mode (default: false)\n- `isBannersActive` (optional): Enable banners section (default: true)\n- `isProductsActive` (optional): Enable products section (default: true)\n- `isCategoryActive` (optional): Enable category section (default: true)\n- `isVendorsActive` (optional): Enable vendors section (default: true)\n- `isMarketplaceActive` (optional): Enable marketplace section (default: true)\n- `bannersOrder` (optional): Banners section order (default: 1)\n- `productsOrder` (optional): Products section order (default: 2)\n- `categoryOrder` (optional): Category section order (default: 3)\n- `livestreamOrder` (optional): Live stream section order (default: 4)\n- `vendorsOrder` (optional): Vendors section order (default: 5)\n- `marketplaceOrder` (optional): Marketplace section order (default: 6)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Created settings object."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Main Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"isLiveStreamEnabled\": true,\n  \"isLoginEnabled\": true,\n  \"isUnderDevelopment\": false,\n  \"isBannersActive\": true,\n  \"isProductsActive\": true,\n  \"isCategoryActive\": true,\n  \"isVendorsActive\": true,\n  \"isMarketplaceActive\": true,\n  \"bannersOrder\": 1,\n  \"productsOrder\": 2,\n  \"categoryOrder\": 3,\n  \"livestreamOrder\": 4,\n  \"vendorsOrder\": 5,\n  \"marketplaceOrder\": 6\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings"
+							]
+						},
+						"description": "Update main app settings. If settings don't exist, they will be created automatically. **Admin only** - Requires admin authentication.\n\n**Body Parameters (all optional):**\n- `isLiveStreamEnabled`: Enable/disable live stream\n- `isLoginEnabled`: Enable/disable login\n- `isUnderDevelopment`: Set app under development mode\n- `isBannersActive`: Enable/disable banners section\n- `isProductsActive`: Enable/disable products section\n- `isCategoryActive`: Enable/disable category section\n- `isVendorsActive`: Enable/disable vendors section\n- `isMarketplaceActive`: Enable/disable marketplace section\n- `bannersOrder`: Banners section display order\n- `productsOrder`: Products section display order\n- `categoryOrder`: Category section display order\n- `livestreamOrder`: Live stream section display order\n- `vendorsOrder`: Vendors section display order\n- `marketplaceOrder`: Marketplace section display order\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated main settings object."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Settings By ID",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"custom_settings_updated\",\n  \"description\": \"Updated Custom Settings\",\n  \"isLiveStreamEnabled\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Setting ID"
+								}
+							]
+						},
+						"description": "Update app settings by ID. **Admin only** - Requires admin authentication.\n\n**Parameters:**\n- `id`: Setting ID\n\n**Body Parameters (all optional):**\n- `name`: Setting name (must be unique)\n- `description`: Setting description\n- `value`: JSON value as string\n- All section status and order fields (same as create)\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated settings object."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Settings",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/app-settings/:id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"app-settings",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Setting ID"
+								}
+							]
+						},
+						"description": "Delete app settings by ID. **Admin only** - Requires admin authentication.\n\n**Parameters:**\n- `id`: Setting ID\n\n**Note:** Cannot delete main settings (name: 'app_main')\n\n**Authentication:** Required (Admin only)\n\n**Response:** Success message."
 					},
 					"response": []
 				}

@@ -4,7 +4,8 @@ import {
   getBannerById,
   createBanner,
   updateBanner,
-  deleteBanner
+  deleteBanner,
+  getAdvertisementBanners
 } from '../controllers/bannerController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/authMiddleware.js';
@@ -13,6 +14,7 @@ import { upload } from '../middleware/upload.js';
 const router = express.Router();
 
 // Public routes - users can get banners
+router.get('/advertisements', getAdvertisementBanners);
 router.get('/', getAllBanners);
 router.get('/:id', getBannerById);
 
