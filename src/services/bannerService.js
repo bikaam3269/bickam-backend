@@ -20,13 +20,20 @@ class BannerService {
     const where = includeInactive ? {} : { isActive: true };
     
     // Add optional filters
+    if (filters.actionType) {
+      where.actionType = filters.actionType;
+    }
+    
     if (filters.vendorId) {
-      // Filter by vendorId - action field might contain vendor ID
-      // Check if action equals vendorId or contains vendorId
-      where[Op.or] = [
-        { action: filters.vendorId.toString() },
-        { action: { [Op.like]: `%${filters.vendorId}%` } }
-      ];
+      // Filter by vendorId - when actionType is 'vendor', action should match vendorId
+      where.actionType = 'vendor';
+      where.action = filters.vendorId.toString();
+    }
+    
+    if (filters.productId) {
+      // Filter by productId - when actionType is 'product', action should match productId
+      where.actionType = 'product';
+      where.action = filters.productId.toString();
     }
     
     if (filters.governorateId) {
@@ -60,15 +67,31 @@ class BannerService {
   }
 
   async createBanner(data) {
-    const { image, text, action, isActive, order } = data;
+    const { image, text, actionType, action, isActive, order } = data;
 
     if (!image) {
       throw new Error('Banner image is required');
     }
 
+    // Validate actionType and action combination
+    if (actionType && !['vendor', 'product', 'link', 'advertisement'].includes(actionType)) {
+      throw new Error('Invalid actionType. Must be one of: vendor, product, link, advertisement');
+    }
+
+    // If actionType is provided (except advertisement), action should also be provided
+    if (actionType && actionType !== 'advertisement' && !action) {
+      throw new Error('Action value is required when actionType is specified (except for advertisement)');
+    }
+
+    // Advertisement banners don't need action
+    if (actionType === 'advertisement' && action) {
+      throw new Error('Advertisement banners should not have an action value');
+    }
+
     const banner = await Banner.create({
       image,
       text: text || null,
+      actionType: actionType || null,
       action: action || null,
       isActive: isActive !== undefined ? isActive : true,
       order: order || 0
@@ -81,6 +104,24 @@ class BannerService {
     const banner = await Banner.findByPk(id);
     if (!banner) {
       throw new Error('Banner not found');
+    }
+
+    // Validate actionType if provided
+    if (data.actionType && !['vendor', 'product', 'link', 'advertisement'].includes(data.actionType)) {
+      throw new Error('Invalid actionType. Must be one of: vendor, product, link, advertisement');
+    }
+
+    // If actionType is provided (new or updated), action should also be provided (except advertisement)
+    const finalActionType = data.actionType !== undefined ? data.actionType : banner.actionType;
+    const finalAction = data.action !== undefined ? data.action : banner.action;
+    
+    if (finalActionType && finalActionType !== 'advertisement' && !finalAction) {
+      throw new Error('Action value is required when actionType is specified (except for advertisement)');
+    }
+
+    // Advertisement banners don't need action
+    if (finalActionType === 'advertisement' && finalAction) {
+      throw new Error('Advertisement banners should not have an action value');
     }
 
     Object.assign(banner, data);

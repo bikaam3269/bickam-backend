@@ -3,7 +3,6 @@ import {
   getAllGovernments,
   getAllGovernmentsWithCities,
   getGovernmentById,
-  getGovernmentByCode,
   createGovernment,
   updateGovernment,
   deleteGovernment
@@ -13,7 +12,6 @@ const router = express.Router();
 
 router.get('/with-cities', getAllGovernmentsWithCities);
 router.get('/', getAllGovernments);
-router.get('/code/:code', getGovernmentByCode);
 router.get('/:id', getGovernmentById);
 router.post('/', createGovernment);
 router.put('/:id', updateGovernment);

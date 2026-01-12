@@ -272,4 +272,3 @@ export const getDiscountDetailsForCustomer = async (req, res, next) => {
     next(error);
   }
 };
-

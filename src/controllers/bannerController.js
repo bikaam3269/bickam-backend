@@ -7,7 +7,9 @@ export const getAllBanners = async (req, res, next) => {
     
     // Optional filters
     const filters = {
+      actionType: req.query.actionType || null,
       vendorId: req.query.vendorId ? parseInt(req.query.vendorId, 10) : null,
+      productId: req.query.productId ? parseInt(req.query.productId, 10) : null,
       governorateId: req.query.governorateId ? parseInt(req.query.governorateId, 10) : null,
       action: req.query.action || null
     };
@@ -55,6 +57,14 @@ export const createBanner = async (req, res, next) => {
       return sendError(res, 'Banner image is required', 400);
     }
 
+    // Convert empty strings to null for actionType and action
+    if (bannerData.actionType === '' || bannerData.actionType === 'null') {
+      bannerData.actionType = null;
+    }
+    if (bannerData.action === '' || bannerData.action === 'null') {
+      bannerData.action = null;
+    }
+
     const banner = await bannerService.createBanner(bannerData);
 
     return sendSuccess(res, banner, 'Banner created successfully', 201);
@@ -77,6 +87,14 @@ export const updateBanner = async (req, res, next) => {
     // Attach uploaded image filename if file was uploaded
     if (req.file) {
       bannerData.image = req.file.filename;
+    }
+
+    // Convert empty strings to null for actionType and action
+    if (bannerData.actionType === '' || bannerData.actionType === 'null') {
+      bannerData.actionType = null;
+    }
+    if (bannerData.action === '' || bannerData.action === 'null') {
+      bannerData.action = null;
     }
 
     const banner = await bannerService.updateBanner(parseInt(id), bannerData);

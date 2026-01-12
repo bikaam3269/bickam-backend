@@ -49,43 +49,21 @@ export const getGovernmentById = async (req, res, next) => {
   }
 };
 
-export const getGovernmentByCode = async (req, res, next) => {
-  try {
-    const { code } = req.params;
-    
-    if (!code || code.trim().length === 0) {
-      return sendError(res, 'Government code is required', 400);
-    }
-    
-    const government = await governmentService.getGovernmentByCode(code.trim());
-
-    return sendSuccess(res, government, 'Government retrieved successfully');
-  } catch (error) {
-    if (error.message === 'Government not found') {
-      return sendError(res, error.message, 404);
-    }
-    next(error);
-  }
-};
-
 export const createGovernment = async (req, res, next) => {
   try {
-    const { name, code } = req.body;
+    const { name, order } = req.body;
 
-    if (!name || !code) {
-      return sendError(res, 'Name and code are required', 400);
+    if (!name) {
+      return sendError(res, 'Name is required', 400);
     }
 
     const government = await governmentService.createGovernment({
       name,
-      code
+      order: order || 0
     });
 
     return sendSuccess(res, government, 'Government created successfully', 201);
   } catch (error) {
-    if (error.message === 'Government code already exists') {
-      return sendError(res, error.message, 409);
-    }
     if (error.name === 'SequelizeValidationError') {
       return sendError(res, error.errors[0].message, 400);
     }
@@ -108,9 +86,6 @@ export const updateGovernment = async (req, res, next) => {
   } catch (error) {
     if (error.message === 'Government not found') {
       return sendError(res, error.message, 404);
-    }
-    if (error.message === 'Government code already exists') {
-      return sendError(res, error.message, 409);
     }
     if (error.name === 'SequelizeValidationError') {
       return sendError(res, error.errors[0].message, 400);

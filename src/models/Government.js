@@ -16,13 +16,11 @@ const Government = sequelize.define('Government', {
       notEmpty: true
     }
   },
-  code: {
-    type: DataTypes.STRING,
+  order: {
+    type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true,
-    validate: {
-      notEmpty: true
-    }
+    defaultValue: 0,
+    comment: 'Display order'
   }
 }, {
   tableName: 'governments',

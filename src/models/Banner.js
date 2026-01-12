@@ -20,10 +20,16 @@ const Banner = sequelize.define('Banner', {
     charset: 'utf8mb4',
     collate: 'utf8mb4_unicode_ci'
   },
+  actionType: {
+    type: DataTypes.ENUM('vendor', 'product', 'link', 'advertisement'),
+    allowNull: true,
+    field: 'action_type',
+    comment: 'Type of action: vendor, product, link, or advertisement (image only)'
+  },
   action: {
     type: DataTypes.STRING,
     allowNull: true,
-    comment: 'Action for vendor (e.g., vendor_id, link, etc.)'
+    comment: 'Action value: vendor_id, product_id, or link URL based on action_type'
   },
   isActive: {
     type: DataTypes.BOOLEAN,

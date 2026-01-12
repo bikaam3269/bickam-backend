@@ -718,12 +718,12 @@
 								{
 									"key": "search",
 									"value": "federal",
-									"description": "Search by name or code",
+									"description": "Search by name",
 									"disabled": true
 								}
 							]
 						},
-						"description": "Get all governments with their associated cities.\n\n**Query Parameters:**\n- `search` (optional): Search governments by name or code\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments, each containing:\n- Government details (id, name, code)\n- `cities` array with city details (id, name)\n\n**Example Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"name\": \"Cairo\",\n    \"code\": \"CAI001\",\n    \"cities\": [\n      { \"id\": 1, \"name\": \"Nasr City\" },\n      { \"id\": 2, \"name\": \"Maadi\" }\n    ]\n  }\n]\n```"
+						"description": "Get all governments with their associated cities.\n\n**Query Parameters:**\n- `search` (optional): Search governments by name\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments, each containing:\n- Government details (id, name, order)\n- `cities` array with city details (id, name)\n\n**Example Response:**\n```json\n[\n  {\n    \"id\": 1,\n    \"name\": \"Cairo\",\n    \"order\": 1,\n    \"cities\": [\n      { \"id\": 1, \"name\": \"Nasr City\" },\n      { \"id\": 2, \"name\": \"Maadi\" }\n    ]\n  }\n]\n```"
 					},
 					"response": []
 				},
@@ -746,12 +746,12 @@
 								{
 									"key": "search",
 									"value": "federal",
-									"description": "Search by name or code",
+									"description": "Search by name",
 									"disabled": true
 								}
 							]
 						},
-						"description": "Get all governments without cities.\n\n**Query Parameters:**\n- `search` (optional): Search by name or code\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments (without cities). Use `/with-cities` endpoint to get governments with cities."
+						"description": "Get all governments without cities.\n\n**Query Parameters:**\n- `search` (optional): Search by name\n\n**Authentication:** Not required (public endpoint)\n\n**Response:** Array of governments (without cities) ordered by `order` field. Use `/with-cities` endpoint to get governments with cities."
 					},
 					"response": []
 				},
@@ -776,27 +776,6 @@
 					"response": []
 				},
 				{
-					"name": "Get Government By Code",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/governments/code/GOV001",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"v1",
-								"governments",
-								"code",
-								"GOV001"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Create Government",
 					"request": {
 						"method": "POST",
@@ -808,7 +787,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Federal Government\",\n  \"code\": \"GOV001\"\n}"
+							"raw": "{\n  \"name\": \"Federal Government\",\n  \"order\": 1\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/governments",
@@ -836,7 +815,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Federal Government Updated\"\n}"
+							"raw": "{\n  \"name\": \"Federal Government Updated\",\n  \"order\": 1\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/governments/1",

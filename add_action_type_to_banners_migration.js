@@ -1,6 +1,6 @@
 import mysql from 'mysql2/promise';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 import { dbConfig as sequelizeConfig } from './src/config/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,45 +29,36 @@ async function runMigration() {
     connection = await mysql.createConnection(dbConfig);
     console.log('✅ Connected to database');
 
-    // Check if size column exists
-    const [sizeColumns] = await connection.query(`
+    // Check if action_type column exists
+    const [columns] = await connection.query(`
       SELECT COLUMN_NAME 
       FROM INFORMATION_SCHEMA.COLUMNS 
       WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME = 'order_items' 
-      AND COLUMN_NAME = 'size'
+      AND TABLE_NAME = 'banners' 
+      AND COLUMN_NAME = 'action_type'
     `, [dbConfig.database]);
 
-    if (sizeColumns.length === 0) {
-      console.log('📦 Adding size column to order_items...');
+    if (columns.length === 0) {
+      console.log('📦 Adding action_type column...');
       await connection.query(`
-        ALTER TABLE \`order_items\` 
-        ADD COLUMN \`size\` VARCHAR(255) NULL COMMENT 'Selected size for the product (optional)' AFTER \`subtotal\`
+        ALTER TABLE \`banners\` 
+        ADD COLUMN \`action_type\` ENUM('vendor', 'product', 'link') NULL 
+        COMMENT 'Type of action: vendor, product, or link' 
+        AFTER \`text\`
       `);
-      console.log('✅ size column added successfully');
+      console.log('✅ action_type column added successfully');
     } else {
-      console.log('ℹ️  size column already exists');
+      console.log('ℹ️  action_type column already exists');
     }
 
-    // Check if color column exists
-    const [colorColumns] = await connection.query(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = ? 
-      AND TABLE_NAME = 'order_items' 
-      AND COLUMN_NAME = 'color'
-    `, [dbConfig.database]);
-
-    if (colorColumns.length === 0) {
-      console.log('📦 Adding color column to order_items...');
-      await connection.query(`
-        ALTER TABLE \`order_items\` 
-        ADD COLUMN \`color\` VARCHAR(255) NULL COMMENT 'Selected color for the product (optional)' AFTER \`size\`
-      `);
-      console.log('✅ color column added successfully');
-    } else {
-      console.log('ℹ️  color column already exists');
-    }
+    // Update action column comment to be more descriptive
+    console.log('🔄 Updating action column comment...');
+    await connection.query(`
+      ALTER TABLE \`banners\` 
+      MODIFY COLUMN \`action\` VARCHAR(255) NULL 
+      COMMENT 'Action value: vendor_id, product_id, or link URL based on action_type'
+    `);
+    console.log('✅ action column comment updated');
 
     console.log('\n✨ Migration completed successfully!');
     
@@ -84,7 +75,3 @@ async function runMigration() {
 }
 
 runMigration();
-
-
-
-
