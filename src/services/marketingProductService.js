@@ -174,7 +174,7 @@ class MarketingProductService {
     }
     
     // Convert image filenames to full URLs
-    productData.images = convertImagesToUrls(productData.images);
+    productData.images = convertFilesToPaths(productData.images);
 
     return productData;
   }

@@ -309,7 +309,7 @@ class ProductService {
     }
     
     // Convert image filenames to full URLs
-    productData.images = convertImagesToUrls(productData.images);
+    productData.images = convertFilesToPaths(productData.images);
 
     // Ensure sizes is always returned as an array
     if (productData.sizes) {
@@ -462,7 +462,7 @@ class ProductService {
       }
       
       // Convert image filenames to full URLs
-      pData.images = convertImagesToUrls(pData.images);
+      pData.images = convertFilesToPaths(pData.images);
       
       // Calculate prices with discount for similar products
       const price = pData.price && pData.isPrice ? parseFloat(pData.price) : 0;

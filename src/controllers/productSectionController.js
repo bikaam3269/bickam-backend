@@ -234,6 +234,7 @@ export const getSectionProducts = async (req, res, next) => {
     const { type, id } = req.query;
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 20;
+    const governorateId = req.query.governorateId ? parseInt(req.query.governorateId, 10) : null;
     const userId = req.user ? req.user.id : null;
 
     if (!type) {
@@ -248,7 +249,7 @@ export const getSectionProducts = async (req, res, next) => {
       return sendError(res, 'Limit must be between 1 and 100', 400);
     }
 
-    const result = await productSectionService.getSectionProducts(type, id, page, limit, userId);
+    const result = await productSectionService.getSectionProducts(type, id, page, limit, userId, governorateId);
 
     return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {

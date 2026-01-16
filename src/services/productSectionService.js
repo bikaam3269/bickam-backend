@@ -440,9 +440,10 @@ class ProductSectionService {
    * @param {number} page - Page number (default: 1)
    * @param {number} limit - Number of products to return (default: 20)
    * @param {number} userId - Optional user ID for favorites/cart
+   * @param {number} governmentId - Optional government ID to filter by governate
    * @returns {Promise<object>} Object with products array and pagination info
    */
-  async getSectionProducts(type, id = null, page = 1, limit = 20, userId = null) {
+  async getSectionProducts(type, id = null, page = 1, limit = 20, userId = null, governmentId = undefined) {
     if (!type || !['vendor', 'category', 'bestSellers', 'lastAdded'].includes(type)) {
       throw new Error('Type must be one of: "vendor", "category", "bestSellers", or "lastAdded"');
     }
@@ -456,16 +457,28 @@ class ProductSectionService {
     const where = { isActive: true };
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
+    // Build include array for vendor with government filter (same as getAllProducts)
+    const vendorInclude = {
+      model: User,
+      as: 'vendor',
+      attributes: ['id', 'name', 'email', 'type'],
+      required: governmentId !== undefined // If filtering by government, make vendor required
+    };
+
+    // Filter by government (governate) through vendor
+    if (governmentId !== undefined) {
+      vendorInclude.where = {
+        governmentId: governmentId
+      };
+    }
+
     if (type === 'vendor') {
       where.vendorId = parseInt(id, 10);
+      
       productsResult = await Product.findAndCountAll({
         where,
         include: [
-          {
-            model: User,
-            as: 'vendor',
-            attributes: ['id', 'name', 'email', 'type']
-          },
+          vendorInclude,
           {
             model: Category,
             as: 'category',
@@ -488,11 +501,7 @@ class ProductSectionService {
       productsResult = await Product.findAndCountAll({
         where,
         include: [
-          {
-            model: User,
-            as: 'vendor',
-            attributes: ['id', 'name', 'email', 'type']
-          },
+          vendorInclude,
           {
             model: Category,
             as: 'category',
@@ -529,11 +538,7 @@ class ProductSectionService {
           ]
         },
         include: [
-          {
-            model: User,
-            as: 'vendor',
-            attributes: ['id', 'name', 'email', 'type']
-          },
+          vendorInclude,
           {
             model: Category,
             as: 'category',
@@ -556,11 +561,7 @@ class ProductSectionService {
       productsResult = await Product.findAndCountAll({
         where,
         include: [
-          {
-            model: User,
-            as: 'vendor',
-            attributes: ['id', 'name', 'email', 'type']
-          },
+          vendorInclude,
           {
             model: Category,
             as: 'category',
