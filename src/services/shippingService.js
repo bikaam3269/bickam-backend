@@ -27,7 +27,7 @@ class ShippingService {
             {
               model: Government,
               as: 'government',
-              attributes: ['id', 'name', 'code']
+              attributes: ['id', 'name', 'order']
             }
           ]
         },
@@ -39,7 +39,7 @@ class ShippingService {
             {
               model: Government,
               as: 'government',
-              attributes: ['id', 'name', 'code']
+              attributes: ['id', 'name', 'order']
             }
           ]
         }
@@ -59,7 +59,7 @@ class ShippingService {
             {
               model: Government,
               as: 'government',
-              attributes: ['id', 'name', 'code']
+              attributes: ['id', 'name', 'order']
             }
           ]
         },
@@ -71,7 +71,7 @@ class ShippingService {
             {
               model: Government,
               as: 'government',
-              attributes: ['id', 'name', 'code']
+              attributes: ['id', 'name', 'order']
             }
           ]
         }

@@ -21,7 +21,7 @@ class CityService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         }
       ],
       order: [['name', 'ASC']]
@@ -34,7 +34,7 @@ class CityService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         }
       ]
     });
@@ -58,7 +58,7 @@ class CityService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         }
       ],
       order: [['name', 'ASC']]

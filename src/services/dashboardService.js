@@ -480,8 +480,8 @@ class DashboardService {
 
   async getGovernorates() {
     const governorates = await Government.findAll({
-      attributes: ['id', 'name', 'code'],
-      order: [['name', 'ASC']]
+      attributes: ['id', 'name', 'order'],
+      order: [['order', 'ASC'], ['name', 'ASC']]
     });
 
     return governorates;

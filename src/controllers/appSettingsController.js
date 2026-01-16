@@ -36,7 +36,7 @@ export const getSettingById = async (req, res, next) => {
  */
 export const getMainSettings = async (req, res, next) => {
   try {
-    let settings = await appSettingsService.getMainSettings();
+    let settings = await appSettingsService.getMainSettings(true); // Always include product sections
     
     // If settings don't exist, create default ones
     if (!settings) {
@@ -48,6 +48,10 @@ export const getMainSettings = async (req, res, next) => {
         isLoginEnabled: true,
         isUnderDevelopment: false
       });
+      
+      // Get settings again with product sections
+      settings = await appSettingsService.getMainSettings(true);
+      
       return sendSuccess(res, settings, 'Main app settings created successfully', 201);
     }
 

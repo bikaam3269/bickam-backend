@@ -1,4 +1,8 @@
 import AppSettings from '../models/AppSettings.js';
+import ProductSection from '../models/ProductSection.js';
+import User from '../models/User.js';
+import Category from '../models/Category.js';
+import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 
 class AppSettingsService {
@@ -15,20 +19,76 @@ class AppSettingsService {
   /**
    * Get app settings by name
    * @param {string} name - Setting name
+   * @param {boolean} includeSections - Include product sections
    * @returns {Promise<object|null>} App setting or null
    */
-  async getSettingByName(name) {
-    return await AppSettings.findOne({
-      where: { name }
+  async getSettingByName(name, includeSections = false) {
+    const settings = await AppSettings.findOne({
+      where: { name },
+      include: includeSections ? [
+        {
+          model: ProductSection,
+          as: 'productSections',
+          include: [
+            {
+              model: User,
+              as: 'vendor',
+              attributes: ['id', 'name', 'phone', 'logoImage'],
+              required: false
+            },
+            {
+              model: Category,
+              as: 'category',
+              attributes: ['id', 'name', 'image'],
+              required: false
+            }
+          ],
+          separate: true,
+          order: [['order', 'ASC'], [sequelize.literal('`ProductSection`.`created_at`'), 'DESC']]
+        }
+      ] : []
     });
+    
+    if (settings && includeSections) {
+      // Transform settings to ensure productSections is properly formatted
+      const settingsData = settings.toJSON ? settings.toJSON() : settings;
+      
+      // Remove productsOrder as it's not an added section
+      if (settingsData.productsOrder !== undefined) {
+        delete settingsData.productsOrder;
+      }
+      
+      // Ensure productSections is always an array
+      if (!settingsData.productSections) {
+        settingsData.productSections = [];
+      }
+      
+      // Transform product sections to ensure all fields are present
+      settingsData.productSections = settingsData.productSections.map(section => {
+        const sectionData = section.toJSON ? section.toJSON() : section;
+        
+        // Ensure name, isActive, and order are always present
+        return {
+          ...sectionData,
+          name: sectionData.name || '',
+          isActive: sectionData.isActive !== undefined ? sectionData.isActive : true,
+          order: sectionData.order !== undefined ? sectionData.order : 0
+        };
+      });
+      
+      return settingsData;
+    }
+    
+    return settings;
   }
 
   /**
    * Get main app settings (default: 'app_main')
+   * @param {boolean} includeSections - Include product sections
    * @returns {Promise<object|null>} Main app settings or null
    */
-  async getMainSettings() {
-    return await this.getSettingByName('app_main');
+  async getMainSettings(includeSections = true) {
+    return await this.getSettingByName('app_main', includeSections);
   }
 
   /**

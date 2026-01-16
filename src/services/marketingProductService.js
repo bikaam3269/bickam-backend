@@ -77,7 +77,7 @@ class MarketingProductService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         },
         {
           model: City,
@@ -142,7 +142,7 @@ class MarketingProductService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         },
         {
           model: City,

@@ -1,0 +1,681 @@
+import { Op } from 'sequelize';
+import sequelize from '../config/sequelize.js';
+import ProductSection from '../models/ProductSection.js';
+import User from '../models/User.js';
+import Category from '../models/Category.js';
+import AppSettings from '../models/AppSettings.js';
+import Product from '../models/Product.js';
+import OrderItem from '../models/OrderItem.js';
+import Order from '../models/Order.js';
+import Subcategory from '../models/Subcategory.js';
+import Favorite from '../models/Favorite.js';
+import Cart from '../models/Cart.js';
+import DiscountProduct from '../models/DiscountProduct.js';
+import Discount from '../models/Discount.js';
+import productService from './productService.js';
+import { getImagePath } from '../utils/imageHelper.js';
+import { convertFilesToPaths } from '../utils/imageHelper.js';
+
+// Helper function to transform section data
+const transformSection = (section) => {
+  if (!section) return section;
+  
+  const sectionData = section.toJSON ? section.toJSON() : section;
+  
+  if (sectionData.image) {
+    sectionData.image = getImagePath(sectionData.image);
+  }
+  
+  return sectionData;
+};
+
+class ProductSectionService {
+  /**
+   * Get all product sections
+   * @param {boolean} includeInactive - Include inactive sections
+   * @param {object} filters - Optional filters
+   * @returns {Promise<Array>} Array of sections
+   */
+  async getAllSections(includeInactive = false, filters = {}) {
+    const where = includeInactive ? {} : { isActive: true };
+    
+    // Add optional filters
+    if (filters.type) {
+      where.type = filters.type;
+    }
+    
+    if (filters.vendorId) {
+      where.vendorId = filters.vendorId;
+    }
+    
+    if (filters.categoryId) {
+      where.categoryId = filters.categoryId;
+    }
+    
+    
+    if (filters.appSettingId) {
+      where.appSettingId = filters.appSettingId;
+    }
+    
+    const sections = await ProductSection.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'phone', 'logoImage'],
+          required: false
+        },
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name', 'image'],
+          required: false
+        },
+        {
+          model: AppSettings,
+          as: 'appSetting',
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ],
+      order: [['order', 'ASC'], [sequelize.literal('`ProductSection`.`created_at`'), 'DESC']]
+    });
+
+    return sections.map(transformSection);
+  }
+
+  /**
+   * Get section by ID
+   * @param {number} id - Section ID
+   * @returns {Promise<object>} Section object
+   */
+  async getSectionById(id) {
+    const section = await ProductSection.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'vendor',
+          attributes: ['id', 'name', 'phone', 'logoImage'],
+          required: false
+        },
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name', 'image'],
+          required: false
+        },
+        {
+          model: AppSettings,
+          as: 'appSetting',
+          attributes: ['id', 'name'],
+          required: false
+        }
+      ]
+    });
+
+    if (!section) {
+      throw new Error('Product section not found');
+    }
+
+    return transformSection(section);
+  }
+
+  /**
+   * Create product section
+   * @param {object} data - Section data
+   * @returns {Promise<object>} Created section
+   */
+  async createSection(data) {
+    const { name, type, vendorId, categoryId, image, rows, order, isActive, appSettingId } = data;
+
+    if (!name || (typeof name === 'string' && name.trim() === '')) {
+      throw new Error('Section name is required');
+    }
+
+    // Validate and normalize type - must match ENUM exactly
+    const validTypes = ['vendor', 'category', 'bestSellers', 'lastAdded'];
+    
+    // Convert to string and trim
+    const typeStr = type ? String(type).trim() : '';
+    
+    if (!typeStr || !validTypes.includes(typeStr)) {
+      throw new Error(`Section type must be one of: "${validTypes.join('", "')}". Received: "${typeStr}"`);
+    }
+
+    // Normalize type to ensure it matches ENUM exactly (case-sensitive)
+    const normalizedType = typeStr;
+
+    // Validate type-specific requirements
+    if (normalizedType === 'vendor' && !vendorId) {
+      throw new Error('Vendor ID is required when type is "vendor"');
+    }
+
+    if (normalizedType === 'category' && !categoryId) {
+      throw new Error('Category ID is required when type is "category"');
+    }
+
+    // bestSellers and lastAdded don't require vendorId or categoryId
+    if ((normalizedType === 'bestSellers' || normalizedType === 'lastAdded') && (vendorId || categoryId)) {
+      throw new Error('Vendor ID and Category ID are not allowed for "bestSellers" or "lastAdded" types');
+    }
+
+    // Validate rows
+    if (rows !== undefined && (rows < 1 || rows > 10)) {
+      throw new Error('Rows must be between 1 and 10');
+    }
+
+    // Get app setting ID (default to main settings if not provided)
+    let finalAppSettingId = appSettingId;
+    if (!finalAppSettingId) {
+      const mainSettings = await AppSettings.findOne({ where: { name: 'app_main' } });
+      if (mainSettings) {
+        finalAppSettingId = mainSettings.id;
+      } else {
+        // If main settings don't exist, use 1 as default
+        finalAppSettingId = 1;
+      }
+    } else {
+      // Verify app setting exists
+      const appSetting = await AppSettings.findByPk(finalAppSettingId);
+      if (!appSetting) {
+        throw new Error('Invalid app setting ID');
+      }
+    }
+
+      // Verify vendor exists if provided
+      if (vendorId) {
+        const vendor = await User.findByPk(vendorId);
+        if (!vendor || vendor.type !== 'vendor') {
+          throw new Error('Invalid vendor ID');
+        }
+      }
+
+    // Verify category exists if provided
+    if (categoryId) {
+      const category = await Category.findByPk(categoryId);
+      if (!category) {
+        throw new Error('Invalid category ID');
+      }
+    }
+
+    const section = await ProductSection.create({
+      name: name.trim(),
+      type: normalizedType,
+      vendorId: normalizedType === 'vendor' ? vendorId : null,
+      categoryId: normalizedType === 'category' ? categoryId : null,
+      image: image || null,
+      rows: rows || 1,
+      order: order || 0,
+      isActive: isActive !== undefined ? isActive : true,
+      appSettingId: finalAppSettingId
+    });
+
+    return await this.getSectionById(section.id);
+  }
+
+  /**
+   * Update product section
+   * @param {number} id - Section ID
+   * @param {object} data - Updated data
+   * @returns {Promise<object>} Updated section
+   */
+  async updateSection(id, data) {
+    const section = await ProductSection.findByPk(id);
+    if (!section) {
+      throw new Error('Product section not found');
+    }
+
+    const { name, type, vendorId, categoryId, image, rows, order, isActive, appSettingId } = data;
+
+    // Validate type if provided
+    if (type && !['vendor', 'category', 'bestSellers', 'lastAdded'].includes(type)) {
+      throw new Error('Section type must be one of: "vendor", "category", "bestSellers", or "lastAdded"');
+    }
+
+    // Use existing type if not provided
+    const finalType = type || section.type;
+
+    // Validate type-specific requirements
+    if (finalType === 'vendor') {
+      const finalVendorId = vendorId !== undefined ? vendorId : section.vendorId;
+      if (!finalVendorId) {
+        throw new Error('Vendor ID is required when type is "vendor"');
+      }
+      // Verify vendor exists
+      const vendor = await User.findByPk(finalVendorId);
+      if (!vendor || vendor.type !== 'vendor') {
+        throw new Error('Invalid vendor ID');
+      }
+    }
+
+    if (finalType === 'category') {
+      const finalCategoryId = categoryId !== undefined ? categoryId : section.categoryId;
+      if (!finalCategoryId) {
+        throw new Error('Category ID is required when type is "category"');
+      }
+      // Verify category exists
+      const category = await Category.findByPk(finalCategoryId);
+      if (!category) {
+        throw new Error('Invalid category ID');
+      }
+    }
+
+    // bestSellers and lastAdded don't require vendorId or categoryId
+    if ((finalType === 'bestSellers' || finalType === 'lastAdded') && (vendorId !== undefined || categoryId !== undefined)) {
+      if (vendorId !== undefined && vendorId !== null) {
+        throw new Error('Vendor ID is not allowed for "bestSellers" or "lastAdded" types');
+      }
+      if (categoryId !== undefined && categoryId !== null) {
+        throw new Error('Category ID is not allowed for "bestSellers" or "lastAdded" types');
+      }
+    }
+
+    // Validate rows
+    if (rows !== undefined && (rows < 1 || rows > 10)) {
+      throw new Error('Rows must be between 1 and 10');
+    }
+
+    // Update appSettingId if provided
+    if (appSettingId !== undefined) {
+      const appSetting = await AppSettings.findByPk(appSettingId);
+      if (!appSetting) {
+        throw new Error('Invalid app setting ID');
+      }
+      section.appSettingId = appSettingId;
+    }
+
+    // Update fields
+    if (name !== undefined) section.name = name;
+    if (type !== undefined) section.type = type;
+    if (finalType === 'vendor') {
+      section.vendorId = vendorId !== undefined ? vendorId : section.vendorId;
+      section.categoryId = null;
+    } else if (finalType === 'category') {
+      section.categoryId = categoryId !== undefined ? categoryId : section.categoryId;
+      section.vendorId = null;
+    } else if (finalType === 'bestSellers' || finalType === 'lastAdded') {
+      section.vendorId = null;
+      section.categoryId = null;
+    }
+    if (image !== undefined) section.image = image;
+    if (rows !== undefined) section.rows = rows;
+    if (order !== undefined) section.order = order;
+    if (isActive !== undefined) section.isActive = isActive;
+
+    await section.save();
+
+    return await this.getSectionById(section.id);
+  }
+
+  /**
+   * Delete product section
+   * @param {number} id - Section ID
+   * @returns {Promise<object>} Deletion result
+   */
+  async deleteSection(id) {
+    const section = await ProductSection.findByPk(id);
+    if (!section) {
+      throw new Error('Product section not found');
+    }
+
+    await section.destroy();
+    return { message: 'Product section deleted successfully' };
+  }
+
+  /**
+   * Reorder sections
+   * @param {Array} sections - Array of {id, order} objects
+   * @returns {Promise<Array>} Updated sections
+   */
+  async reorderSections(sections) {
+    const updatePromises = sections.map(({ id, order }) => {
+      return ProductSection.update({ order }, { where: { id } });
+    });
+
+    await Promise.all(updatePromises);
+
+    // Get new product section orders to check for conflicts with static sections
+    const newProductSectionOrders = sections.map(s => s.order);
+
+    // Update app settings to resolve conflicts and reflect the change
+    try {
+      const mainSettings = await AppSettings.findOne({ where: { name: 'app_main' } });
+      if (mainSettings) {
+        const settingsData = mainSettings.toJSON ? mainSettings.toJSON() : mainSettings;
+        
+        // Static section orders that might conflict
+        const staticSectionOrders = [
+          { key: 'bannersOrder', value: settingsData.bannersOrder },
+          { key: 'categoryOrder', value: settingsData.categoryOrder },
+          { key: 'livestreamOrder', value: settingsData.livestreamOrder },
+          { key: 'vendorsOrder', value: settingsData.vendorsOrder },
+          { key: 'marketplaceOrder', value: settingsData.marketplaceOrder }
+        ].filter(item => item.value !== undefined && item.value !== null);
+
+        // Find conflicts: static sections that use the same order as product sections
+        const conflicts = staticSectionOrders.filter(staticOrder => 
+          newProductSectionOrders.includes(staticOrder.value)
+        );
+
+        // Resolve conflicts by adjusting static section orders
+        if (conflicts.length > 0) {
+          const updateData = {};
+          let maxOrder = Math.max(
+            ...staticSectionOrders.map(s => s.value),
+            ...newProductSectionOrders,
+            0
+          );
+
+          conflicts.forEach(conflict => {
+            // Find next available order that doesn't conflict with product sections or other static sections
+            let newOrder = maxOrder + 1;
+            const allUsedOrders = [
+              ...newProductSectionOrders,
+              ...staticSectionOrders.map(s => s.value)
+            ];
+
+            while (allUsedOrders.includes(newOrder)) {
+              newOrder++;
+            }
+
+            updateData[conflict.key] = newOrder;
+            maxOrder = newOrder;
+          });
+
+          // Update app settings with resolved orders
+          if (Object.keys(updateData).length > 0) {
+            await mainSettings.update({
+              ...updateData,
+              updatedAt: new Date()
+            });
+            console.log('Adjusted static section orders to avoid conflicts:', updateData);
+          }
+        } else {
+          // No conflicts, just update timestamp
+          await mainSettings.update({ updatedAt: new Date() });
+        }
+      }
+    } catch (error) {
+      // Log error but don't fail the reorder operation
+      console.error('Error updating app settings after reordering sections:', error);
+    }
+
+    return await this.getAllSections(true);
+  }
+
+  /**
+   * Get products for a section
+   * @param {string} type - Section type: 'vendor', 'category', 'bestSellers', 'lastAdded'
+   * @param {number} id - Vendor ID or Category ID (required for vendor/category types)
+   * @param {number} limit - Number of products to return
+   * @param {number} userId - Optional user ID for favorites/cart
+   * @returns {Promise<Array>} Array of products
+   */
+  async getSectionProducts(type, id = null, limit = 20, userId = null) {
+    if (!type || !['vendor', 'category', 'bestSellers', 'lastAdded'].includes(type)) {
+      throw new Error('Type must be one of: "vendor", "category", "bestSellers", or "lastAdded"');
+    }
+
+    // Validate id for vendor and category types
+    if ((type === 'vendor' || type === 'category') && !id) {
+      throw new Error(`${type === 'vendor' ? 'Vendor' : 'Category'} ID is required`);
+    }
+
+    let products;
+    const where = { isActive: true };
+
+    if (type === 'vendor') {
+      where.vendorId = parseInt(id, 10);
+      products = await Product.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name'],
+            required: false
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit)
+      });
+    } else if (type === 'category') {
+      where.categoryId = parseInt(id, 10);
+      products = await Product.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name'],
+            required: false
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit)
+      });
+    } else if (type === 'bestSellers') {
+      // Get products ordered by total sales (sum of quantities from order_items)
+      products = await Product.findAll({
+        where,
+        attributes: {
+          include: [
+            [
+              sequelize.literal(`(
+                SELECT COALESCE(SUM(\`oi\`.\`quantity\`), 0)
+                FROM \`order_items\` \`oi\`
+                INNER JOIN \`orders\` \`o\` ON \`oi\`.\`order_id\` = \`o\`.\`id\`
+                WHERE \`oi\`.\`product_id\` = \`Product\`.\`id\`
+                AND \`o\`.\`status\` IN ('delivered')
+              )`),
+              'totalSales'
+            ]
+          ]
+        },
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name'],
+            required: false
+          }
+        ],
+        order: [[sequelize.literal('totalSales'), 'DESC'], [['createdAt', 'DESC']]],
+        limit: parseInt(limit)
+      });
+    } else if (type === 'lastAdded') {
+      // Get latest products
+      products = await Product.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'vendor',
+            attributes: ['id', 'name', 'email', 'type']
+          },
+          {
+            model: Category,
+            as: 'category',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Subcategory,
+            as: 'subcategory',
+            attributes: ['id', 'name'],
+            required: false
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit)
+      });
+    }
+
+    if (!products || products.length === 0) {
+      return [];
+    }
+
+    // Get product IDs
+    const productIds = products.map(p => p.id);
+
+    // Get active discounts
+    const now = new Date();
+    const activeDiscountProducts = await DiscountProduct.findAll({
+      where: {
+        productId: { [Op.in]: productIds }
+      },
+      include: [
+        {
+          model: Discount,
+          as: 'discount',
+          where: {
+            isActive: true,
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          },
+          attributes: ['id', 'discount']
+        }
+      ],
+      attributes: ['productId', 'discountId']
+    });
+
+    // Create discount map
+    const discountMap = new Map();
+    activeDiscountProducts.forEach(dp => {
+      if (dp.discount) {
+        discountMap.set(dp.productId, parseFloat(dp.discount.discount || 0));
+      }
+    });
+
+    // Get favorites and cart items if user is authenticated
+    let favoriteProductIds = new Set();
+    let cartProductIds = new Set();
+
+    if (userId) {
+      const [favorites, cartItems] = await Promise.all([
+        Favorite.findAll({
+          where: { userId },
+          attributes: ['productId']
+        }),
+        Cart.findAll({
+          where: { userId },
+          attributes: ['productId']
+        })
+      ]);
+
+      favorites.forEach(f => favoriteProductIds.add(f.productId));
+      cartItems.forEach(c => cartProductIds.add(c.productId));
+    }
+
+    // Transform products
+    const transformedProducts = products.map(product => {
+      const productData = product.toJSON ? product.toJSON() : product;
+      
+      // Convert images
+      if (productData.images) {
+        if (typeof productData.images === 'string') {
+          try {
+            productData.images = JSON.parse(productData.images);
+          } catch (e) {
+            productData.images = [];
+          }
+        }
+        if (!Array.isArray(productData.images)) {
+          productData.images = [];
+        }
+      } else {
+        productData.images = [];
+      }
+      productData.images = convertFilesToPaths(productData.images);
+
+      // Handle sizes and colors
+      if (productData.sizes) {
+        if (typeof productData.sizes === 'string') {
+          try {
+            productData.sizes = JSON.parse(productData.sizes);
+          } catch (e) {
+            productData.sizes = [];
+          }
+        }
+        if (!Array.isArray(productData.sizes)) {
+          productData.sizes = [];
+        }
+      } else {
+        productData.sizes = [];
+      }
+
+      if (productData.colors) {
+        if (typeof productData.colors === 'string') {
+          try {
+            productData.colors = JSON.parse(productData.colors);
+          } catch (e) {
+            productData.colors = [];
+          }
+        }
+        if (!Array.isArray(productData.colors)) {
+          productData.colors = [];
+        }
+      } else {
+        productData.colors = [];
+      }
+
+      // Add discount
+      const discountPercentage = discountMap.get(productData.id) || 0;
+      productData.discountPercentage = discountPercentage;
+      
+      if (discountPercentage > 0 && productData.price) {
+        const originalPrice = parseFloat(productData.price);
+        productData.originalPrice = originalPrice;
+        productData.discountedPrice = originalPrice * (1 - discountPercentage / 100);
+      } else {
+        productData.originalPrice = productData.price ? parseFloat(productData.price) : null;
+        productData.discountedPrice = productData.price ? parseFloat(productData.price) : null;
+      }
+
+      // Add user-specific flags
+      productData.isFavorite = favoriteProductIds.has(productData.id);
+      productData.isCart = cartProductIds.has(productData.id);
+
+      // Remove totalSales from response if it exists
+      if (productData.totalSales !== undefined) {
+        delete productData.totalSales;
+      }
+
+      return productData;
+    });
+
+    return transformedProducts;
+  }
+}
+
+export default new ProductSectionService();

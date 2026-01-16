@@ -84,7 +84,7 @@ class FollowService {
         include: [{
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         }]
       }],
       order: [['createdAt', 'DESC']]
@@ -114,7 +114,7 @@ class FollowService {
         include: [{
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         }]
       }],
       order: [['createdAt', 'DESC']],

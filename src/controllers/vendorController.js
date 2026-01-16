@@ -124,10 +124,14 @@ export const getAllVendors = async (req, res, next) => {
             limit: req.query.limit || 10
         };
 
+        // userType parameter is ignored since this endpoint always returns vendors
+        // But we'll accept it for compatibility with frontend
+
         const result = await vendorService.getAllVendors(filters);
 
         return sendSuccess(res, result, 'Vendors retrieved successfully');
     } catch (error) {
+        console.error('Error in getAllVendors:', error);
         next(error);
     }
 };

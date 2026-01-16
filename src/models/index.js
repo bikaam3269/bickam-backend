@@ -31,6 +31,7 @@ import Discount from './Discount.js';
 import DiscountProduct from './DiscountProduct.js';
 import Banner from './Banner.js';
 import VendorRating from './VendorRating.js';
+import ProductSection from './ProductSection.js';
 
 // Define associations
 Category.hasMany(Subcategory, {
@@ -147,6 +148,37 @@ Product.hasMany(DiscountProduct, {
   as: 'discounts'
 });
 
+// ProductSection associations
+ProductSection.belongsTo(User, {
+  foreignKey: 'vendorId',
+  as: 'vendor'
+});
+
+ProductSection.belongsTo(Category, {
+  foreignKey: 'categoryId',
+  as: 'category'
+});
+
+ProductSection.belongsTo(AppSettings, {
+  foreignKey: 'appSettingId',
+  as: 'appSetting'
+});
+
+User.hasMany(ProductSection, {
+  foreignKey: 'vendorId',
+  as: 'productSections'
+});
+
+Category.hasMany(ProductSection, {
+  foreignKey: 'categoryId',
+  as: 'productSections'
+});
+
+AppSettings.hasMany(ProductSection, {
+  foreignKey: 'appSettingId',
+  as: 'productSections'
+});
+
 // Initialize all models
 const models = {
   User,
@@ -181,6 +213,7 @@ const models = {
     DiscountProduct,
     Banner,
     VendorRating,
+    ProductSection,
     sequelize
 };
 

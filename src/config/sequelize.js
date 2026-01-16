@@ -17,9 +17,7 @@ const sequelize = new Sequelize(
     dialectOptions: {
       ...(databaseConfig.dialectOptions || {}),
       charset: 'utf8mb4',
-      connectTimeout: 60000,
-      acquireTimeout: 60000,
-      timeout: 30000
+      connectTimeout: 60000
     },
     define: {
       charset: 'utf8mb4',

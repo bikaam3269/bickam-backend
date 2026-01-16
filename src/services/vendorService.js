@@ -159,7 +159,7 @@ class VendorService {
                 {
                     model: Government,
                     as: 'government',
-                    attributes: ['id', 'name', 'code']
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Category,
@@ -191,7 +191,7 @@ class VendorService {
                 {
                     model: Government,
                     as: 'government',
-                    attributes: ['id', 'name', 'code']
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Category,
@@ -318,7 +318,7 @@ class VendorService {
                 {
                     model: Government,
                     as: 'government',
-                    attributes: ['id', 'name', 'code']
+                    attributes: ['id', 'name']
                 },
                 {
                     model: Category,
@@ -335,22 +335,44 @@ class VendorService {
         // Get product images and ratings for all vendors
         const vendorsWithStatus = await Promise.all(
             rows.map(async (vendor) => {
-                // Transform vendor data with image URLs
-                const vendorData = transformVendorImages(vendor);
-                // Set isOnline: false if vendor has no address, latitude, or longitude
-                // Otherwise, isOnline: true
-                vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
+                try {
+                    // Transform vendor data with image URLs
+                    const vendorData = transformVendorImages(vendor);
+                    // Set isOnline: false if vendor has no address, latitude, or longitude
+                    // Otherwise, isOnline: true
+                    vendorData.isOnline = !!(vendorData.address && vendorData.latitude && vendorData.longitude);
 
-                // Get product images as array
-                const productImages = await getProductImages(vendor.id);
-                vendorData.productImages = productImages;
+                    // Get product images as array
+                    try {
+                        const productImages = await getProductImages(vendor.id);
+                        vendorData.productImages = productImages;
+                    } catch (error) {
+                        console.error(`Error getting product images for vendor ${vendor.id}:`, error);
+                        vendorData.productImages = [];
+                    }
 
-                // Get rating from vendor_ratings table
-                const ratingSummary = await ratingService.getVendorRatingSummary(vendor.id);
-                vendorData.rating = ratingSummary.averageRating;
-                vendorData.totalRatings = ratingSummary.totalRatings;
+                    // Get rating from vendor_ratings table
+                    try {
+                        const ratingSummary = await ratingService.getVendorRatingSummary(vendor.id);
+                        vendorData.rating = ratingSummary.averageRating;
+                        vendorData.totalRatings = ratingSummary.totalRatings;
+                    } catch (error) {
+                        console.error(`Error getting rating for vendor ${vendor.id}:`, error);
+                        vendorData.rating = 0;
+                        vendorData.totalRatings = 0;
+                    }
 
-                return vendorData;
+                    return vendorData;
+                } catch (error) {
+                    console.error(`Error processing vendor ${vendor.id}:`, error);
+                    // Return basic vendor data even if there's an error
+                    const vendorData = transformVendorImages(vendor);
+                    vendorData.isOnline = false;
+                    vendorData.productImages = [];
+                    vendorData.rating = 0;
+                    vendorData.totalRatings = 0;
+                    return vendorData;
+                }
             })
         );
 

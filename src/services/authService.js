@@ -289,7 +289,7 @@ class AuthService {
       include: [{
         model: Government,
         as: 'government',
-        attributes: ['id', 'name', 'code']
+        attributes: ['id', 'name', 'order']
       }]
     });
 

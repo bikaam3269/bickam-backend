@@ -7973,6 +7973,338 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Product Sections",
+			"item": [
+				{
+					"name": "Get All Product Sections",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections?includeInactive=false",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections"
+							],
+							"query": [
+								{
+									"key": "includeInactive",
+									"value": "false",
+									"description": "Include inactive sections",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "",
+									"description": "Filter by type: vendor, category, bestSellers, lastAdded",
+									"disabled": true
+								},
+								{
+									"key": "vendorId",
+									"value": "",
+									"description": "Filter by vendor ID",
+									"disabled": true
+								},
+								{
+									"key": "categoryId",
+									"value": "",
+									"description": "Filter by category ID",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get all product sections. **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `includeInactive` (optional): Include inactive sections (default: false)\n- `type` (optional): Filter by type (vendor, category, bestSellers, lastAdded)\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n\n**Response:** Array of product sections with vendor and category information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product Section By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections",
+								"1"
+							]
+						},
+						"description": "Get a specific product section by ID. **Public endpoint** - No authentication required.\n\n**Parameters:**\n- `id`: Product Section ID\n\n**Response:** Product section details with vendor and category information."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Section Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text",
+								"description": "Optional: Include token to get isFavorite and isCart status",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections/products?type=vendor&id=1&limit=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections",
+								"products"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "vendor",
+									"description": "Section type: vendor, category, bestSellers, or lastAdded"
+								},
+								{
+									"key": "id",
+									"value": "1",
+									"description": "Vendor ID or Category ID (required for vendor/category types)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Number of products to return (1-100, default: 20)"
+								}
+							]
+						},
+						"description": "Get products for a section. **Public endpoint** - Authentication optional for user-specific data.\n\n**Query Parameters:**\n- `type` (required): Section type - 'vendor', 'category', 'bestSellers', or 'lastAdded'\n- `id` (required for vendor/category): Vendor ID or Category ID\n- `limit` (optional): Number of products to return (1-100, default: 20)\n\n**Authentication:**\n- Optional: Include Authorization header to get isFavorite and isCart status\n\n**Examples:**\n- Get vendor products: `?type=vendor&id=1&limit=20`\n- Get category products: `?type=category&id=5&limit=20`\n- Get best sellers: `?type=bestSellers&limit=20`\n- Get last added: `?type=lastAdded&limit=20`\n\n**Response:** Array of products with discount information, vendor, category, and user-specific flags (if authenticated)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product Section",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Best Products",
+									"type": "text",
+									"description": "Section name"
+								},
+								{
+									"key": "type",
+									"value": "vendor",
+									"type": "text",
+									"description": "Section type: vendor, category, bestSellers, or lastAdded"
+								},
+								{
+									"key": "vendorId",
+									"value": "10",
+									"type": "text",
+									"description": "Vendor ID (required if type is vendor)"
+								},
+								{
+									"key": "categoryId",
+									"value": "",
+									"type": "text",
+									"description": "Category ID (required if type is category)",
+									"disabled": true
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"description": "Section image (optional)"
+								},
+								{
+									"key": "rows",
+									"value": "2",
+									"type": "text",
+									"description": "Number of rows to display (1-10, default: 1)"
+								},
+								{
+									"key": "order",
+									"value": "1",
+									"type": "text",
+									"description": "Display order (default: 0)"
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"type": "text",
+									"description": "Section active status (default: true)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections"
+							]
+						},
+						"description": "Create a new product section. **Admin only** - Requires admin authentication.\n\n**Body Parameters:**\n- `name` (required): Section name\n- `type` (required): Section type - 'vendor', 'category', 'bestSellers', or 'lastAdded'\n- `vendorId` (required if type is vendor): Vendor ID\n- `categoryId` (required if type is category): Category ID\n- `image` (optional): Section image file\n- `rows` (optional): Number of rows to display (1-10, default: 1)\n- `order` (optional): Display order (default: 0)\n- `isActive` (optional): Section active status (default: true)\n\n**Note:** For 'bestSellers' and 'lastAdded' types, vendorId and categoryId should not be provided.\n\n**Authentication:** Required (Admin only)\n\n**Response:** Created product section with vendor and category information."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product Section",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Updated Section Name",
+									"type": "text",
+									"description": "Section name"
+								},
+								{
+									"key": "type",
+									"value": "vendor",
+									"type": "text",
+									"description": "Section type"
+								},
+								{
+									"key": "vendorId",
+									"value": "10",
+									"type": "text",
+									"description": "Vendor ID"
+								},
+								{
+									"key": "rows",
+									"value": "3",
+									"type": "text",
+									"description": "Number of rows"
+								},
+								{
+									"key": "order",
+									"value": "2",
+									"type": "text",
+									"description": "Display order"
+								},
+								{
+									"key": "isActive",
+									"value": "true",
+									"type": "text",
+									"description": "Active status"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"description": "New image (optional)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections",
+								"1"
+							]
+						},
+						"description": "Update a product section. **Admin only** - Requires admin authentication.\n\n**Parameters:**\n- `id`: Product Section ID\n\n**Body Parameters (all optional):**\n- `name`: Section name\n- `type`: Section type\n- `vendorId`: Vendor ID (if type is vendor)\n- `categoryId`: Category ID (if type is category)\n- `image`: New section image file\n- `rows`: Number of rows (1-10)\n- `order`: Display order\n- `isActive`: Active status\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated product section."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product Section",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections",
+								"1"
+							]
+						},
+						"description": "Delete a product section. **Admin only** - Requires admin authentication.\n\n**Parameters:**\n- `id`: Product Section ID\n\n**Authentication:** Required (Admin only)\n\n**Response:** Success message."
+					},
+					"response": []
+				},
+				{
+					"name": "Reorder Sections",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sections\": [\n    {\n      \"id\": 1,\n      \"order\": 1\n    },\n    {\n      \"id\": 2,\n      \"order\": 2\n    },\n    {\n      \"id\": 3,\n      \"order\": 3\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/product-sections/reorder",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"product-sections",
+								"reorder"
+							]
+						},
+						"description": "Reorder product sections. **Admin only** - Requires admin authentication.\n\n**Body Parameters:**\n- `sections` (required): Array of objects with `id` and `order` fields\n\n**Example:**\n```json\n{\n  \"sections\": [\n    { \"id\": 1, \"order\": 1 },\n    { \"id\": 2, \"order\": 2 },\n    { \"id\": 3, \"order\": 3 }\n  ]\n}\n```\n\n**Important Notes:**\n- If a product section is moved to an order that conflicts with a static section (banners, category, livestream, vendors, marketplace), the static section order will be automatically adjusted to avoid conflicts.\n- App Settings will be automatically updated to reflect the changes.\n\n**Authentication:** Required (Admin only)\n\n**Response:** Updated sections array with adjusted static section orders if conflicts were resolved."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [

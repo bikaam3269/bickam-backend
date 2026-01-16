@@ -35,7 +35,7 @@ class AffiliateService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code'],
+          attributes: ['id', 'name', 'order'],
           required: false
         },
         {
@@ -65,7 +65,7 @@ class AffiliateService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code'],
+          attributes: ['id', 'name', 'order'],
           required: false
         },
         {

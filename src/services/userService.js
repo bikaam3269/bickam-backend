@@ -53,7 +53,7 @@ class UserService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code'],
+          attributes: ['id', 'name', 'order'],
           required: false
         },
         {
@@ -128,7 +128,7 @@ class UserService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         },
         {
           model: City,
@@ -153,7 +153,7 @@ class UserService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         },
         {
           model: City,
@@ -231,7 +231,7 @@ class UserService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'order']
         },
         {
           model: City,
@@ -294,7 +294,7 @@ class UserService {
         {
           model: Government,
           as: 'government',
-          attributes: ['id', 'name', 'code'],
+          attributes: ['id', 'name', 'order'],
           required: false
         },
         {
