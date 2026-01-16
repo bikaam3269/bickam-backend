@@ -700,22 +700,34 @@ class ProductSectionService {
         productData.colors = [];
       }
 
-      // Add discount
-      const discountPercentage = discountMap.get(productData.id) || 0;
-      productData.discountPercentage = discountPercentage;
+      // Calculate prices with discount (same as getAllProducts)
+      const price = productData.price && productData.isPrice ? parseFloat(productData.price) : 0;
+      let discountPercentage = 0;
       
-      if (discountPercentage > 0 && productData.price) {
-        const originalPrice = parseFloat(productData.price);
-        productData.originalPrice = originalPrice;
-        productData.discountedPrice = originalPrice * (1 - discountPercentage / 100);
-      } else {
-        productData.originalPrice = productData.price ? parseFloat(productData.price) : null;
-        productData.discountedPrice = productData.price ? parseFloat(productData.price) : null;
+      // Check discount map first (active discount), then product discount field
+      if (discountMap.has(productData.id)) {
+        discountPercentage = discountMap.get(productData.id);
+      } else if (productData.discount) {
+        discountPercentage = parseFloat(productData.discount || 0);
       }
-
-      // Add user-specific flags
+      
+      const originalPrice = price;
+      const finalPrice = discountPercentage > 0 
+        ? price * (1 - discountPercentage / 100)
+        : price;
+      
+      productData.originalPrice = parseFloat(originalPrice.toFixed(2));
+      productData.finalPrice = parseFloat(finalPrice.toFixed(2));
+      productData.priceAfterDiscount = parseFloat(finalPrice.toFixed(2));
+      productData.discount = discountPercentage;
+      productData.isDiscount = discountPercentage > 0;
+      
+      // Add favorite and cart status
       productData.isFavorite = favoriteProductIds.has(productData.id);
       productData.isCart = cartProductIds.has(productData.id);
+      
+      // Add status based on isActive (same as getAllProducts)
+      productData.status = productData.isActive ? 'published' : 'pending';
 
       // Remove totalSales from response if it exists
       if (productData.totalSales !== undefined) {
