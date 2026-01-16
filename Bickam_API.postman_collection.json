@@ -5250,15 +5250,15 @@
 										"disabled": true
 									}
 								],
-							"url": {
+								"url": {
 								"raw": "{{base_url}}/api/v1/live-streams?governorateId=",
-								"host": [
-									"{{base_url}}"
-								],
-								"path": [
-									"api",
-									"v1",
-									"live-streams"
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"live-streams"
 								],
 								"query": [
 									{
@@ -5267,8 +5267,8 @@
 										"description": "Filter by governorate ID (optional)",
 										"disabled": true
 									}
-								]
-							},
+									]
+								},
 							"description": "Get all currently active (live) streams.\n\n**Query Parameters:**\n- `governorateId` (optional): Filter streams by vendor's governorate ID\n\n**Authentication:** Optional - If authenticated, returns whether user liked each stream.\n\n**Response:** Array of active live streams with vendor info, viewer count, and likes count."
 							},
 							"response": []
@@ -7983,7 +7983,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/product-sections?includeInactive=false",
+							"raw": "{{base_url}}/api/v1/product-sections?page=1&limit=50",
 							"host": [
 								"{{base_url}}"
 							],
@@ -7994,9 +7994,19 @@
 							],
 							"query": [
 								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
+									"key": "limit",
+									"value": "50",
+									"description": "Number of items per page (default: 50)"
+								},
+								{
 									"key": "includeInactive",
 									"value": "false",
-									"description": "Include inactive sections",
+									"description": "Include inactive sections (default: false)",
 									"disabled": true
 								},
 								{
@@ -8019,7 +8029,7 @@
 								}
 							]
 						},
-						"description": "Get all product sections. **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `includeInactive` (optional): Include inactive sections (default: false)\n- `type` (optional): Filter by type (vendor, category, bestSellers, lastAdded)\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n\n**Response:** Array of product sections with vendor and category information."
+						"description": "Get all product sections with pagination. **Public endpoint** - No authentication required.\n\n**Query Parameters:**\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Number of items per page (default: 50)\n- `includeInactive` (optional): Include inactive sections (default: false)\n- `type` (optional): Filter by type (vendor, category, bestSellers, lastAdded)\n- `vendorId` (optional): Filter by vendor ID\n- `categoryId` (optional): Filter by category ID\n\n**Response Example:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Product sections retrieved successfully\",\n  \"data\": {\n    \"sections\": [\n      {\n        \"id\": 1,\n        \"name\": \"Section Name\",\n        \"type\": \"vendor\",\n        \"order\": 1,\n        \"isActive\": true,\n        \"vendor\": { ... },\n        \"category\": null\n      }\n    ],\n    \"pagination\": {\n      \"total\": 15,\n      \"page\": 1,\n      \"limit\": 50,\n      \"totalPages\": 1,\n      \"hasMore\": false\n    }\n  }\n}\n```\n\n**Note:** Response structure is similar to products endpoint with `sections` array and `pagination` object."
 					},
 					"response": []
 				},

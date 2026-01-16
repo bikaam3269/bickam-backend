@@ -12,7 +12,9 @@ export const getAllSections = async (req, res, next) => {
     const filters = {
       type: req.query.type || null,
       vendorId: req.query.vendorId ? parseInt(req.query.vendorId, 10) : null,
-      categoryId: req.query.categoryId ? parseInt(req.query.categoryId, 10) : null
+      categoryId: req.query.categoryId ? parseInt(req.query.categoryId, 10) : null,
+      page: req.query.page || 1,
+      limit: req.query.limit || 50
     };
 
     // Remove null filters
@@ -22,9 +24,9 @@ export const getAllSections = async (req, res, next) => {
       }
     });
 
-    const sections = await productSectionService.getAllSections(includeInactive, filters);
+    const result = await productSectionService.getAllSections(includeInactive, filters);
 
-    return sendSuccess(res, sections, 'Product sections retrieved successfully');
+    return sendSuccess(res, result, 'Product sections retrieved successfully');
   } catch (error) {
     next(error);
   }

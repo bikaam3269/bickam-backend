@@ -33,31 +33,42 @@ class ProductSectionService {
   /**
    * Get all product sections
    * @param {boolean} includeInactive - Include inactive sections
-   * @param {object} filters - Optional filters
-   * @returns {Promise<Array>} Array of sections
+   * @param {object} filters - Optional filters (type, vendorId, categoryId, appSettingId, page, limit)
+   * @returns {Promise<object>} Object with sections array and pagination info
    */
   async getAllSections(includeInactive = false, filters = {}) {
+    const { 
+      type, 
+      vendorId, 
+      categoryId, 
+      appSettingId,
+      page = 1,
+      limit = 50
+    } = filters;
+
     const where = includeInactive ? {} : { isActive: true };
     
     // Add optional filters
-    if (filters.type) {
-      where.type = filters.type;
+    if (type) {
+      where.type = type;
     }
     
-    if (filters.vendorId) {
-      where.vendorId = filters.vendorId;
+    if (vendorId) {
+      where.vendorId = vendorId;
     }
     
-    if (filters.categoryId) {
-      where.categoryId = filters.categoryId;
+    if (categoryId) {
+      where.categoryId = categoryId;
     }
     
-    
-    if (filters.appSettingId) {
-      where.appSettingId = filters.appSettingId;
+    if (appSettingId) {
+      where.appSettingId = appSettingId;
     }
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
     
-    const sections = await ProductSection.findAll({
+    // Get sections with pagination
+    const sectionsResult = await ProductSection.findAndCountAll({
       where,
       include: [
         {
@@ -79,10 +90,25 @@ class ProductSectionService {
           required: false
         }
       ],
-      order: [['order', 'ASC'], [sequelize.literal('`ProductSection`.`created_at`'), 'DESC']]
+      order: [['order', 'ASC'], [sequelize.literal('`ProductSection`.`created_at`'), 'DESC']],
+      limit: parseInt(limit),
+      offset: offset,
+      distinct: true // Important when using includes
     });
 
-    return sections.map(transformSection);
+    const totalCount = sectionsResult.count;
+    const formattedSections = sectionsResult.rows.map(transformSection);
+
+    return {
+      sections: formattedSections,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / parseInt(limit)),
+        hasMore: offset + formattedSections.length < totalCount
+      }
+    };
   }
 
   /**
@@ -401,7 +427,10 @@ class ProductSectionService {
       console.error('Error updating app settings after reordering sections:', error);
     }
 
-    return await this.getAllSections(true);
+    // Get all sections without pagination for reorder response
+    const allSectionsResult = await this.getAllSections(true, { limit: 1000 });
+    // Return sections array (backward compatibility)
+    return allSectionsResult.sections || allSectionsResult;
   }
 
   /**
