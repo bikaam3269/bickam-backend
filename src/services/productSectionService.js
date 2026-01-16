@@ -437,11 +437,12 @@ class ProductSectionService {
    * Get products for a section
    * @param {string} type - Section type: 'vendor', 'category', 'bestSellers', 'lastAdded'
    * @param {number} id - Vendor ID or Category ID (required for vendor/category types)
-   * @param {number} limit - Number of products to return
+   * @param {number} page - Page number (default: 1)
+   * @param {number} limit - Number of products to return (default: 20)
    * @param {number} userId - Optional user ID for favorites/cart
-   * @returns {Promise<Array>} Array of products
+   * @returns {Promise<object>} Object with products array and pagination info
    */
-  async getSectionProducts(type, id = null, limit = 20, userId = null) {
+  async getSectionProducts(type, id = null, page = 1, limit = 20, userId = null) {
     if (!type || !['vendor', 'category', 'bestSellers', 'lastAdded'].includes(type)) {
       throw new Error('Type must be one of: "vendor", "category", "bestSellers", or "lastAdded"');
     }
@@ -451,12 +452,13 @@ class ProductSectionService {
       throw new Error(`${type === 'vendor' ? 'Vendor' : 'Category'} ID is required`);
     }
 
-    let products;
+    let productsResult;
     const where = { isActive: true };
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
     if (type === 'vendor') {
       where.vendorId = parseInt(id, 10);
-      products = await Product.findAll({
+      productsResult = await Product.findAndCountAll({
         where,
         include: [
           {
@@ -477,11 +479,13 @@ class ProductSectionService {
           }
         ],
         order: [['createdAt', 'DESC']],
-        limit: parseInt(limit)
+        limit: parseInt(limit),
+        offset: offset,
+        distinct: true
       });
     } else if (type === 'category') {
       where.categoryId = parseInt(id, 10);
-      products = await Product.findAll({
+      productsResult = await Product.findAndCountAll({
         where,
         include: [
           {
@@ -502,11 +506,13 @@ class ProductSectionService {
           }
         ],
         order: [['createdAt', 'DESC']],
-        limit: parseInt(limit)
+        limit: parseInt(limit),
+        offset: offset,
+        distinct: true
       });
     } else if (type === 'bestSellers') {
       // Get products ordered by total sales (sum of quantities from order_items)
-      products = await Product.findAll({
+      productsResult = await Product.findAndCountAll({
         where,
         attributes: {
           include: [
@@ -541,11 +547,13 @@ class ProductSectionService {
           }
         ],
         order: [[sequelize.literal('totalSales'), 'DESC'], [['createdAt', 'DESC']]],
-        limit: parseInt(limit)
+        limit: parseInt(limit),
+        offset: offset,
+        distinct: true
       });
     } else if (type === 'lastAdded') {
       // Get latest products
-      products = await Product.findAll({
+      productsResult = await Product.findAndCountAll({
         where,
         include: [
           {
@@ -566,12 +574,26 @@ class ProductSectionService {
           }
         ],
         order: [['createdAt', 'DESC']],
-        limit: parseInt(limit)
+        limit: parseInt(limit),
+        offset: offset,
+        distinct: true
       });
     }
 
+    const totalCount = productsResult?.count || 0;
+    const products = productsResult?.rows || [];
+
     if (!products || products.length === 0) {
-      return [];
+      return {
+        products: [],
+        pagination: {
+          total: totalCount,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(totalCount / parseInt(limit)),
+          hasMore: false
+        }
+      };
     }
 
     // Get product IDs
@@ -703,7 +725,16 @@ class ProductSectionService {
       return productData;
     });
 
-    return transformedProducts;
+    return {
+      products: transformedProducts,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / parseInt(limit)),
+        hasMore: offset + transformedProducts.length < totalCount
+      }
+    };
   }
 }
 

@@ -8068,7 +8068,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/v1/product-sections/products?type=vendor&id=1&limit=20",
+							"raw": "{{base_url}}/api/v1/product-sections/products?type=vendor&id=1&page=1&limit=20",
 							"host": [
 								"{{base_url}}"
 							],
@@ -8090,13 +8090,18 @@
 									"description": "Vendor ID or Category ID (required for vendor/category types)"
 								},
 								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number (default: 1)"
+								},
+								{
 									"key": "limit",
 									"value": "20",
 									"description": "Number of products to return (1-100, default: 20)"
 								}
 							]
 						},
-						"description": "Get products for a section. **Public endpoint** - Authentication optional for user-specific data.\n\n**Query Parameters:**\n- `type` (required): Section type - 'vendor', 'category', 'bestSellers', or 'lastAdded'\n- `id` (required for vendor/category): Vendor ID or Category ID\n- `limit` (optional): Number of products to return (1-100, default: 20)\n\n**Authentication:**\n- Optional: Include Authorization header to get isFavorite and isCart status\n\n**Examples:**\n- Get vendor products: `?type=vendor&id=1&limit=20`\n- Get category products: `?type=category&id=5&limit=20`\n- Get best sellers: `?type=bestSellers&limit=20`\n- Get last added: `?type=lastAdded&limit=20`\n\n**Response:** Array of products with discount information, vendor, category, and user-specific flags (if authenticated)."
+						"description": "Get products for a section with pagination. **Public endpoint** - Authentication optional for user-specific data.\n\n**Query Parameters:**\n- `type` (required): Section type - 'vendor', 'category', 'bestSellers', or 'lastAdded'\n- `id` (required for vendor/category): Vendor ID or Category ID\n- `page` (optional): Page number (default: 1)\n- `limit` (optional): Number of products to return (1-100, default: 20)\n\n**Authentication:**\n- Optional: Include Authorization header to get isFavorite and isCart status\n\n**Examples:**\n- Get vendor products: `?type=vendor&id=1&page=1&limit=20`\n- Get category products: `?type=category&id=5&page=1&limit=20`\n- Get best sellers: `?type=bestSellers&page=1&limit=20`\n- Get last added: `?type=lastAdded&page=1&limit=20`\n\n**Response Example:**\n```json\n{\n  \"statusCode\": 200,\n  \"message\": \"Products retrieved successfully\",\n  \"data\": {\n    \"products\": [\n      {\n        \"id\": 1,\n        \"name\": \"Product Name\",\n        \"price\": \"100.00\",\n        \"vendor\": { ... },\n        \"category\": { ... },\n        \"isFavorite\": false,\n        \"isCart\": false\n      }\n    ],\n    \"pagination\": {\n      \"total\": 50,\n      \"page\": 1,\n      \"limit\": 20,\n      \"totalPages\": 3,\n      \"hasMore\": true\n    }\n  }\n}\n```\n\n**Note:** Response structure is similar to products endpoint with `products` array and `pagination` object."
 					},
 					"response": []
 				},

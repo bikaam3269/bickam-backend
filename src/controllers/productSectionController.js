@@ -232,6 +232,7 @@ export const reorderSections = async (req, res, next) => {
 export const getSectionProducts = async (req, res, next) => {
   try {
     const { type, id } = req.query;
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 20;
     const userId = req.user ? req.user.id : null;
 
@@ -239,14 +240,17 @@ export const getSectionProducts = async (req, res, next) => {
       return sendError(res, 'Type parameter is required', 400);
     }
 
-    // Validate limit
+    // Validate pagination
+    if (page < 1) {
+      return sendError(res, 'Page must be greater than 0', 400);
+    }
     if (limit < 1 || limit > 100) {
       return sendError(res, 'Limit must be between 1 and 100', 400);
     }
 
-    const products = await productSectionService.getSectionProducts(type, id, limit, userId);
+    const result = await productSectionService.getSectionProducts(type, id, page, limit, userId);
 
-    return sendSuccess(res, products, 'Products retrieved successfully');
+    return sendSuccess(res, result, 'Products retrieved successfully');
   } catch (error) {
     if (error.message.includes('Type must be') || 
         error.message.includes('ID is required') ||
