@@ -137,5 +137,21 @@ export const getAdvertisementBanners = async (req, res, next) => {
   }
 };
 
+export const reorderBanners = async (req, res, next) => {
+  try {
+    const { banners } = req.body;
+
+    if (!Array.isArray(banners)) {
+      return sendError(res, 'Banners must be an array', 400);
+    }
+
+    const updatedBanners = await bannerService.reorderBanners(banners);
+
+    return sendSuccess(res, updatedBanners, 'Banners reordered successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 

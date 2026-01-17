@@ -224,7 +224,11 @@ class ProductSectionService {
         throw new Error('Invalid category ID');
       }
     }
+ 
 
+
+
+    
     const section = await ProductSection.create({
       name: name.trim(),
       type: normalizedType,

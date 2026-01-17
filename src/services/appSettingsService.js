@@ -1,9 +1,11 @@
 import AppSettings from '../models/AppSettings.js';
 import ProductSection from '../models/ProductSection.js';
+import Banner from '../models/Banner.js';
 import User from '../models/User.js';
 import Category from '../models/Category.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
+import { getImagePath } from '../utils/imageHelper.js';
 
 class AppSettingsService {
   /**
@@ -19,7 +21,7 @@ class AppSettingsService {
   /**
    * Get app settings by name
    * @param {string} name - Setting name
-   * @param {boolean} includeSections - Include product sections
+   * @param {boolean} includeSections - Include product sections and interactive banners
    * @returns {Promise<object|null>} App setting or null
    */
   async getSettingByName(name, includeSections = false) {
@@ -74,6 +76,27 @@ class AppSettingsService {
           isActive: sectionData.isActive !== undefined ? sectionData.isActive : true,
           order: sectionData.order !== undefined ? sectionData.order : 0
         };
+      });
+
+      // Get interactive banners (type = 'interactive')
+      const interactiveBanners = await Banner.findAll({
+        where: {
+          isActive: true,
+          type: 'interactive'
+        },
+        order: [['order', 'ASC'], ['createdAt', 'DESC']],
+        attributes: ['id', 'image', 'text', 'type', 'actionType', 'action', 'isActive', 'order', 'createdAt', 'updatedAt']
+      });
+
+      // Transform banners with image paths
+      settingsData.interactiveBanners = interactiveBanners.map(banner => {
+        const bannerData = banner.toJSON ? banner.toJSON() : banner;
+        
+        if (bannerData.image) {
+          bannerData.image = getImagePath(bannerData.image);
+        }
+        
+        return bannerData;
       });
       
       return settingsData;

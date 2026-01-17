@@ -20,6 +20,12 @@ const Banner = sequelize.define('Banner', {
     charset: 'utf8mb4',
     collate: 'utf8mb4_unicode_ci'
   },
+  type: {
+    type: DataTypes.ENUM('interactive', 'advertisement'),
+    allowNull: false,
+    defaultValue: 'interactive',
+    comment: 'Banner type: interactive (has action) or advertisement (image only)'
+  },
   actionType: {
     type: DataTypes.ENUM('vendor', 'product', 'link', 'advertisement'),
     allowNull: true,

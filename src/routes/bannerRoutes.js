@@ -5,7 +5,8 @@ import {
   createBanner,
   updateBanner,
   deleteBanner,
-  getAdvertisementBanners
+  getAdvertisementBanners,
+  reorderBanners
 } from '../controllers/bannerController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { authorize } from '../middleware/authMiddleware.js';
@@ -23,6 +24,7 @@ router.use(authenticate);
 router.use(authorize('admin'));
 
 router.post('/', upload.single('image'), createBanner);
+router.post('/reorder', reorderBanners);
 router.put('/:id', upload.single('image'), updateBanner);
 router.delete('/:id', deleteBanner);
 
