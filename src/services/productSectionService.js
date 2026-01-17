@@ -440,10 +440,10 @@ class ProductSectionService {
    * @param {number} page - Page number (default: 1)
    * @param {number} limit - Number of products to return (default: 20)
    * @param {number} userId - Optional user ID for favorites/cart
-   * @param {number} governmentId - Optional government ID to filter by governate
+   * @param {number} governorateId - Optional governorate ID to filter by vendor's governorate
    * @returns {Promise<object>} Object with products array and pagination info
    */
-  async getSectionProducts(type, id = null, page = 1, limit = 20, userId = null, governmentId = undefined) {
+  async getSectionProducts(type, id = null, page = 1, limit = 20, userId = null, governorateId = null) {
     if (!type || !['vendor', 'category', 'bestSellers', 'lastAdded'].includes(type)) {
       throw new Error('Type must be one of: "vendor", "category", "bestSellers", or "lastAdded"');
     }
@@ -457,18 +457,18 @@ class ProductSectionService {
     const where = { isActive: true };
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Build include array for vendor with government filter (same as getAllProducts)
+    // Build include array for vendor with governorate filter
     const vendorInclude = {
       model: User,
       as: 'vendor',
       attributes: ['id', 'name', 'email', 'type'],
-      required: governmentId !== undefined // If filtering by government, make vendor required
+      required: governorateId !== null && governorateId !== undefined // If filtering by governorate, make vendor required
     };
 
-    // Filter by government (governate) through vendor
-    if (governmentId !== undefined) {
+    // Filter by governorate through vendor
+    if (governorateId !== null && governorateId !== undefined) {
       vendorInclude.where = {
-        governmentId: governmentId
+        governmentId: governorateId
       };
     }
 
