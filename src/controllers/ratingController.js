@@ -151,6 +151,34 @@ export const getVendorRatingSummary = async (req, res, next) => {
   }
 };
 
+/**
+ * Delete rating by rateId
+ * DELETE /api/v1/ratings/:rateId
+ */
+export const deleteRatingById = async (req, res, next) => {
+  try {
+    const { rateId } = req.params;
+    const userId = req.user.id;
+    const isAdmin = req.user.type === 'admin';
+
+    const result = await ratingService.deleteRatingById(
+      parseInt(rateId),
+      userId,
+      isAdmin
+    );
+
+    return sendSuccess(res, result, 'Rating deleted successfully');
+  } catch (error) {
+    if (error.message === 'Rating not found') {
+      return sendError(res, error.message, 404);
+    }
+    if (error.message === 'Unauthorized to delete this rating') {
+      return sendError(res, error.message, 403);
+    }
+    next(error);
+  }
+};
+
 
 
 

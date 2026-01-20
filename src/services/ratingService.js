@@ -202,6 +202,36 @@ class RatingService {
   }
 
   /**
+   * Delete rating by rateId
+   * @param {number} rateId - Rating ID
+   * @param {number} userId - User ID (to verify ownership or admin)
+   * @param {boolean} isAdmin - Whether user is admin
+   */
+  async deleteRatingById(rateId, userId, isAdmin = false) {
+    const vendorRating = await VendorRating.findByPk(rateId, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name']
+        }
+      ]
+    });
+
+    if (!vendorRating) {
+      throw new Error('Rating not found');
+    }
+
+    // Check if user is the owner of the rating or is admin
+    if (!isAdmin && vendorRating.userId !== userId) {
+      throw new Error('Unauthorized to delete this rating');
+    }
+
+    await vendorRating.destroy();
+    return { message: 'Rating deleted successfully' };
+  }
+
+  /**
    * Get vendor rating summary (for vendor dashboard)
    * @param {number} vendorId - Vendor ID
    */

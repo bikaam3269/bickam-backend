@@ -5,7 +5,8 @@ import {
   getMyRatingForVendor,
   updateRating,
   deleteRating,
-  getVendorRatingSummary
+  getVendorRatingSummary,
+  deleteRatingById
 } from '../controllers/ratingController.js';
 import { authenticate, optionalAuthenticate } from '../middleware/authMiddleware.js';
 
@@ -21,6 +22,9 @@ router.use(authenticate);
 
 // Rate a vendor
 router.post('/', rateVendor);
+
+// Delete rating by rateId (must come before /vendor/:vendorId routes to avoid conflicts)
+router.delete('/:rateId', deleteRatingById);
 
 // Get user's rating for a vendor (must come before /vendor/:vendorId routes)
 router.get('/vendor/:vendorId/my', getMyRatingForVendor);
