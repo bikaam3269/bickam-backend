@@ -46,6 +46,7 @@ export const getMainSettings = async (req, res, next) => {
         value: '{}',
         isLiveStreamEnabled: true,
         isLoginEnabled: true,
+        isMarketPercentageEnabled: true,
         isUnderDevelopment: false
       });
       

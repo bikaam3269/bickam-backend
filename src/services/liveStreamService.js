@@ -31,6 +31,10 @@ class LiveStreamService {
     if (vendor.type !== 'vendor') {
       throw new Error('User is not a vendor');
     }
+    // Check if vendor can make live streams
+    if (vendor.canMakeLiveStream === false) {
+      throw new Error('Vendor is not allowed to create live streams');
+    }
 
     // Check if vendor already has an active live stream
     const activeLiveStream = await withQueryTimeout(() => LiveStream.findOne({

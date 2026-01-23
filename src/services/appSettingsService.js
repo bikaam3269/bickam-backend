@@ -122,7 +122,7 @@ class AppSettingsService {
   async createSettings(data) {
     const { 
       name, description, value, 
-      isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment,
+      isLiveStreamEnabled, isLoginEnabled, isMarketPercentageEnabled, isUnderDevelopment,
       isBannersActive, isProductsActive, isCategoryActive,
       isVendorsActive, isMarketplaceActive,
       bannersOrder, productsOrder, categoryOrder,
@@ -145,6 +145,7 @@ class AppSettingsService {
       value: value || null,
       isLiveStreamEnabled: isLiveStreamEnabled !== undefined ? isLiveStreamEnabled : true,
       isLoginEnabled: isLoginEnabled !== undefined ? isLoginEnabled : true,
+      isMarketPercentageEnabled: isMarketPercentageEnabled !== undefined ? isMarketPercentageEnabled : true,
       isUnderDevelopment: isUnderDevelopment !== undefined ? isUnderDevelopment : false,
       isBannersActive: isBannersActive !== undefined ? isBannersActive : true,
       isProductsActive: isProductsActive !== undefined ? isProductsActive : true,
@@ -174,7 +175,7 @@ class AppSettingsService {
 
     const { 
       name, description, value, 
-      isLiveStreamEnabled, isLoginEnabled, isUnderDevelopment,
+      isLiveStreamEnabled, isLoginEnabled, isMarketPercentageEnabled, isUnderDevelopment,
       isBannersActive, isProductsActive, isCategoryActive,
       isVendorsActive, isMarketplaceActive,
       bannersOrder, productsOrder, categoryOrder,
@@ -195,6 +196,7 @@ class AppSettingsService {
     if (value !== undefined) settings.value = value;
     if (isLiveStreamEnabled !== undefined) settings.isLiveStreamEnabled = isLiveStreamEnabled;
     if (isLoginEnabled !== undefined) settings.isLoginEnabled = isLoginEnabled;
+    if (isMarketPercentageEnabled !== undefined) settings.isMarketPercentageEnabled = isMarketPercentageEnabled;
     if (isUnderDevelopment !== undefined) settings.isUnderDevelopment = isUnderDevelopment;
     if (isBannersActive !== undefined) settings.isBannersActive = isBannersActive;
     if (isProductsActive !== undefined) settings.isProductsActive = isProductsActive;

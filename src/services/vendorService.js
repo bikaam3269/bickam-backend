@@ -850,6 +850,61 @@ class VendorService {
             }
         };
     }
+
+    /**
+     * Update vendor's canMakeLiveStream permission
+     * @param {number} vendorId - Vendor ID
+     * @param {boolean} canMakeLiveStream - Whether vendor can make live streams
+     * @returns {Promise<object>} Updated vendor
+     */
+    async updateVendorLiveStreamPermission(vendorId, canMakeLiveStream) {
+        // Find the vendor
+        const vendor = await User.findByPk(vendorId);
+
+        if (!vendor) {
+            throw new Error('Vendor not found');
+        }
+
+        // Check if user is a vendor
+        if (vendor.type !== 'vendor') {
+            throw new Error('User is not a vendor');
+        }
+
+        // Update canMakeLiveStream
+        vendor.canMakeLiveStream = canMakeLiveStream;
+        await vendor.save();
+
+        // Return transformed vendor data
+        return transformVendorImages(vendor);
+    }
+
+    /**
+     * Check if vendor can make live streams
+     * @param {number} vendorId - Vendor ID
+     * @returns {Promise<object>} Check result with canMakeLiveStream status
+     */
+    async checkVendorLiveStreamAbility(vendorId) {
+        // Find the vendor
+        const vendor = await User.findByPk(vendorId, {
+            attributes: ['id', 'name', 'type', 'canMakeLiveStream']
+        });
+
+        if (!vendor) {
+            throw new Error('Vendor not found');
+        }
+
+        // Check if user is a vendor
+        if (vendor.type !== 'vendor') {
+            throw new Error('User is not a vendor');
+        }
+
+        // Return check result
+        return {
+            vendorId: vendor.id,
+            vendorName: vendor.name,
+            canMakeLiveStream: vendor.canMakeLiveStream === true
+        };
+    }
 }
 
 export default new VendorService();

@@ -166,6 +166,13 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'fcm_token'
+  },
+  // Vendor live stream permission
+  canMakeLiveStream: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    field: 'can_make_live_stream',
+    comment: 'Whether vendor can create live streams'
   }
 }, {
   tableName: 'users',

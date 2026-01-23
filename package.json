@@ -27,7 +27,8 @@
     "migrate:marketing-products": "node create_marketing_products_table_migration.js",
     "migrate:discounts": "node create_discounts_table_migration.js",
     "migrate:ratings": "node create_vendor_ratings_table_migration.js",
-    "migrate:product-sizes-colors": "node add_sizes_and_colors_to_products_migration.js"
+    "migrate:product-sizes-colors": "node add_sizes_and_colors_to_products_migration.js",
+    "migrate:market-percentage": "node add_market_percentage_enabled_migration.js"
   },
   "keywords": [],
   "author": "",

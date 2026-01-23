@@ -222,8 +222,11 @@ class RatingService {
       throw new Error('Rating not found');
     }
 
-    // Check if user is the owner of the rating or is admin
-    if (!isAdmin && vendorRating.userId !== userId) {
+    // Check if user is the owner of the rating, the vendor being rated, or is admin
+    const isOwner = vendorRating.userId === userId;
+    const isVendor = vendorRating.vendorId === userId;
+    
+    if (!isAdmin && !isOwner && !isVendor) {
       throw new Error('Unauthorized to delete this rating');
     }
 

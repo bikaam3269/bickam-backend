@@ -360,3 +360,63 @@ export const getVendorRevenue = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Update vendor's canMakeLiveStream permission
+ * PUT /api/v1/vendors/:id/can-make-live-stream
+ * Body: { canMakeLiveStream: true/false }
+ */
+export const updateVendorLiveStreamPermission = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { canMakeLiveStream } = req.body;
+
+        // Only admin can update this permission
+        if (req.user.type !== 'admin') {
+            return sendError(res, 'Only admin can update live stream permission', 403);
+        }
+
+        // Validate input
+        if (typeof canMakeLiveStream !== 'boolean') {
+            return sendError(res, 'canMakeLiveStream must be a boolean value', 400);
+        }
+
+        const vendor = await vendorService.updateVendorLiveStreamPermission(
+            parseInt(id),
+            canMakeLiveStream
+        );
+
+        return sendSuccess(res, vendor, 'Live stream permission updated successfully');
+    } catch (error) {
+        if (error.message === 'Vendor not found') {
+            return sendError(res, error.message, 404);
+        }
+        if (error.message === 'User is not a vendor') {
+            return sendError(res, error.message, 400);
+        }
+        next(error);
+    }
+};
+
+/**
+ * Check if vendor can make live streams
+ * GET /api/v1/vendors/:id/can-make-live-stream
+ * Returns status 200 in both cases (can or cannot)
+ */
+export const checkVendorLiveStreamAbility = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const result = await vendorService.checkVendorLiveStreamAbility(parseInt(id));
+
+        return sendSuccess(res, result, 'Live stream ability checked successfully');
+    } catch (error) {
+        if (error.message === 'Vendor not found') {
+            return sendError(res, error.message, 404);
+        }
+        if (error.message === 'User is not a vendor') {
+            return sendError(res, error.message, 400);
+        }
+        next(error);
+    }
+};

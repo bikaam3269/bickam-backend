@@ -41,6 +41,12 @@ const AppSettings = sequelize.define('AppSettings', {
     defaultValue: true,
     field: 'is_login_enabled'
   },
+  isMarketPercentageEnabled: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'is_market_percentage_enabled'
+  },
   isUnderDevelopment: {
     type: DataTypes.BOOLEAN,
     allowNull: false,

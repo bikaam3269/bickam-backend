@@ -9,7 +9,9 @@ import {
     getVendorRevenue,
     getVendorFollowers,
     debugVendorOrders,
-    debugVendorDiscounts
+    debugVendorDiscounts,
+    updateVendorLiveStreamPermission,
+    checkVendorLiveStreamAbility
 } from '../controllers/vendorController.js';
 import { authenticate, authorize, optionalAuthenticate } from '../middleware/authMiddleware.js';
 import { upload } from '../middleware/upload.js';
@@ -51,6 +53,21 @@ router.put(
         { name: 'backgroundImage', maxCount: 1 }
     ]),
     updateVendorProfile
+);
+
+// 5. Public/Protected Routes - Check Vendor Live Stream Ability
+router.get(
+    '/:id/can-make-live-stream',
+    optionalAuthenticate,
+    checkVendorLiveStreamAbility
+);
+
+// 6. Protected Routes - Update Vendor Live Stream Permission (Admin only)
+router.put(
+    '/:id/can-make-live-stream',
+    authenticate,
+    authorize('admin'),
+    updateVendorLiveStreamPermission
 );
 
 export default router;
